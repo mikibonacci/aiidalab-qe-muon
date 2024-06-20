@@ -169,6 +169,12 @@ def produce_collective_unit_cell(findmuon_output_node):
         mupos = np.dot(musite,sc_matrix)%1
         input_str.append(species = "H"+key, coords = mupos[0], coords_are_cartesian = False, validate_proximity = True)
         input_str.tags.append(key)
+    
+    l = []
+    for i in input_str.sites:
+        i.properties["kind_name"] = i.label
+        l.append(i.properties)
+    #raise ValueError(l)
         
     return input_str
 
