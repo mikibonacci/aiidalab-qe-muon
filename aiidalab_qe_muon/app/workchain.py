@@ -15,12 +15,33 @@ except:
 old_structuredata = True
 
 
+def create_resource_config(code_details):
+    """
+    Create a dictionary with resource configuration based on codes for 'pw'.
+
+    Parameters:
+        codes (dict): A dictionary containing the code configuration.
+
+    Returns:
+        dict: A nested dictionary with structured resource configurations.
+    """
+    return {
+        "options": {
+            "resources": {
+                "num_machines": code_details["nodes"],
+                "num_mpiprocs_per_machine": code_details["ntasks_per_node"],
+                "num_cores_per_mpiproc": code_details["cpus_per_task"],
+            }
+        }
+    }
+
+
 def get_builder(codes, structure, parameters):
     from copy import deepcopy
 
     protocol = parameters["workchain"].pop("protocol", "fast")
-    pw_code = codes.get("pw")
-    pp_code = codes.get("pp_code")
+    pw_code = codes.get("pw")["code"]
+    pp_code = codes.get("pp_code")["code"]
 
     magmom = parameters["muonic"].pop("magmoms", None)
     supercell = parameters["muonic"].pop("supercell_selector", None)
@@ -34,17 +55,14 @@ def get_builder(codes, structure, parameters):
     hubbard = parameters["muonic"].pop("hubbard", False)
 
     pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
-    try:
-        family = load_group(pseudo_family)
-        pseudos = family.get_pseudos(structure=structure)
-    except:
-        pseudo_family = "SSSP/1.2/PBEsol/efficiency"
+    # try:
+    family = load_group(pseudo_family)
+    pseudos = family.get_pseudos(structure=structure)
+    # except:
+    #    pseudo_family = "SSSP/1.2/PBE/efficiency"
 
     if hubbard and old_structuredata:
         structure = HubbardStructureData.from_structure(structure)
-
-    if compute_supercell:
-        sc_matrix = None
 
     trigger = "findmuon"
 
@@ -52,9 +70,18 @@ def get_builder(codes, structure, parameters):
     overrides = {
         # "relax":{
         "base": scf_overrides,
-        # },
-        # "pwscf": scf_overrides,
+        #    },
+        "pwscf": scf_overrides,
     }
+
+    if compute_supercell:
+        sc_matrix = None
+        overrides["impuritysupercellconv_metadata"] = create_resource_config(
+            codes.get("pw")
+        )
+        overrides["impuritysupercellconv"] = overrides
+
+    overrides["base"]["pw"]["metadata"] = create_resource_config(codes.get("pw"))
 
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_code=pw_code,
