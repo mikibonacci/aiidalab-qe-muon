@@ -12,7 +12,7 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Natural Language :: English
 Classifier: Development Status :: 2 - Pre-Alpha
 Classifier: Framework :: AiiDAlab
-Requires-Dist: aiida-muon@ git+https://github.com/positivemuon/aiida-muon@dev_StructureData
+Requires-Dist: aiida-muon@ git+https://github.com/positivemuon/aiida-muon@new_name/dev_StructureData
 Requires-Dist: pymatgen>=2023.9.25
 Provides-Extra: docs
 Requires-Dist: sphinx; extra == "docs"

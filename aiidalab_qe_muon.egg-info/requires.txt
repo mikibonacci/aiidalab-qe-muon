@@ -1,4 +1,4 @@
-aiida-muon@ git+https://github.com/positivemuon/aiida-muon@dev_StructureData
+aiida-muon@ git+https://github.com/positivemuon/aiida-muon@new_name/dev_StructureData
 pymatgen>=2023.9.25
 
 [docs]
