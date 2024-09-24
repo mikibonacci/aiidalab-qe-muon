@@ -45,7 +45,7 @@ class ImplantMuonWorkChain(WorkChain):
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
-            exclude=("clean_workdir"),  # AAA check this... maybe not needed.
+            exclude=("clean_workdir","structure"),  # AAA check this... maybe not needed.
             namespace_options={
                 "required": False,
                 "populate_defaults": False,
@@ -135,7 +135,8 @@ class ImplantMuonWorkChain(WorkChain):
         )
         # builder.findmuon = builder_findmuon
         for k, v in builder_findmuon.items():
-            setattr(builder.findmuon, k, v)
+            if k != "structure":
+                setattr(builder.findmuon, k, v)
 
         # If I don't pop here, when we set this builder as QeAppWorkChain builder attribute,
         # it will be validated and it will fail because it tries anyway to detect IMPURITY inputs...
@@ -158,17 +159,19 @@ class ImplantMuonWorkChain(WorkChain):
         """Run a WorkChain for vibrational properties."""
         # maybe we can unify this, thanks to a wise setup.
         inputs = AttributeDict(
-            self.exposed_inputs(self.ctx.workchain, namespace=self.ctx.key)
+            self.exposed_inputs(self.ctx.workchain, namespace="findmuon")
         )
-        inputs.metadata.call_link_label = self.ctx.key
+        inputs.metadata.call_link_label = "findmuon"
+
+        inputs.structure = self.inputs.structure
 
         future = self.submit(self.ctx.workchain, **inputs)
         self.report(f"submitting `WorkChain` <PK={future.pk}>")
-        self.to_context(**{self.ctx.key: future})
+        self.to_context(**{"findmuon": future})
 
     def results(self):
         """Inspect all sub-processes."""
-        workchain = self.ctx[self.ctx.key]
+        workchain = self.ctx["findmuon"]
 
         if not workchain.is_finished_ok:
             self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
@@ -176,6 +179,6 @@ class ImplantMuonWorkChain(WorkChain):
 
         self.out_many(
             self.exposed_outputs(
-                self.ctx[self.ctx.key], self.ctx.workchain, namespace=self.ctx.key
+                self.ctx["findmuon"], self.ctx.workchain, namespace="findmuon"
             )
         )
