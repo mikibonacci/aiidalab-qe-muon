@@ -12,7 +12,6 @@ ImplantMuonWorkChain = WorkflowFactory("muon_app.implant_muon")
 except:
     old_structuredata=True"""
 
-old_structuredata = True
 
 
 def create_resource_config(code_details):
@@ -40,7 +39,7 @@ def get_builder(codes, structure, parameters):
     from copy import deepcopy
 
     protocol = parameters["workchain"].pop("protocol", "fast")
-    pw_code = codes.get("pw")["code"]
+    pw_code = codes.get("pw_muons")["code"]
     pp_code = codes.get("pp_code")["code"]
 
     magmom = parameters["muonic"].pop("magmoms", None)
@@ -55,13 +54,13 @@ def get_builder(codes, structure, parameters):
     hubbard = parameters["muonic"].pop("hubbard", False)
 
     pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
-    # try:
-    family = load_group(pseudo_family)
+    
+    # just a dummy logic.
+    family = load_group(pseudo_family) if pseudo_family != "" else load_group("SSSP/1.3/PBE/efficiency")
     pseudos = family.get_pseudos(structure=structure)
-    # except:
-    #    pseudo_family = "SSSP/1.2/PBE/efficiency"
 
-    if hubbard and old_structuredata:
+
+    if hubbard and not isinstance(structure, HubbardStructureData):
         structure = HubbardStructureData.from_structure(structure)
 
     trigger = "findmuon"
@@ -73,18 +72,28 @@ def get_builder(codes, structure, parameters):
         #    },
         "pwscf": scf_overrides,
     }
+    
+    pp_metadata = {
+        "options": {
+            "max_wallclock_seconds": 60 * 60,
+            "resources": {
+                "num_machines": 1,
+                "num_mpiprocs_per_machine": 1,
+            },
+        },
+    }
 
     if compute_supercell:
         sc_matrix = None
         overrides["impuritysupercellconv_metadata"] = create_resource_config(
-            codes.get("pw")
+            codes.get("pw_muons")
         )
         overrides["impuritysupercellconv"] = overrides
 
-    overrides["base"]["pw"]["metadata"] = create_resource_config(codes.get("pw"))
+    overrides["base"]["pw"]["metadata"] = create_resource_config(codes.get("pw_muons"))
 
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
-        pw_code=pw_code,
+        pw_muons_code=pw_code,
         pp_code=pp_code,
         pseudo_family=pseudo_family,
         structure=structure,
@@ -101,17 +110,9 @@ def get_builder(codes, structure, parameters):
         electronic_type=ElectronicType(parameters["workchain"]["electronic_type"]),
         spin_type=SpinType(parameters["workchain"]["spin_type"]),
         initial_magnetic_moments=parameters["advanced"]["initial_magnetic_moments"],
+        pp_metadata = pp_metadata if pp_code else None
     )
 
-    pp_metadata = {
-        "options": {
-            "max_wallclock_seconds": 60 * 60,
-            "resources": {
-                "num_machines": 1,
-                "num_mpiprocs_per_machine": 1,
-            },
-        },
-    }
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
 

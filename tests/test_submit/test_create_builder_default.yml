@@ -1,0 +1,62 @@
+advanced:
+  clean_workdir: false
+  initial_magnetic_moments: null
+  kpoints_distance: 0.12
+  pseudo_family: SSSP/1.3/PBEsol/efficiency
+  pw:
+    parameters:
+      CONTROL:
+        etot_conv_thr: 2.0e-05
+        forc_conv_thr: 0.0001
+      ELECTRONS:
+        conv_thr: 4.0e-10
+      SYSTEM:
+        degauss: 0.015
+        ecutrho: 240.0
+        ecutwfc: 30.0
+        smearing: methfessel-paxton
+        tot_charge: 0.0
+        vdw_corr: none
+    pseudos: {}
+codes:
+  pp_code:
+    cpus: 1
+    cpus_per_task: 1
+    max_wallclock_seconds: 43200
+    nodes: 1
+    ntasks_per_node: 1
+  pw:
+    cpus: 2
+    cpus_per_task: 1
+    max_wallclock_seconds: 43200
+    nodes: 1
+    ntasks_per_node: 2
+    parallelization: {}
+  pw_muons:
+    cpus: 2
+    cpus_per_task: 1
+    max_wallclock_seconds: 43200
+    nodes: 1
+    ntasks_per_node: 2
+    parallelization: {}
+muonic:
+  charged_muon: true
+  compute_supercell: true
+  hubbard: true
+  kpoints_distance: 0.3
+  magmoms: null
+  mu_spacing: 1.0
+  pseudo_choice: SSSP/1.3/PBEsol/efficiency
+  spin_pol: false
+  supercell_selector:
+  - 1
+  - 1
+  - 1
+workchain:
+  electronic_type: metal
+  properties:
+  - muonic
+  - relax
+  protocol: moderate
+  relax_type: positions_cell
+  spin_type: none

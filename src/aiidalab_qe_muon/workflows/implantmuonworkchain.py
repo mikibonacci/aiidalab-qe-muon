@@ -43,16 +43,6 @@ class ImplantMuonWorkChain(WorkChain):
         )  # Maybe not needed as input... just in the protocols. but in this way it is not easy to automate it in the app, after the relaxation. So let's keep it for now.
 
         spec.expose_inputs(
-            MusconvWorkChain,
-            namespace="impuritysupercellconv",
-            exclude=("clean_workdir"),  # AAA check this... maybe not needed.
-            namespace_options={
-                "required": False,
-                "populate_defaults": False,
-                "help": "Inputs for the `MusconvWorkChain`.",
-            },
-        )
-        spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
             exclude=("clean_workdir"),  # AAA check this... maybe not needed.
@@ -82,14 +72,6 @@ class ImplantMuonWorkChain(WorkChain):
                 "help": "Outputs of the `PhononWorkChain`.",
             },
         )
-        spec.expose_outputs(
-            MusconvWorkChain,
-            namespace="impuritysupercellconv",
-            namespace_options={
-                "required": False,
-                "help": "Outputs of the `DielectricWorkChain`.",
-            },
-        )
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
         ###
@@ -98,7 +80,7 @@ class ImplantMuonWorkChain(WorkChain):
     @classmethod
     def get_builder_from_protocol(
         cls,
-        pw_code,
+        pw_muons_code,
         structure,
         pseudo_family: str = "SSSP/1.2/PBE/efficiency",
         pp_code=None,
@@ -112,11 +94,12 @@ class ImplantMuonWorkChain(WorkChain):
         mu_spacing: float = 1.0,
         kpoints_distance: float = 0.301,
         charge_supercell: bool = True,
+        pp_metadata: dict = None,
         **kwargs,
     ):
         """Return a builder prepopulated with inputs selected according to the chosen protocol.
 
-        :param pw_code: the ``Code`` instance configured for the ``quantumespresso.pw`` plugin.
+        :param pw_muons_code: the ``Code`` instance configured for the ``quantumespresso.pw`` plugin.
         :param structure: the ``StructureData`` instance to use.
         :param protocol: protocol to use, if not specified, the default will be used.
         :param overrides: optional dictionary of inputs to override the defaults of the protocol.
@@ -128,9 +111,6 @@ class ImplantMuonWorkChain(WorkChain):
         """
         from aiida_quantumespresso.workflows.protocols.utils import recursive_merge
 
-        if trigger not in ["findmuon", "impuritysupercellconv"]:
-            raise ValueError('trigger not in "findmuon" or "impuritysupercellconv"')
-
         if magmom and not pp_code:
             raise ValueError(
                 "pp code not provided but required, as the system is magnetic."
@@ -138,45 +118,33 @@ class ImplantMuonWorkChain(WorkChain):
 
         builder = cls.get_builder()
 
-        if trigger == "findmuon":
-            builder_findmuon = FindMuonWorkChain.get_builder_from_protocol(
-                pw_code=pw_code,
-                pp_code=pp_code,
-                structure=structure,
-                protocol=protocol,
-                overrides=overrides,
-                relax_musconv=relax_musconv,  # relaxation of unit cell already done if needed.
-                magmom=magmom,
-                sc_matrix=sc_matrix,
-                mu_spacing=mu_spacing,
-                kpoints_distance=kpoints_distance,
-                charge_supercell=charge_supercell,
-                pseudo_family=pseudo_family,
-                **kwargs,
-            )
-            # builder.findmuon = builder_findmuon
-            for k, v in builder_findmuon.items():
-                setattr(builder.findmuon, k, v)
+        builder_findmuon = FindMuonWorkChain.get_builder_from_protocol(
+            pw_code=pw_muons_code,
+            pp_code=pp_code,
+            structure=structure,
+            protocol=protocol,
+            overrides=overrides,
+            relax_musconv=relax_musconv,  # relaxation of unit cell already done if needed.
+            magmom=magmom,
+            sc_matrix=sc_matrix,
+            mu_spacing=mu_spacing,
+            kpoints_distance=kpoints_distance,
+            charge_supercell=charge_supercell,
+            pseudo_family=pseudo_family,
+            **kwargs,
+        )
+        # builder.findmuon = builder_findmuon
+        for k, v in builder_findmuon.items():
+            setattr(builder.findmuon, k, v)
 
-            # I have to set this, otherwise we have no parameters. TOBE understood.
-            builder.findmuon.impuritysupercellconv.relax.base.pw.parameters = Dict({})
-            if sc_matrix:
-                builder.findmuon.impuritysupercellconv.pwscf.pw.parameters = Dict({})
-
-        elif trigger == "impuritysupercellconv":
-            builder_musconv = MusconvWorkChain.get_builder_from_protocol(
-                code=pw_code,
-                structure=structure,
-                protocol=protocol,
-                overrides=overrides,
-                pseudo_family=pseudo_family,
-                **kwargs,
-            )
-            builder.impuritysupercellconv = builder_musconv
-
-        for wchain in ["findmuon", "impuritysupercellconv"]:
-            if trigger != wchain:
-                builder.pop(wchain, None)
+        # If I don't pop here, when we set this builder as QeAppWorkChain builder attribute,
+        # it will be validated and it will fail because it tries anyway to detect IMPURITY inputs...
+        if sc_matrix:
+            builder.findmuon.pop('impuritysupercellconv')
+        #    builder.findmuon.impuritysupercellconv.pwscf.pw.parameters = Dict({})
+            
+        if pp_metadata:
+            builder.findmuon.pp_metadata = pp_metadata
 
         builder.structure = structure
 
@@ -184,12 +152,7 @@ class ImplantMuonWorkChain(WorkChain):
 
     def setup(self):
         # key, class, outputs namespace.
-        if "findmuon" in self.inputs:
-            self.ctx.key = "findmuon"
-            self.ctx.workchain = FindMuonWorkChain
-        elif "impuritysupercellconv" in self.inputs:
-            self.ctx.key = "impuritysupercellconv"
-            self.ctx.workchain = MusconvWorkChain
+        self.ctx.workchain = FindMuonWorkChain
 
     def implant_muon(self):
         """Run a WorkChain for vibrational properties."""

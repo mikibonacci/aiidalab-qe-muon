@@ -1,8 +1,0 @@
-[aiida.workflows]
-muon_app.implant_muon = aiidalab_qe_muon.workflows.implantmuonworkchain:ImplantMuonWorkChain
-
-[aiidalab_qe.properties]
-muonic = aiidalab_qe_muon.app:property
-
-[console_scripts]
-install_muon_codes = aiidalab_qe_muon.scripts.post_install:InstallCodes
