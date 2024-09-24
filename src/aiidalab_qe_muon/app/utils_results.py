@@ -21,6 +21,35 @@ from ase import neighborlist
 from importlib_resources import files
 from aiidalab_qe_muon.app import data
 
+
+# spinner for waiting time (supercell estimations)
+spinner_html = """
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+}
+
+.spinner div {
+  width: 100%;
+  height: 100%;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+</style>
+<div class="spinner">
+  <div></div>
+</div>
+"""
+
 file = files(data)/'isotopedata.txt'
 
 info = pd.read_table(file,comment='%', 
@@ -387,17 +416,34 @@ class KT_asymmetry_widget(ipw.HBox):
         selected=None,  
         **kwargs):
         
-        self.fig = go.FigureWidget()
+        
         self.df=df
         self.KT = {}
+        self.selected = selected
+        
+        self.render_button = ipw.Button(
+            description='Plot Kubo-Toyabe function (may take some time)',
+            button_style="info",
+            layout=ipw.Layout(width="500px"),
+        )
+        self.render_button.on_click(self._render)
+               
+        super().__init__(
+            children=[self.render_button],
+            **kwargs)
+    
+    def _render(self,_=None):
+        
+        self.children = [ipw.HTML(value=spinner_html)]
+        
+        self.fig = go.FigureWidget()
         self.t = np.linspace(0,40e-6,1000) #should be a slider
         self.t_axes = np.linspace(0,40,1000) #should be a slider
-        self.selected = selected
 
 
         #figure widget
         ## the scatter plots.
-        for data,label in zip(df.loc["structure"].tolist(),df.loc["muon_index"].tolist()):
+        for data,label in zip(self.df.loc["structure"].tolist(),self.df.loc["muon_index"].tolist()):
             atms = data.get_ase()
 
             
@@ -442,8 +488,9 @@ class KT_asymmetry_widget(ipw.HBox):
             #bargroupgap=0.4, # Gap between bar groups
         )
         
-        super().__init__(children=[self.fig],**kwargs)
-        
+        self.children=[self.fig]
+        return
+         
 class MuonSummaryBarPlotWidget(ipw.VBox):
     """
     Widget for the summary bar plot with all unique muon sites.
