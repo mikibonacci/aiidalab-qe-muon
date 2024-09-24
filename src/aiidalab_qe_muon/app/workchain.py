@@ -44,23 +44,21 @@ def get_builder(codes, structure, parameters):
 
     magmom = parameters["muonic"].pop("magmoms", None)
     supercell = parameters["muonic"].pop("supercell_selector", None)
-    sc_matrix = [[[supercell[0], 0, 0], [0, supercell[1], 0], [0, 0, supercell[2]]]]
+    sc_matrix = [[supercell[0], 0, 0], [0, supercell[1], 0], [0, 0, supercell[2]]]
 
     compute_supercell = parameters["muonic"].pop("compute_supercell", False)
     mu_spacing = parameters["muonic"].pop("mu_spacing", 1.0)
     kpoints_distance = parameters["muonic"].pop("kpoints_distance", 0.301)
     charge_supercell = parameters["muonic"].pop("charged_muon", True)
 
-    hubbard = parameters["muonic"].pop("hubbard", False)
+    disable_hubbard = not parameters["muonic"].pop("hubbard", True) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
     pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
-    
-    # just a dummy logic.
-    family = load_group(pseudo_family) if pseudo_family != "" else load_group("SSSP/1.3/PBE/efficiency")
-    pseudos = family.get_pseudos(structure=structure)
+    # dummy logic.
+    pseudo_family = pseudo_family if pseudo_family != "" else "SSSP/1.3/PBE/efficiency"
 
 
-    if hubbard and not isinstance(structure, HubbardStructureData):
+    if not disable_hubbard and not isinstance(structure, HubbardStructureData):
         structure = HubbardStructureData.from_structure(structure)
 
     trigger = "findmuon"
@@ -106,7 +104,7 @@ def get_builder(codes, structure, parameters):
         mu_spacing=mu_spacing,
         kpoints_distance=kpoints_distance,
         charge_supercell=charge_supercell,
-        hubbard=hubbard,
+        hubbard=not disable_hubbard,
         electronic_type=ElectronicType(parameters["workchain"]["electronic_type"]),
         spin_type=SpinType(parameters["workchain"]["spin_type"]),
         initial_magnetic_moments=parameters["advanced"]["initial_magnetic_moments"],
@@ -116,6 +114,9 @@ def get_builder(codes, structure, parameters):
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
 
+    if not disable_hubbard and isinstance(structure, HubbardStructureData):
+        builder.structure = HubbardStructureData.from_structure(structure)
+    
     return builder
 
 

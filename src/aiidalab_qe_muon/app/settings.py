@@ -166,13 +166,13 @@ class Setting(Panel):
 
         # start enable Hubbard. Temporary, with the LegacyStructureData.
         self.hubbard__label = ipw.Label(
-            "Enable Hubbard correction: ",
+            "Disable Hubbard correction (if any): ",
             layout=ipw.Layout(justify_content="flex-start"),
         )
         self.hubbard_ = ipw.Checkbox(
             description="",
             indent=False,
-            value=True,
+            value=False,
         )
         self.hubbard__widget = ipw.HBox(
             [self.hubbard__label, self.hubbard_],
@@ -478,6 +478,6 @@ class Setting(Panel):
         self.kpoints_distance_.value = 0.3
         self.mu_spacing_.value = 1
         self.magmoms = None
-        self.hubbard_.value = True
+        self.hubbard_.value = False
         self.spin_pol_.value = True
         self.pseudo_choice_.value = ""
