@@ -323,6 +323,7 @@ class Setting(Panel):
                 supercell,
                 orm.Float(self.kpoints_distance_.value),
                 orm.Bool(False),
+                metadata={"store_provenance": False},
             )
             self.mesh_grid.value = "Mesh " + str(mesh.get_kpoints_mesh()[0])
         else:
@@ -385,6 +386,7 @@ class Setting(Panel):
                     orm.Str("H"),
                     orm.Float(self.mu_spacing_.value),
                     orm.Float(1.0),
+                    metadata={"store_provenance": False},
                 )
 
                 sc_matrix = [
