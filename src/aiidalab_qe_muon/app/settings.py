@@ -17,6 +17,7 @@ from aiidalab_qe.common.panel import Panel
 from ase.build import make_supercell
 from aiida_muon.workflows.find_muon import gensup, niche_add_impurities
 
+from aiidalab_qe_muon.app.utils_results import spinner_html
 
 class Setting(Panel):
     title = "Muon Settings"
@@ -112,12 +113,6 @@ class Setting(Panel):
 
         self.supercell_selector = ipw.HBox(
             children=[
-                ipw.HTML(
-                    description="Supercell size:",
-                    style={"description_width": "initial"},
-                )
-            ]
-            + [
                 self._sc_x,
                 self._sc_y,
                 self._sc_z,
@@ -125,41 +120,52 @@ class Setting(Panel):
         )
 
         # SCell widget
-        self.supercell_label = ipw.Label(
+        self.supercell_label = ipw.HTML(
             "Compute supercell: ",
-            layout=ipw.Layout(justify_content="flex-start"),
+            layout=ipw.Layout(width="120px"),
         )
         self.compute_supercell_ = ipw.Checkbox(
             description="",
             indent=False,
             value=True,
+            layout=ipw.Layout(width="150px"),
         )
         # enable supercell setting
         self.compute_supercell_.observe(self._compute_supercell, "value")
 
         # supercell data
         self.supercell_hint_button = ipw.Button(
-            description="Size hint",
+            description="Supercell hint",
             disabled=True,
-            width="500px",
+            button_style="info",
         )
         # supercell hint (9A lattice params)
         self.supercell_hint_button.on_click(self._suggest_supercell)
+
+        # supercell data
+        self.supercell_reset_button = ipw.Button(
+            description="Reset supercell",
+            disabled=True,
+            button_style="warning",
+        )
+        # supercell hint (9A lattice params)
+        self.supercell_reset_button.on_click(self._reset_supercell)
 
         self.supercell_html = ipw.HTML(display="none")
 
         self.supercell_known_widget = ipw.VBox(
             [
-                ipw.HBox(
-                    [
-                        self.supercell_label,
-                        self.compute_supercell_,
-                        self.supercell_hint_button,
-                        self.supercell_selector,
-                    ],
-                    layout=ipw.Layout(justify_content="flex-start"),
-                ),
-                self.supercell_html,
+            ipw.HBox(
+                [
+                self.supercell_label,
+                self.compute_supercell_,
+                self.supercell_hint_button,
+                self.supercell_selector,
+                self.supercell_reset_button,
+                ],
+                layout=ipw.Layout(align_items="center"),
+            ),
+            self.supercell_html,
             ],
         )
         # end Supercell.
@@ -301,8 +307,15 @@ class Setting(Panel):
         for elem in [self._sc_x, self._sc_y, self._sc_z]:
             elem.disabled = change["new"]
         self.supercell_hint_button.disabled = change["new"]
+        self.supercell_reset_button.disabled = change["new"]
         self._write_html_supercell()
         self.supercell_html.layout.display = "none" if change["new"] else "block"
+        
+    def _reset_supercell(self, _=None):
+        if self.input_structure is not None:
+            for direction  in[self._sc_x, self._sc_y, self._sc_z]:
+                direction.value = 1
+        return
 
     def _display_mesh(self, _=None):
         if self.input_structure is None:
@@ -381,6 +394,7 @@ class Setting(Panel):
             if False in self.input_structure.pbc:
                 self.Warning_button.layout.display = "block"
             else:
+                self.number_of_supercells.value = "Number of supercells: " + spinner_html
                 mu_lst = niche_add_impurities(
                     self.input_structure,
                     orm.Str("H"),
