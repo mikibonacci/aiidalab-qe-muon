@@ -196,7 +196,12 @@ def produce_collective_unit_cell(findmuon_output_node):
         py_struc = Structure.from_dict(findmuon_output_node.unique_sites.get_dict()[key][0])
         musite = py_struc.frac_coords[py_struc.atomic_numbers.index(1)]
         mupos = np.dot(musite,sc_matrix)%1
-        input_str.append(species = "H"+key, coords = mupos[0], coords_are_cartesian = False, validate_proximity = True)
+        # bad workaround for strange bug.
+        if len(mupos) == 1:  
+            mupos=mupos[0]
+            if len(mupos) == 1:
+                mupos=mupos[0]
+        input_str.append(species = "H"+key, coords = mupos, coords_are_cartesian = False, validate_proximity = True)
         input_str.tags.append(key)
     
     l = []
