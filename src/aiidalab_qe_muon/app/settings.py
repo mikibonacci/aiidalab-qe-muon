@@ -232,7 +232,7 @@ class Setting(Panel):
         self.mu_spacing_description = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
             <h5><b>Muons site distance</b></h5>
-            Muons distance in Å for different candidate positions in the choosen supercell.</div>"""
+            Muons distance in Å for different candidate positions in the choosen supercell. Default is 1 Å.</div>"""
         )
 
         self.mu_spacing_ = ipw.BoundedFloatText(
@@ -243,8 +243,17 @@ class Setting(Panel):
             disabled=False,
             style={"description_width": "initial"},
         )
-        self.mu_spacing_.observe(self._estimate_supercells, "value")
-        self.number_of_supercells = ipw.HTML()
+        self.mu_spacing_.observe(self._on_change_muspacing, "value")
+        self.estimate_number_of_supercells_button = ipw.Button(
+            description="Estimate number of muon trial sites ➡",
+            disabled=False,
+            layout=ipw.Layout(width="240px"),
+            button_style="info",
+            tooltip="Number of muon trial sites (i.e. different supercells);\nwarning: for large systems, this may take some time.",
+        )
+        # supercell reset reaction
+        self.estimate_number_of_supercells_button.on_click(self._estimate_supercells)
+        self.number_of_supercells = ipw.HTML("?")
         # end mu spacing.
 
         # start TEMPORARY magnetic moments settings. this should be in the structure creation.
@@ -272,7 +281,7 @@ class Setting(Panel):
             self.kpoints_description,
             ipw.HBox([self.kpoints_distance_, self.mesh_grid]),
             self.mu_spacing_description,
-            ipw.HBox([self.mu_spacing_, self.number_of_supercells]),
+            ipw.HBox([self.mu_spacing_, self.estimate_number_of_supercells_button,self.number_of_supercells]),
             ipw.VBox(
                 [
                     ipw.HBox([self.pseudo_label, self.pseudo_choice_]),
@@ -287,8 +296,13 @@ class Setting(Panel):
     def _update_input_structure(self, change):
         if self.input_structure is not None:
             self._display_mesh()
-            self._estimate_supercells()
+            self.number_of_supercells.value = "?"
+            self.estimate_number_of_supercells_button.disabled = False
             self._display_moments()
+            
+    def _on_change_muspacing(self, _=None):
+        self.number_of_supercells.value = "?"
+        self.estimate_number_of_supercells_button.disabled = False
 
     def _validate_pseudo_family(self, change):
         """try to load the pseudo family and raise warning/exception"""
@@ -414,6 +428,8 @@ class Setting(Panel):
                 self.number_of_supercells.value = "Number of supercells: " + str(
                     len(supercell_list)
                 )
+        self.estimate_number_of_supercells_button.disabled = True
+        
 
     def _display_moments(self, _=None):
         """
