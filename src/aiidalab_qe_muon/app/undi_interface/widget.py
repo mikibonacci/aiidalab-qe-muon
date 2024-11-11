@@ -71,30 +71,29 @@ class UndiPlotWidget(ipw.VBox):
                         The approximations used in this plots are: ... <br>
                         You can find more information on the UNDI code here: ...
                         """
-                    )
+                    ),
+                    ipw.VBox(
+                        [
+                            ipw.HTML(
+                                "The average is performed considering the probabilities..."
+                            ),
+                            self.cluster_isotopes_table,
+                        ],
+                    ),
                 ],
             )
             self.info_on_the_approximations.set_title(
                 0, "Details on the approximations"
             )
+            self.info_on_the_approximations.set_title(1, "Isotopes combinations:")
             self.info_on_the_approximations.selected_index = None  # Collapse by default
 
             self.children = [
                 self.fig,
-                ipw.HBox(
+                ipw.VBox(
                     [
-                        ipw.VBox(
-                            [
-                                ipw.HTML("Plot options:"),
-                                self.plot_box,
-                            ],
-                        ),
-                        ipw.VBox(
-                            [
-                                ipw.HTML("Isotopes combinations:"),
-                                self.cluster_isotopes_table,
-                            ],
-                        ),
+                        ipw.HTML("Plot options:"),
+                        self.plot_box,
                     ],
                 ),
                 self.info_on_the_approximations,
@@ -125,10 +124,12 @@ class UndiPlotWidget(ipw.VBox):
         self.fig.data = ()
         direction = self._model.directions
         field_direction = self._model.field_direction
+        selected_fields = self._model.selected_fields
 
         for index in range(len(self._model.nodes)):
             # shell_node = node #orm.load_node(2582)
-
+            if self._model.fields[index] not in selected_fields:
+                continue
             if self._model.mode == "plot":
                 Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
                 label = f"B<sub>ext</sub>={Bmod} mT"
@@ -198,29 +199,60 @@ class UndiPlotWidget(ipw.VBox):
     def tuning_plot_box(
         self,
     ):
+        sample_description = ipw.HTML(
+            """
+            Sample direction:
+            """
+        )
         sample_dir = ipw.RadioButtons(
             options=["x", "y", "z", "powder"],
             value=self._model.directions,
-            description="(a) Sampling directions:",
             style={"description_width": "initial"},
         )
 
+        field_description = ipw.HTML(
+            """
+            B<sub>ext</sub> direction and magnitude:
+            toggle field values using CTRL+cursor selection.
+            """
+        )
         field_directions_ddown = ipw.RadioButtons(
             options=[("Longitudinal", "lf"), ("Transverse", "tf")],
             value="lf",  # Default value
-            description="B<sub>ext</sub> is: ",
+            disabled=False,
+        )
+
+        field_magnitudes = ipw.SelectMultiple(
+            options=self._model.fields,
+            value=self._model.selected_fields,
             disabled=False,
         )
 
         plot_box = ipw.HBox(
             [
-                sample_dir,
-                field_directions_ddown,
+                ipw.VBox(
+                    [
+                        sample_description,
+                        sample_dir,
+                    ],
+                    layout=ipw.Layout(
+                        width="50%",
+                    ),
+                ),
+                ipw.VBox(
+                    [
+                        field_description,
+                        ipw.HBox(
+                            [field_directions_ddown, field_magnitudes],
+                        ),
+                    ],
+                ),
             ],
-            layout=ipw.Layout(width="80%", border="2px solid black", padding="10px"),
+            layout=ipw.Layout(width="100%", border="2px solid black", padding="10px"),
         )
         sample_dir.observe(self._on_sampling_dir_change, "value")
         field_directions_ddown.observe(self._on_field_direction_change, "value")
+        field_magnitudes.observe(self._on_field_magnitudes_change, "value")
 
         return plot_box
 
@@ -230,10 +262,16 @@ class UndiPlotWidget(ipw.VBox):
             self._model.directions = change["new"]
             self._update_plot()
 
-    # control of model
+    # control of view
     def _on_field_direction_change(self, change):
         if change["new"] != change["old"]:
             self._model.field_direction = change["new"]
+            self._update_plot()
+
+    # control of view
+    def _on_field_magnitudes_change(self, change):
+        if change["new"] != change["old"]:
+            self._model.selected_fields = change["new"]
             self._update_plot()
 
     # control of model and view

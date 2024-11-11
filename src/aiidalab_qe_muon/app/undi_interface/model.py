@@ -31,6 +31,7 @@ class PolarizationModel:
     mode = "plot"  # "analysis" for the convergence analysis
     max_hdims = [1e5]
     estimated_convergence = 0
+    selected_fields = [0.0]
     selected_isotopes = []
     field_direction = "lf"  # "tf", longitudinal and transverse.
 
@@ -38,6 +39,9 @@ class PolarizationModel:
         self.nodes = [orm.load_node(node_pk) for node_pk in nodes_pk]
         if len(nodes_pk):
             self.fields = [
+                node.inputs.nodes.Bmod.value * 1000 for node in self.nodes
+            ]  # mT
+            self.selected_fields = [
                 node.inputs.nodes.Bmod.value * 1000 for node in self.nodes
             ]  # mT
             self.max_hdims = [node.inputs.nodes.max_hdim.value for node in self.nodes]
