@@ -31,6 +31,7 @@ class PolarizationModel:
     mode = "plot"  # "analysis" for the convergence analysis
     max_hdims = [1e5]
     estimated_convergence = 0
+    plotting_quantity = "P"  # for the convergence analysis
     selected_fields = [0.0]
     selected_isotopes = []
     field_direction = "lf"  # "tf", longitudinal and transverse.
