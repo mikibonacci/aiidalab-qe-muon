@@ -14,12 +14,12 @@ def create_html_table(matrix, first_row=[]):
     :return: HTML table string
     """
     html = '<table border="1" style="border-collapse: collapse;">'
-    for cell in first_row:
+    for cell in first_row[1:]:
         html += f'<td style="padding: 5px; text-align: center;">{cell}</td>'
     html += "</tr>"
     for row in matrix:
         html += "<tr>"
-        for cell in row:
+        for cell in row[1:]:
             html += f'<td style="padding: 5px; text-align: center;">{cell}</td>'
         html += "</tr>"
     html += "</table>"
@@ -97,19 +97,16 @@ class UndiPlotWidget(ipw.VBox):
         """
         This will produce plots for both results of the polarization, both for the convergence of it.
         """
-        import itertools
 
         self.fig.data = ()
+        direction = self._model.directions
 
-        for index, direction in itertools.product(
-            range(len(self._model.nodes)),
-            self._model.directions,
-        ):
+        for index in range(len(self._model.nodes)):
             # shell_node = node #orm.load_node(2582)
 
             if self._model.mode == "plot":
                 Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
-                label = f"B<sub>ext</sub>={Bmod} mT, {direction}"
+                label = f"B<sub>ext</sub>={Bmod} mT"
                 ydata = self._model.data["y"][index][f"signal_{direction}"]
                 ylabel = "P(t)"
                 title = None
@@ -174,26 +171,13 @@ class UndiPlotWidget(ipw.VBox):
     def tuning_plot_box(
         self,
     ):
-        description_string_pol = ipw.HTML("""
-            <b>Replot instructions</b>
-            <br> Choose the sample orientation directions among x,y and/or z, separated by commas.
-            Choose the isotopes (via the index in the below table) to be included in the average,
-            separated by commas.
-        """)
-        string_pol = ipw.Text(
-            description="(a) Sample directions:",
-            value=",".join(self._model.directions),
-            style={
-                "description_width": "initial"
-            },  # Adjust the width of the description label
+        sample_dir = ipw.ToggleButtons(
+            options=["x", "y", "z", "powder"],
+            value=self._model.directions,
+            description="(a) Sampling directions:",
+            style={"description_width": "initial"},
         )
-        string_isotopes = ipw.Text(
-            description="(b) Clusters considered:",
-            value=",".join(map(str, self._model.selected_isotopes)),
-            style={
-                "description_width": "initial"
-            },  # Adjust the width of the description label
-        )
+
         update_button = ipw.Button(description="Replot", disabled=True)
 
         field_directions_ddown = ipw.Dropdown(
@@ -202,77 +186,41 @@ class UndiPlotWidget(ipw.VBox):
             description="B<sub>ext</sub> is: ",
             disabled=False,
         )
-        field_directions_ddown.observe(self._update_field_direction, "value")
+        field_directions_ddown.observe(self._on_field_direction_change, "value")
 
         plot_box = ipw.VBox(
             [
-                description_string_pol,
-                string_pol,
-                string_isotopes,
+                sample_dir,
                 update_button,
                 field_directions_ddown,
             ],
             layout=ipw.Layout(width="40%"),
         )
-        string_pol.observe(self._enable_replot, "value")  # on_string_pol_change
-        string_isotopes.observe(
-            self._enable_replot, "value"
-        )  # on_string_isotopes_change
-        update_button.on_click(self._update_plot)  # the on_ is already in on_click.
+        sample_dir.observe(self._on_sampling_dir_change, "value")
+        update_button.on_click(self._update_plot)  # the on_* is already in on_click.
 
         return plot_box
 
     # control of view
-    def _enable_replot(self, _=None):
-        new_directions = (
-            self.plot_box.children[1].value.rstrip(",").split(",")
-        )  # this generates a list of strings + "". this is why belowe we put rstrip(",").
-        new_isotopes = list(
-            map(int, self.plot_box.children[2].value.rstrip(",").split(","))
-        )
-
-        # check that we have the polarizations x and/or y and/or z, otherwise error.
-        self.plot_box.children = self.plot_box.children[:5]
-        if not set(new_directions).issubset(set(["x", "y", "z"])) and not set(
-            new_directions
-        ).issubset(set(["powder"])):
-            self.plot_box.children += (
-                ipw.HTML(
-                    f"Invalid direction selected: {new_directions}. Valid directions are: {set(['x','y','z'])} and 'powder'"
-                ),
-            )
-        # check that we selected valid cluster indexes.
-        elif not set(new_isotopes).issubset(set(range(len(self._model.isotopes)))):
-            self.plot_box.children += (
-                ipw.HTML(
-                    f"Invalid isotopes index selected. Valid indexes are: {set(range(len(self._model.isotopes)))}"
-                ),
-            )
-        else:
-            self.plot_box.children = self.plot_box.children[:5]
-            if (
-                new_directions == self._model.directions
-                and new_isotopes == self._model.selected_isotopes
-            ):
-                return
-            self.plot_box.children[3].disabled = False
+    def _on_sampling_dir_change(self, change):
+        if change["new"] != change["old"]:
+            # I am referring to the childrens using the indexes, because these are just three;
+            # but we should put them as attributes of the superwidget, I think, and refer them accessing these attributes.
+            self.plot_box.children[1].disabled = False
 
     # control of model and view
     def _update_plot(self, _=None):
         # is this control or view? Control, because it calls view?
-        self._model.directions = self.plot_box.children[1].value.rstrip(",").split(",")
-        self._model.selected_isotopes = list(
-            map(int, self.plot_box.children[2].value.rstrip(",").split(","))
-        )
+        self._model.directions = self.plot_box.children[0].value
 
-        self._model.prepare_data_for_plots()  # compute the isotopic averages - depends on the selected isotope configurations
+        self._model.prepare_data_for_plots()
 
         self.produce_undi_plots()
 
-        self.plot_box.children[3].disabled = True
+        self.plot_box.children[1].disabled = True
 
     # control of model
-    def _update_field_direction(self, change):
+    def _on_field_direction_change(self, change):
         if change["new"] != change["old"]:
             self._model.field_direction = change["new"]
             self._update_plot()

@@ -9,12 +9,12 @@ class PolarizationModel:
     """PolarizationModel is a class designed for handling polarization plots and convergence analysis.
     Attributes:
         nodes (list): List of nodes used in the model.
-        directions (list): List of directions for polarization, default is ["z"].
+        directions (str): str of directions for polarization, default is "z", but can be also x, y or powder.
         fields (list): List of magnetic field values in mT.
         mode (str): Mode of operation, either "plot" or "analysis".
         max_hdims (list): List of maximum hyperfine dimensions.
         estimated_convergence (int): Estimated convergence value.
-        selected_isotopes (list): List of selected isotopes for analysis.
+        REMOVED -> selected_isotopes (list): List of selected isotopes for analysis.
     Methods:
         __init__(self, nodes_pk=[]):
             Initializes the PolarizationModel with given node primary keys.
@@ -22,10 +22,11 @@ class PolarizationModel:
             Prepares the data to be used in the UndiWidget for plotting.
         compute_isotopic_averages(self):
             Computes the isotopic averages for the selected isotopes and returns them.
+            We always average over all the isotopes.
     """
 
     nodes = []
-    directions = ["z"]  # ,"y","x", "powder"]
+    directions = "z"  # ,"y","x", "powder"]
     fields = [0.0]
     mode = "plot"  # "analysis" for the convergence analysis
     max_hdims = [1e5]
@@ -64,16 +65,15 @@ class PolarizationModel:
     def compute_isotopic_averages(
         self,
     ):
+        direction = self.directions
+        field_direction = self.field_direction
         weights = [self.isotopes[int(i)][-1] for i in self.selected_isotopes if i != ""]
         averages_full = []
         for index in range(len(self.nodes)):  # field, or calculation.
             averages = {}
-            if self.directions[0] == "powder":
-                direction = self.directions[0]
+            if direction == "powder":
                 values = [
-                    self.results[index][int(i)][
-                        f"signal_{direction}_{self.field_direction}"
-                    ]
+                    self.results[index][int(i)][f"signal_{direction}_{field_direction}"]
                     for i in self.selected_isotopes
                     if i != ""
                 ]
@@ -82,20 +82,18 @@ class PolarizationModel:
                     values, weights=weights, axis=0
                 )
             else:
-                for direction in ["x", "y", "z"]:
-                    if self.mode == "analysis" and direction in ["x", "y"]:
+                for axis in ["x", "y", "z"]:
+                    if self.mode == "analysis" and axis in ["x", "y"]:
                         continue
 
                     values = [
-                        self.results[index][int(i)][
-                            f"signal_{direction}_{self.field_direction}"
-                        ]
+                        self.results[index][int(i)][f"signal_{axis}_{field_direction}"]
                         for i in self.selected_isotopes
                         if i != ""
                     ]
 
                     # Compute the weighted average
-                    averages[f"signal_{direction}"] = np.average(
+                    averages[f"signal_{axis}"] = np.average(
                         values, weights=weights, axis=0
                     )
 
