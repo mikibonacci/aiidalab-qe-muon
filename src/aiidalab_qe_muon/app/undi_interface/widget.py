@@ -64,6 +64,20 @@ class UndiPlotWidget(ipw.VBox):
                 first_row=["cluster index", "isotopes", "spins", "probability"],
             )
             self.cluster_isotopes_table = ipw.HTML(table)
+            self.info_on_the_approximations = ipw.Accordion(
+                children=[
+                    ipw.HTML(
+                        """
+                        The approximations used in this plots are: ... <br>
+                        You can find more information on the UNDI code here: ...
+                        """
+                    )
+                ],
+            )
+            self.info_on_the_approximations.set_title(
+                0, "Details on the approximations"
+            )
+            self.info_on_the_approximations.selected_index = None  # Collapse by default
 
             self.children = [
                 self.fig,
@@ -83,6 +97,7 @@ class UndiPlotWidget(ipw.VBox):
                         ),
                     ],
                 ),
+                self.info_on_the_approximations,
             ]
 
             self.rendered = True
