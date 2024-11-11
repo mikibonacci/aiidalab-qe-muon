@@ -57,45 +57,35 @@ class PolarizationModel:
         """Prepare the data to just be plugged in in the FigureWidget."""
 
         self.data = {
-            "y": self.compute_isotopic_averages(),  # one element each node. These elements are dictionaries containing x,y,z signals averaged.
+            "y": {
+                "lf": self.compute_isotopic_averages(field_direction="lf"),
+                "tf": self.compute_isotopic_averages(field_direction="tf")
+                if self.mode == "plot"
+                else None,  # one element each node. These elements are dictionaries containing x,y,z signals averaged wrt the isotopes.
+            }
         }
 
         self.data["x"] = np.array(self.results[0][0]["t"]) * 1e6
 
-    def compute_isotopic_averages(
-        self,
-    ):
-        direction = self.directions
-        field_direction = self.field_direction
+    def compute_isotopic_averages(self, field_direction="lf"):
         weights = [self.isotopes[int(i)][-1] for i in self.selected_isotopes if i != ""]
         averages_full = []
         for index in range(len(self.nodes)):  # field, or calculation.
             averages = {}
-            if direction == "powder":
+            for direction in ["z", "x", "y", "powder"]:
+                if self.mode == "analysis" and direction in ["x", "y", "powder"]:
+                    continue
+
                 values = [
                     self.results[index][int(i)][f"signal_{direction}_{field_direction}"]
                     for i in self.selected_isotopes
                     if i != ""
                 ]
+
                 # Compute the weighted average
                 averages[f"signal_{direction}"] = np.average(
                     values, weights=weights, axis=0
                 )
-            else:
-                for axis in ["x", "y", "z"]:
-                    if self.mode == "analysis" and axis in ["x", "y"]:
-                        continue
-
-                    values = [
-                        self.results[index][int(i)][f"signal_{axis}_{field_direction}"]
-                        for i in self.selected_isotopes
-                        if i != ""
-                    ]
-
-                    # Compute the weighted average
-                    averages[f"signal_{axis}"] = np.average(
-                        values, weights=weights, axis=0
-                    )
 
             averages_full.append(averages)
 

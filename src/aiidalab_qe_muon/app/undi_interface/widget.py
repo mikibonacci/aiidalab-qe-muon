@@ -66,21 +66,30 @@ class UndiPlotWidget(ipw.VBox):
             self.cluster_isotopes_table = ipw.HTML(table)
 
             self.children = [
+                self.fig,
                 ipw.HBox(
                     [
-                        self.fig,
-                        self.plot_box,
+                        ipw.VBox(
+                            [
+                                ipw.HTML("Plot options:"),
+                                self.plot_box,
+                            ],
+                        ),
+                        ipw.VBox(
+                            [
+                                ipw.HTML("Isotopes combinations:"),
+                                self.cluster_isotopes_table,
+                            ],
+                        ),
                     ],
                 ),
-                ipw.HTML("Isotopes combination considered in this calculation:"),
-                self.cluster_isotopes_table,
             ]
 
             self.rendered = True
 
         else:
             self.children = [
-                ipw.HBox(
+                ipw.VBox(
                     [
                         self.fig,
                         ipw.HTML("Convergence analysis..."),
@@ -100,6 +109,7 @@ class UndiPlotWidget(ipw.VBox):
 
         self.fig.data = ()
         direction = self._model.directions
+        field_direction = self._model.field_direction
 
         for index in range(len(self._model.nodes)):
             # shell_node = node #orm.load_node(2582)
@@ -107,7 +117,9 @@ class UndiPlotWidget(ipw.VBox):
             if self._model.mode == "plot":
                 Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
                 label = f"B<sub>ext</sub>={Bmod} mT"
-                ydata = self._model.data["y"][index][f"signal_{direction}"]
+                ydata = self._model.data["y"][field_direction][index][
+                    f"signal_{direction}"
+                ]
                 ylabel = "P(t)"
                 title = None
             elif self._model.mode == "analysis":
@@ -119,7 +131,7 @@ class UndiPlotWidget(ipw.VBox):
                     self._model.nodes[-1].outputs.results_json.get_content()
                 )
                 ydata = np.array(highest_res[0][f"signal_{direction}_lf"]) - np.array(
-                    self._model.data["y"][index][f"signal_{direction}"]
+                    self._model.data["y"][field_direction][index][f"signal_{direction}"]
                 )
                 title = "$$\Delta P(t) = P_{max\_hdim=10^9}(t) - P(t)$$"
                 ylabel = "$$\Delta P(t)$$"
@@ -171,56 +183,46 @@ class UndiPlotWidget(ipw.VBox):
     def tuning_plot_box(
         self,
     ):
-        sample_dir = ipw.ToggleButtons(
+        sample_dir = ipw.RadioButtons(
             options=["x", "y", "z", "powder"],
             value=self._model.directions,
             description="(a) Sampling directions:",
             style={"description_width": "initial"},
         )
 
-        update_button = ipw.Button(description="Replot", disabled=True)
-
-        field_directions_ddown = ipw.Dropdown(
+        field_directions_ddown = ipw.RadioButtons(
             options=[("Longitudinal", "lf"), ("Transverse", "tf")],
             value="lf",  # Default value
             description="B<sub>ext</sub> is: ",
             disabled=False,
         )
-        field_directions_ddown.observe(self._on_field_direction_change, "value")
 
-        plot_box = ipw.VBox(
+        plot_box = ipw.HBox(
             [
                 sample_dir,
-                update_button,
                 field_directions_ddown,
             ],
-            layout=ipw.Layout(width="40%"),
+            layout=ipw.Layout(width="80%", border="2px solid black", padding="10px"),
         )
         sample_dir.observe(self._on_sampling_dir_change, "value")
-        update_button.on_click(self._update_plot)  # the on_* is already in on_click.
+        field_directions_ddown.observe(self._on_field_direction_change, "value")
 
         return plot_box
 
     # control of view
     def _on_sampling_dir_change(self, change):
         if change["new"] != change["old"]:
-            # I am referring to the childrens using the indexes, because these are just three;
-            # but we should put them as attributes of the superwidget, I think, and refer them accessing these attributes.
-            self.plot_box.children[1].disabled = False
-
-    # control of model and view
-    def _update_plot(self, _=None):
-        # is this control or view? Control, because it calls view?
-        self._model.directions = self.plot_box.children[0].value
-
-        self._model.prepare_data_for_plots()
-
-        self.produce_undi_plots()
-
-        self.plot_box.children[1].disabled = True
+            self._model.directions = change["new"]
+            self._update_plot()
 
     # control of model
     def _on_field_direction_change(self, change):
         if change["new"] != change["old"]:
             self._model.field_direction = change["new"]
             self._update_plot()
+
+    # control of model and view
+    def _update_plot(self, _=None):
+        # is this control or view? Control, because it calls view?
+        # self._model.prepare_data_for_plots()
+        self.produce_undi_plots()
