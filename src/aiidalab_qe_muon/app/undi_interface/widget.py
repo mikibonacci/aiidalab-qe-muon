@@ -95,7 +95,7 @@ class UndiPlotWidget(ipw.VBox):
                 icon="download",
                 button_style="primary",
                 disabled=False,
-                tooltip="Download polarization data with selected directions, for all value of the extrnal field.",
+                tooltip="Download polarization data with selected directions, for all the B<sub>ext</sub> magnitudes.",
                 layout=ipw.Layout(width="auto"),
             )
 
@@ -121,7 +121,7 @@ class UndiPlotWidget(ipw.VBox):
                 options=[
                     ("P(t)", "P"),
                     ("ΔP(t)", "deltaP"),
-                    ("100*ΔP(t)/P(t,hdim_max)", "deltaP_rel"),
+                    ("100*ΔP(t)/Pᵣ(t)", "deltaP_rel"),
                 ],
                 value="P",
             )
@@ -130,11 +130,25 @@ class UndiPlotWidget(ipw.VBox):
                     [
                         ipw.VBox(
                             [
-                                ipw.HTML("Function:"),
+                                ipw.HTML("Plotted function:"),
                                 self.plotting_quantity,
                             ],
+                            layout=ipw.Layout(width="34%"),
                         ),
-                        ipw.HTML("Description + `go to experts...`:"),
+                        ipw.VBox(
+                            [
+                                ipw.HTML(
+                                    """
+                                - Here you can check the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>)
+                                which is used to build the Hamiltonian containing the muon-nuclei interactions. For more details, please have a look here... <br>
+                                - We considered a reference P<sub>r</sub>(t) computed using max<sub>hdim</sub>=10<sup>9</sup> (the same value used in the the 'Polarization plot' tab.). <br>
+                                - If you think the results are not at convergence and/or need further improvement, you can contact the developers from the corresponding
+                                <a href="https://github.com/mikibonacci/aiidalab-qe-muon" target="_blank">github page</a>.
+                                """
+                                ),
+                            ],
+                            layout=ipw.Layout(width="66%"),
+                        ),
                     ],
                 ),
                 self.fig,
