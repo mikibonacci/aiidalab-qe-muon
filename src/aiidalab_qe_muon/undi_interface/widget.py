@@ -5,7 +5,7 @@ import pandas as pd
 import ipywidgets as ipw
 import plotly.graph_objects as go
 
-from aiidalab_qe_muon.app.undi_interface.model import PolarizationModel
+from aiidalab_qe_muon.undi_interface.model import PolarizationModel
 
 
 def create_html_table(matrix, first_row=[]):
@@ -95,7 +95,7 @@ class UndiPlotWidget(ipw.VBox):
                 icon="download",
                 button_style="primary",
                 disabled=False,
-                tooltip="Download polarization data with selected directions, for all the B<sub>ext</sub> magnitudes.",
+                tooltip="Download polarization data with selected directions, for all the applied magnetic field magnitudes.",
                 layout=ipw.Layout(width="auto"),
             )
 
@@ -117,41 +117,26 @@ class UndiPlotWidget(ipw.VBox):
             self.rendered = True
 
         else:
-            self.plotting_quantity = ipw.RadioButtons(
+            self.plotting_quantity = ipw.ToggleButtons(
                 options=[
                     ("P(t)", "P"),
-                    ("ΔP(t)", "deltaP"),
+                    ("ΔP(t) = P(t) - Pᵣ(t)", "deltaP"),
                     ("100*ΔP(t)/Pᵣ(t)", "deltaP_rel"),
                 ],
                 value="P",
             )
             self.children = [
-                ipw.HBox(
-                    [
-                        ipw.VBox(
-                            [
-                                ipw.HTML("Plotted function:"),
-                                self.plotting_quantity,
-                            ],
-                            layout=ipw.Layout(width="34%"),
-                        ),
-                        ipw.VBox(
-                            [
-                                ipw.HTML(
-                                    """
+                self.fig,
+                self.plotting_quantity,
+                ipw.HTML(
+                    """
                                 - Here you can check the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>)
                                 which is used to build the Hamiltonian containing the muon-nuclei interactions. For more details, please have a look here... <br>
                                 - We considered a reference P<sub>r</sub>(t) computed using max<sub>hdim</sub>=10<sup>9</sup> (the same value used in the the 'Polarization plot' tab.). <br>
                                 - If you think the results are not at convergence and/or need further improvement, you can contact the developers from the corresponding
                                 <a href="https://github.com/mikibonacci/aiidalab-qe-muon" target="_blank">github page</a>.
                                 """
-                                ),
-                            ],
-                            layout=ipw.Layout(width="66%"),
-                        ),
-                    ],
                 ),
-                self.fig,
             ]
 
             self.plotting_quantity.observe(self._on_plotting_quantity_change, "value")
@@ -171,7 +156,7 @@ class UndiPlotWidget(ipw.VBox):
         field_direction = self._model.field_direction
         selected_fields = self._model.selected_fields
 
-        for index in range(len(self._model.nodes)):
+        for index in range(len(self._model.results)):
             # shell_node = node #orm.load_node(2582)
             if self._model.fields[index] not in selected_fields:
                 continue
@@ -184,15 +169,12 @@ class UndiPlotWidget(ipw.VBox):
                 ylabel = "P(t)"
                 title = None
             elif self._model.mode == "analysis":
-                import json
-
                 to_be_plotted = self._model.plotting_quantity
                 Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
-                label = f"max<sub>hdim</sub> = {self._model.nodes[index].inputs.nodes.max_hdim.value}"
+                label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
 
-                highest_res = json.loads(
-                    self._model.nodes[-1].outputs.results_json.get_content()
-                )
+                highest_res = self._model.results[-1]
+
                 ydata = np.array(
                     self._model.data["y"][field_direction][index][f"signal_{direction}"]
                 )
