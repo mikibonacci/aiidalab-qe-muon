@@ -172,8 +172,8 @@ class ImplantMuonWorkChain(WorkChain):
 
     def setup(self):
         # key, class, outputs namespace.
-        self.ctx.muon_not_implanted = False
-        self.ctx.compute_polarization = True
+        self.ctx.muon_not_implanted = True
+        self.ctx.compute_polarization = False
         self.ctx.workchain_class = FindMuonWorkChain
 
     def need_implant(self):

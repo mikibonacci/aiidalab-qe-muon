@@ -32,6 +32,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")
+    
+    # TODO: implement these two in MVC
     specific_pseudofamily = tl.Unicode("")
     warning_banner = tl.List(
         trait=tl.Unicode(""),
@@ -54,18 +56,19 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     disable_z = tl.Bool(False)
     
     supercell = tl.List(
-        trait=tl.Int(),
         default_value=[1,1,1],
     )
 
     def get_model_state(self):
-        return {k: v for k, v in self.traits().items()}
+        return {
+            k: getattr(self, k) for k, v in self.traits().items() if
+            k != "input_structure"
+        }
     
     def set_model_state(self, parameters: dict):
         for key, value in parameters.items():
             if key in self.traits():
                 self.set_trait(key, value)
-    
     
     def _get_default(self, trait):
         return self.traits()[trait].default_value
