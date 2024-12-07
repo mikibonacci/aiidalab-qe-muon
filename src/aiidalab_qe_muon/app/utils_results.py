@@ -315,17 +315,18 @@ class SingleMuonStructureBarWidget(ipw.VBox):
         self.df = df
         self.selected = selected
 
-        self.muon_index_list = df.columns.tolist()
-        self.muon_index_list.sort()
-
-        if len(self.df) > 0:
+        if self.df:
             """
             Structure of the widget:
 
             dropdown
             structureviewer
             barplot+table
+            polarization done with UNDI and KT, if any. Here put the node, so I can load everything (still, the model is used inside the view, will change when LL)
             """
+            self.muon_index_list = df.columns.tolist()
+            self.muon_index_list.sort()
+        
             dropdown = ipw.Dropdown(
                 options=[None] + self.muon_index_list,
                 value=None,

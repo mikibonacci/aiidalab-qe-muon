@@ -5,15 +5,23 @@ from aiida_workgraph import task
 @task.pythonjob()
 def undi_run(
     structure: Atoms,
-    Bmod=0,  # this will not work, I need to import typing: t.Union[float,int] = 0,
-    max_hdim=1e3,  # this will not work, I need to import typing: t.Union[float,int] = 1e3,
+    Bmod = 0.0,
+    atom_as_muon = 'H',
+    max_hdim = 1000,
+    convergence_check = False,
+    algorithm  = 'fast',
+    sample_size_average  = 1000
 ) -> dict:
     from undi.undi_analysis import execute_undi_analysis
 
     results = execute_undi_analysis(
         structure,
         Bmod=Bmod,
+        atom_as_muon=atom_as_muon,
         max_hdim=max_hdim,
+        convergence_check=convergence_check,
+        algorithm=algorithm,
+        sample_size_average=sample_size_average
     )
 
     return {"results": results}

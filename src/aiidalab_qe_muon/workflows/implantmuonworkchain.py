@@ -223,13 +223,15 @@ class ImplantMuonWorkChain(WorkChain):
 
         # which code to use?
         workgraph = WorkGraph(name="polarization")
-        for structure in self.ctx.structure_group:
+        for i,structure in enumerate(self.ctx.structure_group):
             workgraph.add_task(
                 UndiAndKuboToyabe,
                 structure=structure,
                 Bmods=[0, 2e-3, 4e-3],  # for now, hardcoded.
                 max_hdims=[10**p for p in range(1, 4, 2)],  # for now, hardcoded.
-                convergence=True,  # maybe the convergence can be done for only one site...
+                convergence_check=i==0,  # maybe the convergence can be done for only one site...
+                algorithm='fast',
+                sample_size_average=10,
                 name=f"polarization_structure_{structure.pk}",
             )
 

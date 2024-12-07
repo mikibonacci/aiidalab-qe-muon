@@ -111,7 +111,7 @@ class PolarizationModel:
         """
 
         # workgraph case
-        if len(self.nodes) == 1 and self.nodes[0].label == "Full_Undi_and_KT_workflow":
+        if len(self.nodes) == 1 and "workgraph" in self.nodes[0].process_type:
             # this loops can be improved, for sure there is a smarter way to do this.
             main_node = self.nodes[0].called[0]
 
