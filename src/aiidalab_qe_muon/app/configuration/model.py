@@ -34,7 +34,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     mesh_grid = tl.Unicode("")
     specific_pseudofamily = tl.Unicode("")
     warning_banner = tl.List(
-        trait=tl.Unicode(),
+        trait=tl.Unicode(""),
         default_value=["", ""]
     )
     
@@ -73,10 +73,11 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     def _set_default(self, trait):
         self.set_trait(trait, self._get_default(trait))
         
-    def reset(self):
+    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner']):
         with self.hold_trait_notifications():
             for trait in self.traits():
-                self._set_default(trait)
+                if trait not in exclude:
+                    self._set_default(trait)
     
     
     def _validate_pseudo_family(self, change):
@@ -89,11 +90,12 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
                     pseudos = family.get_pseudos(structure=self.input_structure)
                     self.warning_banner[1] = ''
             except:
-                self.warning_banner[1] = f"Could not load pseudopotential family '{change['new']}'"
+                self.warning_banner[1] = f"Could not load pseudopotential family '{change['new']}'"        
     
     def suggest_supercell(self, _=None):
         if self.input_structure:
             with self.hold_trait_notifications():
+                self.supercell_hint_reset()
                 s = self.input_structure.get_ase()
                 s = make_supercell(
                     s,

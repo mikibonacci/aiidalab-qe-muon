@@ -147,7 +147,7 @@ class MuonConfigurationSettingPanel(
         ## Supercell size hint
         self.supercell_hint = ipw.Button(
             description="Supercell hint",
-            disabled=True,
+            disabled=False,
             tooltip="Estimate the supercell size based on a minimum requirement of 9 Angstrom for the lattice vectors.",
             button_style="info",
         )
@@ -155,7 +155,7 @@ class MuonConfigurationSettingPanel(
         
         self.supercell_reset_button = ipw.Button(
             description="Reset supercell",
-            disabled=True,
+            disabled=False,
             button_style="warning",
         )
         # supercell hint (9A lattice params)
