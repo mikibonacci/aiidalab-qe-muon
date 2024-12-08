@@ -64,11 +64,19 @@ class FindMuonWidget(ipw.VBox):
         self.barplot = go.FigureWidget()
         self._update_barplot()
         
+        table = ipw.HTML()
+        ipw.dlink(
+            (self._model, "html_table"), 
+            (table, "value"),
+        )
+        self._update_table()
+        
         self.children = [
             selected_muons,
             select_all_button,
             self.structure_viewer,
             self.barplot,
+            table,
         ]
         
         self.rendered = True
@@ -94,8 +102,14 @@ class FindMuonWidget(ipw.VBox):
         data_to_plot = self._model.get_data_plot() # to have more compact code below
         if not self.rendered:
             for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
+                
+                if entry == "ΔE<sub>total</sub> (eV)":
+                    trace_callback = go.Scatter
+                else:
+                    trace_callback = go.Bar
+                
                 self.barplot.add_trace(
-                    go.Scatter(
+                    trace_callback(
                         x=data_to_plot["x"],
                         y=data_y,
                         name=entry,
@@ -104,6 +118,7 @@ class FindMuonWidget(ipw.VBox):
                     )
                 )
             
+            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index("ΔE<sub>total</sub> (eV)")]
             self.barplot.update_layout(
             # title='Summary',
             barmode="group",
@@ -116,8 +131,8 @@ class FindMuonWidget(ipw.VBox):
             ),
             yaxis=dict(
                 title="ΔE<sub>total</sub> (eV)",
-                titlefont=dict(color=data_to_plot["color_code"]["delta_E"]),
-                tickfont=dict(color=data_to_plot["color_code"]["delta_E"]),
+                titlefont=dict(color=color_tot_E),
+                tickfont=dict(color=color_tot_E),
             ),
             legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
             # width=400, # Width of the plot
@@ -131,12 +146,15 @@ class FindMuonWidget(ipw.VBox):
             # bargap=0.000001, # Gap between bars
             # bargroupgap=0.4, # Gap between bar groups
             )
-            #if "B_T_norm" in data_to_plot["entry"]:
+            if "B_T_norm" in data_to_plot["entry"]:
+                color_B = data_to_plot["color_code"][data_to_plot["entry"].index("|B<sub>total</sub>| (T)")]
+            else:
+                color_B = "blue"
             self.barplot.update_layout(
-            yaxis=dict(
+            yaxis2=dict(
                 title="B (T)",
-                titlefont=dict(color="blue"),
-                tickfont=dict(color="blue"),
+                titlefont=dict(color=color_B),
+                tickfont=dict(color=color_B),
                 overlaying="y",
                 side="right",
                 ),
@@ -149,6 +167,5 @@ class FindMuonWidget(ipw.VBox):
                 self.barplot.data[i].x = data_to_plot["x"]
                 self.barplot.data[i].y = data_y
            
-        
     def _update_table(self, _=None):
-        pass
+        self._model._generate_html_table()

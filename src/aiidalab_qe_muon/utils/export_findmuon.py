@@ -28,7 +28,7 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
             bars["muons"][idx]["tot_energy"] = (
                 relaxwc.outputs.output_parameters.get_dict()["energy"]
             )
-            bars["muons"][idx]["structure"] = relaxwc.outputs.output_structure
+            bars["muons"][idx]["structure_pk"] = relaxwc.outputs.output_structure.pk
             bars["muons"][idx]["muon_index"] = idx
             bars["muons"][idx]["muon_position_cc"] = list(
                 np.round(

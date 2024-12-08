@@ -12,8 +12,8 @@ dictionary_of_names_for_html = {
 }
 
 color_code = {
-    "delta_E": "blue",
-    "B_T_norm": "red",
+    "delta_E": "black",
+    "B_T_norm": "blue",
     "Bdip_norm": "green",
     "hyperfine_norm": "purple",
 }

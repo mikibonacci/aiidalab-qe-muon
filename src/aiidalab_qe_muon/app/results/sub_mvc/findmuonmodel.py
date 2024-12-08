@@ -34,7 +34,7 @@ class FindMuonModel(Model):
         ],
         allow_none=True,
     )
-    
+    html_table = tl.Unicode("")
     
     def fetch_data(self):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
@@ -50,9 +50,9 @@ class FindMuonModel(Model):
         And then in the view we select only the one we want to inspect.
         """
         if len(self.muon_index_list) == 1:
-            self.structure = self.findmuon_data["table"].loc[self.muon_index_list[0],"structure"]
+            self.structure = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"])
         elif len(self.selected_muons) == 1 and self.selected_view_mode == 0:
-            self.structure = self.findmuon_data["table"].loc[self.selected_muons[0],"structure"]
+            self.structure = orm.load_node(self.findmuon_data["table"].loc[self.selected_muons[0],"structure_pk"])
         elif len(self.selected_muons) > 1:
             self.structure = self.findmuon_data["unit_cell"]
     
@@ -93,3 +93,11 @@ class FindMuonModel(Model):
         ]
                 
         return self.data_plot
+    
+    def _generate_html_table(self,) -> str:
+        """Generate an html table from the selected data.
+        
+        This method is called by the controller to get the html table.
+        """
+        self.html_table = self.findmuon_data["table"].loc[self.selected_muons].to_html()
+           
