@@ -270,4 +270,4 @@ class ImplantMuonWorkChain(WorkChain):
             if not polarization.is_finished_ok:
                 self.report(f"the child WorkGraph with <PK={polarization.pk}> failed")
                 return self.exit_codes.ERROR_POLARIZATION_FAILED
-            # self.out_many(polarization.outputs)
+            #self.out_many(polarization.outputs)

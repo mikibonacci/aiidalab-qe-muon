@@ -27,6 +27,6 @@ class MuonResultsModel(ResultsModel):
     
     def needs_undi_rendering(self):
         node = self.get_muon_node()
-        if not any(key in node for key in ["undi"]):
+        if not any(key in node for key in ["polarization"]):
             return False
         return True

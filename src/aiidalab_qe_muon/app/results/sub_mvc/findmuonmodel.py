@@ -4,7 +4,6 @@ from aiida.common.extendeddicts import AttributeDict
 import numpy as np
 import base64
 import json
-from IPython.display import display
 
 from aiidalab_qe_muon.utils.export_findmuon import export_findmuon_data
 from aiidalab_qe_muon.utils.data import dictionary_of_names_for_html, color_code

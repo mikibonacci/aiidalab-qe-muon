@@ -5,28 +5,7 @@ import pandas as pd
 import ipywidgets as ipw
 import plotly.graph_objects as go
 
-from aiidalab_qe_muon.undi_interface.model import PolarizationModel
-
-
-def create_html_table(matrix, first_row=[]):
-    """
-    Create an HTML table representation of a Nx3 matrix. N is the number of isotope mixtures.
-
-    :param matrix: List of lists representing an Nx3 matrix
-    :return: HTML table string
-    """
-    html = '<table border="1" style="border-collapse: collapse;">'
-    for cell in first_row[1:]:
-        html += f'<td style="padding: 5px; text-align: center;">{cell}</td>'
-    html += "</tr>"
-    for row in matrix:
-        html += "<tr>"
-        for cell in row[1:]:
-            html += f'<td style="padding: 5px; text-align: center;">{cell}</td>'
-        html += "</tr>"
-    html += "</table>"
-    return html
-
+from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel
 
 class UndiPlotWidget(ipw.VBox):
     """_summary_
@@ -40,28 +19,29 @@ class UndiPlotWidget(ipw.VBox):
         ipw (_type_): _description_
     """
 
-    def __init__(self, model=PolarizationModel(), **kwargs):
-        # from aiidalab_qe.common.widgets import LoadingWidget # when lazy-loading is there.
-
+    def __init__(self, model: PolarizationModel, node: None, **kwargs):
         super().__init__(
-            # children=[LoadingWidget("Loading Polarization panel")], # when lazy-loading is there.
+            children=[LoadingWidget("Loading widgets")],
             **kwargs,
         )
-        self.rendered = False
         self._model = model
 
+        self.rendered = False
+        self._model.muon = node
+        
     def render(self):
         if self.rendered:
             return
 
-        self._model.prepare_data_for_plots()
+        self._initial_view()
+
         self.fig = go.FigureWidget()
-        self.produce_undi_plots()
+        self.init_undi_plots()
 
         if self._model.mode == "plot":
-            self.plot_box = self.tuning_plot_box()
+            self.plot_box = self.inject_tune_plot_box()
 
-            table = create_html_table(
+            table = self._model.create_html_table(
                 self._model.create_cluster_matrix(),
                 first_row=["cluster index", "isotopes", "spins", "probability"],
             )
@@ -98,6 +78,7 @@ class UndiPlotWidget(ipw.VBox):
                 tooltip="Download polarization data with selected directions, for all the applied magnetic field magnitudes.",
                 layout=ipw.Layout(width="auto"),
             )
+            download_data_button.on_click(self._download_pol)
 
             self.children = [
                 self.fig,
@@ -112,9 +93,7 @@ class UndiPlotWidget(ipw.VBox):
                 self.info_on_the_approximations,
             ]
 
-            download_data_button.on_click(self._download_pol)
-
-            self.rendered = True
+            
 
         else:
             self.plotting_quantity = ipw.ToggleButtons(
@@ -125,6 +104,13 @@ class UndiPlotWidget(ipw.VBox):
                 ],
                 value="P",
             )
+            ipw.dlink(
+                (self.plotting_quantity, "value"),
+                (self._model, "plotting_quantity"),
+            )
+            self.plotting_quantity.observe(self._on_plotting_quantity_change, "value")
+
+
             self.children = [
                 self.fig,
                 self.plotting_quantity,
@@ -139,12 +125,14 @@ class UndiPlotWidget(ipw.VBox):
                 ),
             ]
 
-            self.plotting_quantity.observe(self._on_plotting_quantity_change, "value")
+        self.rendered = True
 
-            self.rendered = True
+    def _initial_view(self):
+        self._model.fetch_data() 
+        self._model.get_data_plot()
 
     # view
-    def produce_undi_plots(
+    def _update_plot(
         self,
     ):
         """
@@ -235,7 +223,7 @@ class UndiPlotWidget(ipw.VBox):
                 )
 
     # view
-    def tuning_plot_box(
+    def inject_tune_plot_box(
         self,
     ):
         sample_description = ipw.HTML(
@@ -249,11 +237,16 @@ class UndiPlotWidget(ipw.VBox):
 
         sample_dir = ipw.RadioButtons(
             options=["x", "y", "z", "powder"],
-            value=self._model.directions,
+            value=self._model.directions.default_value,
             layout=ipw.Layout(
                 width="80%",
             ),
         )
+        ipw.dlink(
+            (sample_dir, "value"),
+            (self._model, "directions"),
+        )
+        sample_dir.observe(self._on_sampling_dir_change, "value")
 
         add_KT = ipw.Checkbox(
             value=False,
@@ -264,6 +257,11 @@ class UndiPlotWidget(ipw.VBox):
                 width="80%",
             ),
         )
+        ipw.dlink(
+            (add_KT, "value"),
+            (self._model, "want_KT"),
+        )
+        add_KT.observe(self._on_add_KT_change, "value")
 
         field_direction_desc = ipw.HTML(
             """
@@ -279,6 +277,12 @@ class UndiPlotWidget(ipw.VBox):
                 width="90%",
             ),
         )
+        ipw.dlink(
+            (field_directions_ddown, "value"),
+            (self._model, "field_direction"),
+        )
+        field_directions_ddown.observe(self._on_field_direction_change, "value")
+
 
         field_magnitude_desc = ipw.HTML(
             """
@@ -292,6 +296,11 @@ class UndiPlotWidget(ipw.VBox):
             disabled=False,
             layout=ipw.Layout(width="200px", height="100px"),
         )
+        ipw.dlink(
+            (field_magnitudes, "value"),
+            (self._model, "selected_fields"),
+        )
+        field_magnitudes.observe(self._on_field_magnitudes_change, "value")
 
         plot_box = ipw.HBox(
             [
@@ -323,54 +332,31 @@ class UndiPlotWidget(ipw.VBox):
             layout=ipw.Layout(width="100%", border="2px solid black", padding="10px"),
         )
 
-        sample_dir.observe(self._on_sampling_dir_change, "value")
-        field_directions_ddown.observe(self._on_field_direction_change, "value")
-        field_magnitudes.observe(self._on_field_magnitudes_change, "value")
-
         return plot_box
 
     # control of view
     def _on_sampling_dir_change(self, change):
-        if change["new"] != change["old"]:
-            self._model.directions = change["new"]
-            self._update_plot()
+        self._update_plot()
 
     # control of view
     def _on_field_direction_change(self, change):
-        if change["new"] != change["old"]:
-            self._model.field_direction = change["new"]
-            self._update_plot()
+        self._update_plot()
 
     # control of view
     def _on_field_magnitudes_change(self, change):
-        if change["new"] != change["old"]:
-            self._model.selected_fields = change["new"]
-            self._update_plot()
+        self._update_plot()
 
     # for the convergence analysis:
     def _on_plotting_quantity_change(self, change):
-        if change["new"] != change["old"]:
-            self._model.plotting_quantity = change["new"]
-            self._update_plot()
-
-    # control of model and view
-    def _update_plot(self, _=None):
-        # is this control or view? Control, because it calls view?
-        # self._model.prepare_data_for_plots()
-        self.produce_undi_plots()
+        self._update_plot()
+    
+    def _on_add_KT_change(self, change):
+       raise NotImplementedError("The Kubo-Toyabe is not implemented yet.")
+       self._update_plot()
 
     def _download_pol(self, _=None):
-        csv_dict = {"t (μs)": self._model.data["x"]}
-
-        for i, Bvalue in enumerate(self._model.fields):
-            csv_dict[f"B={Bvalue}_mT"] = self._model.data["y"][
-                self._model.field_direction
-            ][i][f"signal_{self._model.directions}"]
-
-        df = pd.DataFrame.from_dict(csv_dict)
-        data = base64.b64encode(df.to_csv(index=True).encode()).decode()
-        fname = f"muon_1_dir_{self._model.directions}_{self._model.field_direction}.csv"
-        self._download(payload=data, filename=fname)
+        data, filename = self._model.prepare_data_for_download()
+        self._download(payload=data, filename=filename)
 
     @staticmethod
     def _download(payload, filename):
