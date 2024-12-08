@@ -49,7 +49,7 @@ spinner_html = """
 </div>
 """
 
-change_names_for_html = {
+dictionary_of_names_for_html = {
     # "tot_energy":"total energy (eV)",
     "muon_position_cc": "muon position (crystal coordinates)",
     "delta_E": "ΔE<sub>total</sub> (eV)",

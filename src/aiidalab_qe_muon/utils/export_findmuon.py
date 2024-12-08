@@ -67,12 +67,14 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
     # <HERE>: filter only unique sites.
     # </HERE>
     df = pd.DataFrame.from_dict(bars["muons"])
-
+    df.columns = df.columns.astype(int)
     # sort
     df = df.sort_values("tot_energy", axis=1)
-
     # deltaE
     df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min()
+    
+    # then swap row and columns (for sure can be done already above)
+    df = df.transpose()
     return df
 
 
