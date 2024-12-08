@@ -100,4 +100,15 @@ class FindMuonModel(Model):
         This method is called by the controller to get the html table.
         """
         self.html_table = self.findmuon_data["table"].loc[self.selected_muons].to_html()
+        
+    def _prepare_data_for_download(self) -> str:
+        """Prepare the data for download.
+        
+        This method is called by the controller to get the data for download.
+        """
+        # prepare the data for download as csv file
+        data = base64.b64encode(self.findmuon_data['table'].to_csv(index=True).encode()).decode()
+        formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"]).get_formula()
+        filename = f"Summary_{formula}_muon_{'_'.join([str(muon_index) for muon_index in self.selected_muons])}.csv"
+        return data, filename
            

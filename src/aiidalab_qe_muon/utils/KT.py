@@ -3,7 +3,7 @@ import pandas as pd
 from ase import neighborlist
 from importlib_resources import files
 
-from aiidalab_qe_muon.workflows.utils import data as isotopedata
+from aiidalab_qe_muon import utils as isotopedata
 
 file = files(isotopedata) / "isotopedata.txt"
 

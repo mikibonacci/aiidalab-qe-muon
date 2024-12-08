@@ -61,9 +61,6 @@ class FindMuonWidget(ipw.VBox):
             ),
         )
         
-        self.barplot = go.FigureWidget()
-        self._update_barplot()
-        
         table = ipw.HTML()
         ipw.dlink(
             (self._model, "html_table"), 
@@ -71,12 +68,24 @@ class FindMuonWidget(ipw.VBox):
         )
         self._update_table()
         
+        download_button = ipw.Button(
+            description="Download Table", 
+            tooltip="Download the data for the selected muons in CSV format",
+            icon="download", 
+            button_style="primary"
+        )
+        download_button.on_click(self.download_data)
+        
+        self.barplot = go.FigureWidget()
+        self._update_barplot()
+        
         self.children = [
             selected_muons,
             select_all_button,
             self.structure_viewer,
-            self.barplot,
             table,
+            download_button,
+            self.barplot,
         ]
         
         self.rendered = True
@@ -169,3 +178,25 @@ class FindMuonWidget(ipw.VBox):
            
     def _update_table(self, _=None):
         self._model._generate_html_table()
+        
+    def download_data(self, _=None):
+        """Function to download the data."""
+        b64_str, file_name = self._model._prepare_data_for_download()
+        self._download(payload=b64_str, filename=file_name)
+
+    @staticmethod
+    def _download(payload, filename):
+        """Download payload as a file named as filename."""
+        from IPython.display import Javascript
+
+        javas = Javascript(
+            f"""
+            var link = document.createElement('a');
+            link.href = 'data:text/json;charset=utf-8;base64,{payload}'
+            link.download = "{filename}"
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            """
+        )
+        display(javas)

@@ -32,7 +32,7 @@ def compute_KT(
     structure: Atoms,
 ):
     import numpy as np
-    from aiidalab_qe_muon.workflows.utils.KT import compute_second_moments, kubo_toyabe
+    from aiidalab_qe_muon.utils.KT import compute_second_moments, kubo_toyabe
 
     t = np.linspace(0, 20e-6, 1000)  # time is microseconds
     sm = compute_second_moments(structure)

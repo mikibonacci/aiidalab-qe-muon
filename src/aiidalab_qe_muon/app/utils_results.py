@@ -16,7 +16,7 @@ from pymatgen.core import Structure
 #### for KT
 
 
-from aiidalab_qe_muon.workflows.utils.KT import (
+from aiidalab_qe_muon.utils.KT import (
     compute_second_moments,
     kubo_toyabe,
 )
