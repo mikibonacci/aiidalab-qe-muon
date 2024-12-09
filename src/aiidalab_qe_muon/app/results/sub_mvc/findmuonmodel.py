@@ -110,4 +110,21 @@ class FindMuonModel(Model):
         formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"]).get_formula()
         filename = f"Summary_{formula}_muon_{'_'.join([str(muon_index) for muon_index in self.selected_muons])}.csv"
         return data, filename
+    
+    @staticmethod
+    def _download(payload, filename):
+        """Download payload as a file named as filename."""
+        from IPython.display import Javascript
+
+        javas = Javascript(
+            f"""
+            var link = document.createElement('a');
+            link.href = 'data:text/json;charset=utf-8;base64,{payload}'
+            link.download = "{filename}"
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            """
+        )
+        display(javas)
            

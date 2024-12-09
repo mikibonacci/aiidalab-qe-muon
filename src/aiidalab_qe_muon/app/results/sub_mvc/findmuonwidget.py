@@ -182,21 +182,4 @@ class FindMuonWidget(ipw.VBox):
     def download_data(self, _=None):
         """Function to download the data."""
         b64_str, file_name = self._model._prepare_data_for_download()
-        self._download(payload=b64_str, filename=file_name)
-
-    @staticmethod
-    def _download(payload, filename):
-        """Download payload as a file named as filename."""
-        from IPython.display import Javascript
-
-        javas = Javascript(
-            f"""
-            var link = document.createElement('a');
-            link.href = 'data:text/json;charset=utf-8;base64,{payload}'
-            link.download = "{filename}"
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            """
-        )
-        display(javas)
+        self._model._download(payload=b64_str, filename=file_name)
