@@ -7,7 +7,7 @@ from aiida_workgraph import task, WorkGraph
 from aiidalab_qe_muon.undi_interface.calculations.pythonjobs import undi_run, compute_KT
 
 
-@task.graph_builder()
+@task.graph_builder(outputs=[{"name": "results", "from": "context.results"}])
 def multiple_undi_analysis(
     structure: Atoms,
     Bmods: t.List[t.Union[float, int]] = [0.0],
@@ -28,7 +28,7 @@ def multiple_undi_analysis(
 
     for Bmod in Bmods:
         for max_hdim in max_hdims:
-            wg.add_task(
+            tmp = wg.add_task(
                 undi_run,
                 structure=structure,
                 Bmod=Bmod,
@@ -38,8 +38,9 @@ def multiple_undi_analysis(
                 algorithm=algorithm,
                 sample_size_average=sample_size_average,
                 metadata=metadata,
-                # name=f"undi_single_run"
+                name=f"bmod_{Bmod}.max_hdim_{max_hdim}"
             )
+            tmp.set_context({"results.bmod_{Bmod}_max_hdim_{max_hdim}": "tmp.outputs.results"})
 
     return wg
 

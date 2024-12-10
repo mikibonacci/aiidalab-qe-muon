@@ -39,6 +39,9 @@ class PolarizationModel(Model):
         ],
         allow_none=True,
     )
+    
+    
+    
     sample_orientation = tl.Enum(["z","y","x", "powder"], default_value="z")
     mode = tl.Enum(["plot","analysis"], default_value="plot")  # "analysis" for the convergence analysis
     max_hdims = tl.List(
@@ -51,7 +54,7 @@ class PolarizationModel(Model):
         value=[0.0],
     )
     field_direction = tl.Enum(["lf", "tf"], default_value="lf")
-    want_KT = tl.Bool(False)
+    plot_KT = tl.Bool(False)
     
     def __init__(self, undi_nodes=[], KT_node=None, mode="plot"):
         self.mode = mode
@@ -76,30 +79,6 @@ class PolarizationModel(Model):
         }
 
         self.data["x"] = np.array(self.results[0][0]["t"]) * 1e6
-
-    def compute_isotopic_averages(self, field_direction="lf"):
-        weights = [self.isotopes[int(i)][-1] for i in self.selected_isotopes if i != ""]
-        averages_full = []
-        for index in range(len(self.results)):
-            averages = {}
-            for direction in ["z", "x", "y", "powder"]:
-                if self.mode == "analysis" and direction in ["x", "y", "powder"]:
-                    continue
-
-                values = [
-                    self.results[index][int(i)][f"signal_{direction}_{field_direction}"]
-                    for i in self.selected_isotopes
-                    if i != ""
-                ]
-
-                # Compute the weighted average
-                averages[f"signal_{direction}"] = np.average(
-                    values, weights=weights, axis=0
-                )
-
-            averages_full.append(averages)
-
-        return averages_full
 
     def create_cluster_matrix(
         self,
@@ -218,3 +197,29 @@ class PolarizationModel(Model):
         data = base64.b64encode(df.to_csv(index=True).encode()).decode()
         filename = f"muon_1_dir_{self.directions}_{self.field_direction}.csv"
         return data, filename
+    
+    @staticmethod
+    def compute_isotopic_averages(results, isotopes, field_direction="lf", mode="plot"):
+        selected_isotopes = list(range(len(isotopes)))
+        weights = [isotopes[int(i)][-1] for i in selected_isotopes if i != ""]
+        averages_full = []
+        for index in range(len(results)):
+            averages = {}
+            for direction in ["z", "x", "y", "powder"]:
+                if mode == "analysis" and direction in ["x", "y", "powder"]:
+                    continue
+
+                values = [
+                    results[index][int(i)][f"signal_{direction}_{field_direction}"]
+                    for i in selected_isotopes
+                    if i != ""
+                ]
+
+                # Compute the weighted average
+                averages[f"signal_{direction}"] = np.average(
+                    values, weights=weights, axis=0
+                )
+
+            averages_full.append(averages)
+
+        return averages_full

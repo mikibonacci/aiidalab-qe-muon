@@ -259,7 +259,7 @@ class UndiPlotWidget(ipw.VBox):
         )
         ipw.dlink(
             (add_KT, "value"),
-            (self._model, "want_KT"),
+            (self._model, "plot_KTT"),
         )
         add_KT.observe(self._on_add_KT_change, "value")
 

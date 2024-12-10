@@ -21,7 +21,7 @@ property = {
         "panel": MuonConfigurationSettingPanel,
         "model": MuonConfigurationSettingsModel,
     },
-    "code": {
+    "resources": {
         "panel": MuonResourcesSettingsPanel,
         "model": MuonResourceSettingsModel,
     },

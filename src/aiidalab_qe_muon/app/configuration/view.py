@@ -45,18 +45,64 @@ class MuonConfigurationSettingPanel(
     def render(self):
         if self.rendered:
             return
-        
-        self.warning_banner = ipw.HTML('')
-        self.warning_banner.layout.display = "none"
-        
+           
         self.settings_help = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 0px; padding-bottom: 5px">
             Please select desired inputs to compute muon stopping sites and related properties. The muon is considered infinite-dilute
             in the crystal, so we should select a supercell in which the muon will stay and do not interact with its replica.
-            If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing step will be submitted
-            to estimate it.
+            If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing set of simulation will be submitted
+            to estimate it.<br>
+            You can select the three main steps of the workflow: <b>Compute supercell</b>, <b>Search for muon sites</b>, and <b>Compute polarization</b>.
+            Computing only the polarization requires the muon (H atom) already placed in the structure as last site.
             </div>"""
         )
+        
+        self.warning_banner = ipw.HTML('Please select at list on among the three main steps of the workflow.')
+        self.warning_banner.layout.display = "none"
+        
+        # Supercell size view and control
+        self.compute_supercell = ipw.Checkbox(
+            description="Compute supercell size: ",
+            indent=False,
+            value=self._model.compute_supercell,
+            tooltip="Compute the supercell size by running an additional set of simulations.",
+            layout=ipw.Layout(width="150px"),
+        )
+        ipw.link(
+            (self.compute_supercell, "value"),
+            (self._model, "compute_supercell"),
+        )
+        
+        self.compute_findmuon = ipw.Checkbox(
+            description="Search for muon sites: ",
+            indent=False,
+            value=self._model.compute_findmuon,
+            tooltip="Run the workflow to find candidate muon resting sites.",
+            layout=ipw.Layout(width="150px"),
+        )
+        ipw.link(
+            (self.compute_findmuon, "value"),
+            (self._model, "compute_findmuon"),
+        )
+        ipw.dlink(
+            (self.compute_findmuon, "value"),
+            (self.compute_supercell, "disabled"),
+            lambda x: not x, # disable if compute_findmuon is not selected
+        )
+        self.compute_findmuon.observe(self._on_compute_findmuon_change, "value")
+        
+        self.compute_polarization_undi = ipw.Checkbox(
+            description="Compute polarization: ",
+            indent=False,
+            value=self._model.compute_polarization_undi,
+            tooltip="Compute the compute polarization for muon resting site(s).",
+            layout=ipw.Layout(width="150px"),
+        )
+        ipw.link(
+            (self.compute_polarization_undi, "value"),
+            (self._model, "compute_polarization_undi"),
+        )
+        
         
         # Charge state view and control (the control is the link, and observe() if any)
         self.charge_help = ipw.HTML(
@@ -80,28 +126,12 @@ class MuonConfigurationSettingPanel(
             (self._model, "charge_state"),
         )
         
-        # Supercell size view and control
-        self.compute_supercell = ipw.Checkbox(
-            description="Compute supercell: ",
-            indent=False,
-            value=True,
-            tooltip="Compute the supercell size by running an additional set of simulations.",
-            layout=ipw.Layout(width="150px"),
+        supercell_hint_estimator = ipw.HTML(
+            """Click the button to estimate the supercell size or defined it. 
+            If `compute_supercell` is not selected, this is be the supercell 
+            size used in the search of muon resting sites."""
         )
-        ipw.link(
-            (self.compute_supercell, "value"),
-            (self._model, "compute_supercell"),
-        )
-        
         self.supercell_x = ipw.BoundedIntText(
-            min=1,
-            layout={"width": "40px"},
-        )
-        self.supercell_y = ipw.BoundedIntText(
-            min=1,
-            layout={"width": "40px"},
-        )
-        self.supercell_z = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
         )
@@ -113,6 +143,15 @@ class MuonConfigurationSettingPanel(
             (self._model, "disable_x"),
             (self.supercell_x, "disabled"),
         )
+        ipw.dlink(
+            (self.compute_supercell, "value"),
+            (self.supercell_x, "disabled"),
+            lambda x: not (not x and self._model.compute_findmuon), # disable if compute_supercell is selected or we don't want to compute findmuon
+        )
+        self.supercell_y = ipw.BoundedIntText(
+            min=1,
+            layout={"width": "40px"},
+        )       
         ipw.link(
             (self._model, "supercell_y"),
             (self.supercell_y, "value"),
@@ -120,6 +159,15 @@ class MuonConfigurationSettingPanel(
         ipw.link(
             (self._model, "disable_y"),
             (self.supercell_y, "disabled"),
+        )
+        ipw.dlink(
+            (self.compute_supercell, "value"),
+            (self.supercell_y, "disabled"),
+            lambda x: not (not x and self._model.compute_findmuon),
+        )
+        self.supercell_z = ipw.BoundedIntText(
+            min=1,
+            layout={"width": "40px"},
         )
         ipw.link(
             (self._model, "supercell_z"),
@@ -129,13 +177,15 @@ class MuonConfigurationSettingPanel(
             (self._model, "disable_z"),
             (self.supercell_z, "disabled"),
         )
+        ipw.dlink(
+            (self.compute_supercell, "value"),
+            (self.supercell_z, "disabled"),
+            lambda x: not (not x and self._model.compute_findmuon),
+        )
 
         self.supercell_selector = ipw.HBox(
             children=[
-                ipw.HTML(
-                    description="Supercell size:",
-                    style={"description_width": "initial"},
-                )
+                supercell_hint_estimator
             ]
             + [
                 self.supercell_x,
@@ -196,7 +246,6 @@ class MuonConfigurationSettingPanel(
             (self._model, "mesh_grid"),
             (self.mesh_grid, "value"),
         )
-        
         
         self.hubbard = ipw.Checkbox(
             description="Disable Hubbard correction (if any): ",
@@ -260,12 +309,16 @@ class MuonConfigurationSettingPanel(
             (self.number_of_supercells, "value"),
         )
             
-        self.children = [
-            # self.warning_banner, # TODO: use the one from the app.
+        general_settings = [
             self.settings_help,
+            self.warning_banner, # TODO: use the one from the app.
+            self.compute_supercell,
+            self.compute_findmuon,
+            self.compute_polarization_undi,
+        ]
+        self.findmuon_settings = [
             self.charge_help,
             self.charge_options,
-            self.compute_supercell,
             self.supercell_selector,
             self.supercell_hint,
             self.supercell_reset_button,
@@ -282,12 +335,23 @@ class MuonConfigurationSettingPanel(
             self.number_of_supercells,
             # self.moments, # TODO: add moments widget
         ]
+        # we display the findmuon settings only if the compute_findmuon is selected
+        # we link the display of each
+
+        self.polarization_settings = [] # TODO: add polarization settings
         
+        self.children = general_settings + self.findmuon_settings + self.polarization_settings
         self.rendered = True
     
     def _on_input_structure_change(self, _):
         self.refresh(specific="structure")
         self._model.on_input_structure_change()
+    
+    def _on_compute_findmuon_change(self, _):
+        with self.hold_trait_notifications():
+            for widget in self.findmuon_settings:
+                widget.layout.display = "none" if not self._model.compute_findmuon else "flex"
+            
     
     def _suggest_supercell(self, _=None):
         """

@@ -1,6 +1,6 @@
 from aiidalab_qe.common.panel import ResultsModel
 import traitlets as tl
-
+from aiida import orm
 
 class MuonResultsModel(ResultsModel):
     
@@ -27,6 +27,7 @@ class MuonResultsModel(ResultsModel):
     
     def needs_undi_rendering(self):
         node = self.get_muon_node()
+        # Querybuilder to find node with a given label, outgoing from this node
         if not any(key in node for key in ["polarization"]):
             return False
         return True

@@ -56,7 +56,11 @@ def get_builder(codes, structure, parameters):
     supercell_z = parameters["muonic"].pop("supercell_z", 1)
     sc_matrix = [[supercell_x, 0, 0], [0, supercell_y, 0], [0, 0, supercell_z]]
 
+    # The three step of the workflow.
     compute_supercell = parameters["muonic"].pop("compute_supercell", False)
+    compute_findmuon = parameters["muonic"].pop("compute_findmuon", False)
+    compute_polarization_undi = parameters["muonic"].pop("compute_polarization_undi", False)
+    
     mu_spacing = parameters["muonic"].pop("mu_spacing", 1.0)
     kpoints_distance = parameters["muonic"].pop("kpoints_distance", 0.301)
     charge_supercell = parameters["muonic"].pop("charge_state", True)
@@ -105,6 +109,8 @@ def get_builder(codes, structure, parameters):
         #pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
+        compute_findmuon=compute_findmuon,
+        compute_polarization_undi=compute_polarization_undi,
         overrides=overrides,
         trigger=trigger,
         relax_unitcell=False,  # but not true in the construction; in the end you relax in the first step of the QeAppWorkchain.

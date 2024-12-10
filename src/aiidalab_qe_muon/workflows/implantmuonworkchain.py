@@ -2,7 +2,7 @@
 
 from aiida.common import AttributeDict
 from aiida.engine import WorkChain
-from aiida.orm import StructureData
+from aiida import orm
 from aiida.plugins import WorkflowFactory
 from aiida.engine import if_
 
@@ -39,7 +39,7 @@ class ImplantMuonWorkChain(WorkChain):
         super().define(spec)
 
         spec.input(
-            "structure", valid_type=StructureData
+            "structure", valid_type=orm.StructureData
         )  # Maybe not needed as input... just in the protocols. but in this way it is not easy to automate it in the app, after the relaxation. So let's keep it for now.
 
         spec.expose_inputs(
@@ -58,6 +58,20 @@ class ImplantMuonWorkChain(WorkChain):
                 ),
             },
             # exclude=('symmetry')
+        )
+        spec.input(
+            "implant_muon",
+            valid_type=bool,
+            default=True,
+            non_db=True,
+            help="Whether to implant the muon or not.",
+        )
+        spec.input(
+            "compute_polarization",
+            valid_type=bool,
+            default=True,
+            non_db=True,
+            help="Whether to compute the polarization or not.",
         )
 
         # I think the following is not needed, as we may want to just provide the structure and the fields, max_hdims
@@ -84,9 +98,12 @@ class ImplantMuonWorkChain(WorkChain):
             namespace="findmuon",
             namespace_options={
                 "required": False,
-                "help": "Outputs of the `PhononWorkChain`.",
+                "help": "Outputs of the `FindMuonWorkChain`.",
             },
         )
+        
+        # expose a dictionary for polarization with dynamic output
+        spec.output("polarization", valid_type=orm.Dict, required=False, dynamic=True, help="The polarization results.")
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
         spec.exit_code(
@@ -105,6 +122,8 @@ class ImplantMuonWorkChain(WorkChain):
         pseudo_family: str = "SSSP/1.2/PBE/efficiency",
         pp_code=None,
         protocol=None,
+        compute_findmuon: bool = True,
+        compute_polarization_undi: bool = True,
         overrides: dict = {},
         trigger=None,
         relax_musconv: bool = False,  # in the end you relax in the first step of the QeAppWorkchain.
@@ -167,13 +186,16 @@ class ImplantMuonWorkChain(WorkChain):
             builder.findmuon.pp_metadata = pp_metadata
 
         builder.structure = structure
+        
+        builder.implant_muon = compute_findmuon
+        builder.compute_polarization = compute_polarization_undi
 
         return builder
 
     def setup(self):
         # key, class, outputs namespace.
-        self.ctx.muon_not_implanted = True
-        self.ctx.compute_polarization = False
+        self.ctx.implant_muon = self.inputs.implant_muon
+        self.ctx.compute_polarization = self.inputs.compute_polarization
         self.ctx.workchain_class = FindMuonWorkChain
 
     def need_implant(self):
@@ -183,7 +205,7 @@ class ImplantMuonWorkChain(WorkChain):
         # a smart check is to see if the structure contain as last element the muon, and if it contains
         # the extra: muon_implanted == True, fixed in the settings (so we can trigger only the undi run).
         # in the settings we need also a check that H is the only H....
-        return self.ctx.muon_not_implanted
+        return self.ctx.implant_muon
 
     def prepare_implant(self):
         return
@@ -206,8 +228,8 @@ class ImplantMuonWorkChain(WorkChain):
         return self.ctx.compute_polarization
 
     def prepare_polarization(self):
-        if self.ctx.muon_not_implanted:
-            pass
+        if self.ctx.implant_muon:
+            self.ctx.structure_group = self.get_structures_group_from_findmuon(self.ctx.findmuon)
         else:  # we want only polarization, so use the input structure.
             self.ctx.structure_group = [self.inputs.structure]
 
@@ -228,7 +250,7 @@ class ImplantMuonWorkChain(WorkChain):
                 UndiAndKuboToyabe,
                 structure=structure,
                 Bmods=[0, 2e-3, 4e-3],  # for now, hardcoded.
-                max_hdims=[10**p for p in range(1, 4, 2)],  # for now, hardcoded.
+                max_hdims=[10**2, 20**2],  # for now, hardcoded.
                 convergence_check=i==0,  # maybe the convergence can be done for only one site...
                 algorithm='fast',
                 sample_size_average=10,
@@ -255,7 +277,7 @@ class ImplantMuonWorkChain(WorkChain):
                 self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
                 return self.exit_codes.ERROR_WORKCHAIN_FAILED
 
-            if self.ctx.muon_not_implanted:
+            if self.ctx.implant_muon:
                 self.out_many(
                     self.exposed_outputs(
                         self.ctx["findmuon"],
@@ -271,3 +293,14 @@ class ImplantMuonWorkChain(WorkChain):
                 self.report(f"the child WorkGraph with <PK={polarization.pk}> failed")
                 return self.exit_codes.ERROR_POLARIZATION_FAILED
             #self.out_many(polarization.outputs)
+
+    @staticmethod
+    def get_structures_group_from_findmuon(findmuon: FindMuonWorkChain):
+        """Return the structures group from the FindMuonWorkChain."""
+        structure_group = []
+        for idx, uuid in findmuon.outputs.all_index_uuid.get_dict().items():
+            if idx in findmuon.outputs.unique_sites.get_dict().keys():
+                relaxwc = orm.load_node(uuid)
+                structure_group.append(relaxwc.outputs.output_structure)
+                
+        return structure_group

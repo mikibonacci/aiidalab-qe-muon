@@ -20,6 +20,11 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         "input_structure",
     ]
     
+    # the following three define the three possible workflow steps.
+    compute_supercell = tl.Bool(False)
+    compute_findmuon = tl.Bool(True)
+    compute_polarization_undi = tl.Bool(True)
+    
     charge_options = [ # does not need to be a trait
             ("Muon (+1)", True),
             ("Muonium (neutral)", False)
@@ -27,7 +32,6 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     charge_state = tl.Bool(True)
     mu_spacing = tl.Float(1.0)
     
-    compute_supercell = tl.Bool(False)
     hubbard = tl.Bool(True)
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
@@ -44,9 +48,6 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     number_of_supercells = tl.Unicode("")
     
     # Traits for the supercell size hint (related to ImpuritySupercellConvWorkChain)
-    supercell_hint_estimator = tl.Unicode(
-        "Click the button to estimate the supercell size."
-    )
     supercell_x = tl.Int(1)
     supercell_y = tl.Int(1)
     supercell_z = tl.Int(1)
