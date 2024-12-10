@@ -117,7 +117,12 @@ def produce_collective_unit_cell(findmuon_output_node: orm.Node) -> orm.Structur
     # raise ValueError(l)
 
     # We convert from pymatgen Structure to orm.StructureData, so we can use directly StructureDataViewer.
-    return orm.StructureData(pymatgen=input_str)
+    structure = orm.StructureData(pymatgen=input_str)
+    
+    # Tags are used for the StructureDataViewer to highlight the muon sites.
+    structure.tags = input_str.tags
+    
+    return structure
 
 def export_findmuon_data(findmuon_output_node: orm.Node) -> dict:
     return {

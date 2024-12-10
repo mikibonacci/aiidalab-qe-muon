@@ -52,7 +52,7 @@ class FindMuonWidget(ipw.VBox):
         )
         select_all_button.on_click(self._select_all)
         
-        self.structure_viewer = ipw.VBox(
+        self.structure_view_container = ipw.VBox(
             children=[
                 StructureDataViewer(self._model.structure),
             ],
@@ -82,7 +82,7 @@ class FindMuonWidget(ipw.VBox):
         self.children = [
             selected_muons,
             select_all_button,
-            self.structure_viewer,
+            self.structure_view_container,
             table,
             download_button,
             self.barplot,
@@ -96,6 +96,7 @@ class FindMuonWidget(ipw.VBox):
     
     def _on_selected_muons_change(self, change):
         self._update_structure_view()
+        self._update_picked_atoms()
         self._update_barplot()
         self._update_table()
         
@@ -104,8 +105,14 @@ class FindMuonWidget(ipw.VBox):
     
     def _update_structure_view(self, _=None):
         self._model.select_structure() # switch between the structure to be displayed
-        self.structure_viewer.children = [StructureDataViewer(self._model.structure)]
-        
+        self.structure_view_container.children = [StructureDataViewer(self._model.structure)]
+    
+    def _update_picked_atoms(self, _=None):
+        if len(self._model.selected_muons) > 1 and len(self._model.selected_muons) < len(self._model.muon_index_list):
+            self.structure_view_container.children[0].displayed_selection = [self.structure.tags[i] for i in self._model.selected_muons]
+        else:
+            self.structure_view_container.children[0].displayed_selection = []
+            
     def _update_barplot(self, _=None):
         
         data_to_plot = self._model.get_data_plot() # to have more compact code below
