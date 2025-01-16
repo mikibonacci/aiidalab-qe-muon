@@ -40,7 +40,7 @@ def multiple_undi_analysis(
                 metadata=metadata,
                 name=f"bmod_{Bmod}.max_hdim_{max_hdim}"
             )
-            tmp.set_context({"results.bmod_{Bmod}_max_hdim_{max_hdim}": "tmp.outputs.results"})
+            tmp.set_context({f"results.bmod_{Bmod}_max_hdim_{max_hdim}": "tmp.outputs.results"})
 
     return wg
 

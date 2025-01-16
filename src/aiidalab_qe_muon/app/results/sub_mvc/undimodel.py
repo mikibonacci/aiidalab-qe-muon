@@ -40,9 +40,7 @@ class PolarizationModel(Model):
         allow_none=True,
     )
     
-    
-    
-    sample_orientation = tl.Enum(["z","y","x", "powder"], default_value="z")
+    directions = tl.Enum(["z","y","x", "powder"], default_value="z")
     mode = tl.Enum(["plot","analysis"], default_value="plot")  # "analysis" for the convergence analysis
     max_hdims = tl.List(
         trait=tl.Float(),
@@ -162,13 +160,14 @@ class PolarizationModel(Model):
             ]
             self.selected_isotopes = list(range(len(self.isotopes)))
 
-    def create_html_table(matrix, first_row=[]):
+    def create_html_table(self, first_row=[]):
         """
         Create an HTML table representation of a Nx3 matrix. N is the number of isotope mixtures.
 
         :param matrix: List of lists representing an Nx3 matrix
         :return: HTML table string
         """
+        matrix = self.create_cluster_matrix()
         html = '<table border="1" style="border-collapse: collapse;">'
         for cell in first_row[1:]:
             html += f'<td style="padding: 5px; text-align: center;">{cell}</td>'
@@ -198,19 +197,18 @@ class PolarizationModel(Model):
         filename = f"muon_1_dir_{self.directions}_{self.field_direction}.csv"
         return data, filename
     
-    @staticmethod
-    def compute_isotopic_averages(results, isotopes, field_direction="lf", mode="plot"):
-        selected_isotopes = list(range(len(isotopes)))
-        weights = [isotopes[int(i)][-1] for i in selected_isotopes if i != ""]
+    def compute_isotopic_averages(self, field_direction="lf"):
+        selected_isotopes = list(range(len(self.isotopes)))
+        weights = [self.isotopes[int(i)][-1] for i in selected_isotopes if i != ""]
         averages_full = []
-        for index in range(len(results)):
+        for index in range(len(self.results)):
             averages = {}
             for direction in ["z", "x", "y", "powder"]:
-                if mode == "analysis" and direction in ["x", "y", "powder"]:
+                if self.mode == "analysis" and direction in ["x", "y", "powder"]:
                     continue
 
                 values = [
-                    results[index][int(i)][f"signal_{direction}_{field_direction}"]
+                    self.results[index][int(i)][f"signal_{direction}_{field_direction}"]
                     for i in selected_isotopes
                     if i != ""
                 ]

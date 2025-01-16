@@ -5,6 +5,9 @@ import pandas as pd
 import ipywidgets as ipw
 import plotly.graph_objects as go
 
+from aiida import orm
+
+from aiidalab_qe.common.widgets import LoadingWidget
 from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel
 
 class UndiPlotWidget(ipw.VBox):
@@ -16,18 +19,18 @@ class UndiPlotWidget(ipw.VBox):
     So, the value of the widgets are linked to the attibute of the model
 
     Args:
-        ipw (_type_): _description_
+        model (PolarizationModel): The model that contains the data and the logic.
+                                   Needs to already have loaded the nodes inside it.
     """
 
-    def __init__(self, model: PolarizationModel, node: None, **kwargs):
+    def __init__(self, model: PolarizationModel, **kwargs):
+
         super().__init__(
             children=[LoadingWidget("Loading widgets")],
             **kwargs,
         )
         self._model = model
-
         self.rendered = False
-        self._model.muon = node
         
     def render(self):
         if self.rendered:
@@ -42,7 +45,6 @@ class UndiPlotWidget(ipw.VBox):
             self.plot_box = self.inject_tune_plot_box()
 
             table = self._model.create_html_table(
-                self._model.create_cluster_matrix(),
                 first_row=["cluster index", "isotopes", "spins", "probability"],
             )
             self.cluster_isotopes_table = ipw.HTML(table)
@@ -237,7 +239,7 @@ class UndiPlotWidget(ipw.VBox):
 
         sample_dir = ipw.RadioButtons(
             options=["x", "y", "z", "powder"],
-            value=self._model.directions.default_value,
+            value=self._model.directions,
             layout=ipw.Layout(
                 width="80%",
             ),
@@ -259,7 +261,7 @@ class UndiPlotWidget(ipw.VBox):
         )
         ipw.dlink(
             (add_KT, "value"),
-            (self._model, "plot_KTT"),
+            (self._model, "plot_KT"),
         )
         add_KT.observe(self._on_add_KT_change, "value")
 
@@ -357,6 +359,9 @@ class UndiPlotWidget(ipw.VBox):
     def _download_pol(self, _=None):
         data, filename = self._model.prepare_data_for_download()
         self._download(payload=data, filename=filename)
+        
+    def init_undi_plots(self):
+        self._update_plot()
 
     @staticmethod
     def _download(payload, filename):

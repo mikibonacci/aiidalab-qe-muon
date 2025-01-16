@@ -26,8 +26,8 @@ property = {
         "model": MuonResourceSettingsModel,
     },
     "result": {
-    "panel": MuonResultsPanel,
-    "model": MuonResultsModel,
+        "panel": MuonResultsPanel,
+        "model": MuonResultsModel,
     },
     "workchain": workchain_and_builder,
 }

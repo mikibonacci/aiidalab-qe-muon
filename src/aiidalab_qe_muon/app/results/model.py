@@ -10,6 +10,7 @@ class MuonResultsModel(ResultsModel):
         a new model should be created and injected in the corresponding view.
     """
     
+    title = "Muon results"
     identifier = "muonic"
 
     _this_process_label = "ImplantMuonWorkChain"

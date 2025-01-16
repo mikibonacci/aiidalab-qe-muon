@@ -21,7 +21,7 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
     can hosts also Neb and others.
     """
     
-    title = "Muonic"
+    title = "Muon results"
     identifier = "munonic"
     workchain_labels = ["muon"]
     

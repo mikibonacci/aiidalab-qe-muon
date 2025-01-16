@@ -103,7 +103,7 @@ class ImplantMuonWorkChain(WorkChain):
         )
         
         # expose a dictionary for polarization with dynamic output
-        spec.output("polarization", valid_type=orm.Dict, required=False, dynamic=True, help="The polarization results.")
+        spec.output("polarization", valid_type=orm.Dict, required=False, help="The polarization results.")
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
         spec.exit_code(
@@ -249,8 +249,8 @@ class ImplantMuonWorkChain(WorkChain):
             workgraph.add_task(
                 UndiAndKuboToyabe,
                 structure=structure,
-                Bmods=[0, 2e-3, 4e-3],  # for now, hardcoded.
-                max_hdims=[10**2, 20**2],  # for now, hardcoded.
+                Bmods=[0, 2e-3, 4e-3, 6e-3],  # for now, hardcoded.
+                max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
                 convergence_check=i==0,  # maybe the convergence can be done for only one site...
                 algorithm='fast',
                 sample_size_average=10,
@@ -292,7 +292,8 @@ class ImplantMuonWorkChain(WorkChain):
             if not polarization.is_finished_ok:
                 self.report(f"the child WorkGraph with <PK={polarization.pk}> failed")
                 return self.exit_codes.ERROR_POLARIZATION_FAILED
-            #self.out_many(polarization.outputs)
+            else:
+                self.out_many(polarization.outputs)
 
     @staticmethod
     def get_structures_group_from_findmuon(findmuon: FindMuonWorkChain):

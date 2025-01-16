@@ -16,6 +16,9 @@ from ase.build import make_supercell
 from aiida_muon.workflows.find_muon import gensup, niche_add_impurities
 
 class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructure):
+    
+    title = "Muon Settings"
+    
     dependencies = [
         "input_structure",
     ]
