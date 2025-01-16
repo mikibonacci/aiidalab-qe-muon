@@ -48,6 +48,7 @@ class MuonConfigurationSettingPanel(
            
         self.settings_help = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 0px; padding-bottom: 5px">
+            <h4><b>Muon spectroscopy settings</b></h4>
             Please select desired inputs to compute muon stopping sites and related properties. The muon is considered infinite-dilute
             in the crystal, so we should select a supercell in which the muon will stay and do not interact with its replica.
             If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing set of simulation will be submitted
@@ -62,11 +63,11 @@ class MuonConfigurationSettingPanel(
         
         # Supercell size view and control
         self.compute_supercell = ipw.Checkbox(
-            description="Compute supercell size: ",
+            description="Compute supercell size ",
             indent=False,
             value=self._model.compute_supercell,
             tooltip="Compute the supercell size by running an additional set of simulations.",
-            layout=ipw.Layout(width="150px"),
+            layout=ipw.Layout(width="250px"),
         )
         ipw.link(
             (self.compute_supercell, "value"),
@@ -74,11 +75,11 @@ class MuonConfigurationSettingPanel(
         )
         
         self.compute_findmuon = ipw.Checkbox(
-            description="Search for muon sites: ",
+            description="Search for muon sites ",
             indent=False,
             value=self._model.compute_findmuon,
             tooltip="Run the workflow to find candidate muon resting sites.",
-            layout=ipw.Layout(width="150px"),
+            layout=ipw.Layout(width="250px"),
         )
         ipw.link(
             (self.compute_findmuon, "value"),
@@ -92,11 +93,11 @@ class MuonConfigurationSettingPanel(
         self.compute_findmuon.observe(self._on_compute_findmuon_change, "value")
         
         self.compute_polarization_undi = ipw.Checkbox(
-            description="Compute polarization: ",
+            description="Compute polarization ",
             indent=False,
             value=self._model.compute_polarization_undi,
             tooltip="Compute the compute polarization for muon resting site(s).",
-            layout=ipw.Layout(width="150px"),
+            layout=ipw.Layout(width="250px"),
         )
         ipw.link(
             (self.compute_polarization_undi, "value"),
@@ -127,9 +128,12 @@ class MuonConfigurationSettingPanel(
         )
         
         supercell_hint_estimator = ipw.HTML(
-            """Click the button to estimate the supercell size or defined it. 
+            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
+            <h5><b>Muon supercell</b></h5>
+            Click the button to estimate the supercell size or defined it. 
             If `compute_supercell` is not selected, this is be the supercell 
-            size used in the search of muon resting sites."""
+            size used in the search of muon resting sites.
+            </div>"""
         )
         self.supercell_x = ipw.BoundedIntText(
             min=1,
@@ -183,14 +187,14 @@ class MuonConfigurationSettingPanel(
             lambda x: not (not x and self._model.compute_findmuon),
         )
 
-        self.supercell_selector = ipw.HBox(
+        self.supercell_selector = ipw.VBox(
             children=[
-                supercell_hint_estimator
-            ]
-            + [
-                self.supercell_x,
-                self.supercell_y,
-                self.supercell_z,
+                supercell_hint_estimator,
+                ipw.HBox([
+                    self.supercell_x,
+                    self.supercell_y,
+                    self.supercell_z,
+                ],),
             ],
         )
         
@@ -298,7 +302,7 @@ class MuonConfigurationSettingPanel(
         self.estimate_number_of_supercells = ipw.Button(
             description="Click to stimate number of muon trial sites ➡",
             disabled=False,
-            layout=ipw.Layout(width="240px"),
+            layout=ipw.Layout(width="350px"),
             button_style="info",
             tooltip="Number of muon trial sites (i.e. different supercells);\nwarning: for large systems, this may take some time.",
         )
@@ -320,19 +324,31 @@ class MuonConfigurationSettingPanel(
             self.charge_help,
             self.charge_options,
             self.supercell_selector,
-            self.supercell_hint,
-            self.supercell_reset_button,
+            ipw.HBox([
+                self.supercell_hint,
+                self.supercell_reset_button,
+                ],
+            ),
             self.kpoints_description,
-            self.kpoints_distance,
-            self.reset_kpoints_distance,
-            self.mesh_grid,
+            ipw.HBox([
+                self.kpoints_distance,
+                self.reset_kpoints_distance,
+                self.mesh_grid,
+                ],
+            ),
             self.hubbard,
             self.spin_polarized,
             self.mu_spacing_help,
-            self.mu_spacing,
-            self.mu_spacing_reset_button,
-            self.estimate_number_of_supercells,
-            self.number_of_supercells,
+            ipw.HBox([
+                self.mu_spacing,
+                self.mu_spacing_reset_button,
+                ],
+            ),
+            ipw.HBox([
+                self.estimate_number_of_supercells,
+                self.number_of_supercells,
+                ],
+            ),
             # self.moments, # TODO: add moments widget
         ]
         # we display the findmuon settings only if the compute_findmuon is selected
