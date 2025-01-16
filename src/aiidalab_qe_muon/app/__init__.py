@@ -9,6 +9,7 @@ from aiidalab_qe_muon.app.codes.mvc import (
 from aiidalab_qe_muon.app.results.view import MuonResultsPanel
 from aiidalab_qe_muon.app.results.model import MuonResultsModel
 from aiidalab_qe_muon.app.workchain import workchain_and_builder
+from aiidalab_qe_muon.app.structure_importer.structure import ImportMagnetism
 
 
 class MuonPluginOutline(PluginOutline):
@@ -30,4 +31,5 @@ property = {
         "model": MuonResultsModel,
     },
     "workchain": workchain_and_builder,
+    "importer": ImportMagnetism,
 }
