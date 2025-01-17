@@ -80,7 +80,7 @@ class UndiPlotWidget(ipw.VBox):
                 tooltip="Download polarization data with selected directions, for all the applied magnetic field magnitudes.",
                 layout=ipw.Layout(width="auto"),
             )
-            download_data_button.on_click(self._download_pol)
+            download_data_button.on_click(self._model._download_pol)
 
             self.children = [
                 self.fig,
@@ -378,26 +378,6 @@ class UndiPlotWidget(ipw.VBox):
             else:
                 # remove the trace
                 if hasattr(self, "KT_trace"): self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
-
-    def _download_pol(self, _=None):
-        data, filename = self._model.prepare_data_for_download()
-        self._download(payload=data, filename=filename)
         
     def init_undi_plots(self):
         self._update_plot()
-
-    @staticmethod
-    def _download(payload, filename):
-        from IPython.display import Javascript, display
-
-        javas = Javascript(
-            f"""
-            var link = document.createElement('a');
-            link.href = 'data:application;base64,{payload}'
-            link.download = '{filename}'
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            """
-        )
-        display(javas)

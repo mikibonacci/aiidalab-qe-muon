@@ -201,18 +201,47 @@ class PolarizationModel(Model):
         """Prepare the data for download.
         This method is called by the controller to get the data for download.
         """
+        import pandas as pd
+        
+        data_file_list = []
+        
         # prepare the data for download as csv file
-        csv_dict = {"t (μs)": self.data["x"]}
+        for muon_index in self.selected_indexes:
+            csv_dict = {"t (μs)": self.muons[muon_index].data["x"]}
 
-        for i, Bvalue in enumerate(self.fields):
-            csv_dict[f"B={Bvalue}_mT"] = self.data["y"][
-                self.field_direction
-            ][i][f"signal_{self.directions}"]
+            for i, Bvalue in enumerate(self.fields):
+                csv_dict[f"B={Bvalue}_mT"] = self.muons[muon_index].data["y"][
+                    self.field_direction
+                ][i][f"signal_{self.directions}"]
 
-        df = pd.DataFrame.from_dict(csv_dict)
-        data = base64.b64encode(df.to_csv(index=True).encode()).decode()
-        filename = f"muon_1_dir_{self.directions}_{self.field_direction}.csv"
-        return data, filename
+            df = pd.DataFrame.from_dict(csv_dict)
+            data = base64.b64encode(df.to_csv(index=True).encode()).decode()
+            filename = f"muon_{muon_index}_dir_{self.directions}_{self.field_direction}.csv"
+            
+            data_file_list.append((data, filename))
+            
+        return data_file_list
+    
+    def _download_pol(self, _=None):
+        data_file_list = self._prepare_data_for_download()
+        for data, filename in data_file_list:
+            self._download(payload=data, filename=filename)
+            
+    @staticmethod
+    def _download(payload, filename):
+        from IPython.display import Javascript, display
+
+        javas = Javascript(
+            f"""
+            var link = document.createElement('a');
+            link.href = 'data:application;base64,{payload}'
+            link.download = '{filename}'
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            """
+        )
+        display(javas)
     
     def compute_isotopic_averages(self, field_direction="lf", muon_index = "0"):
         selected_isotopes = list(range(len(self.isotopes)))
