@@ -223,7 +223,9 @@ class UndiPlotWidget(ipw.VBox):
                 self.fig.update_layout(
                     yaxis=dict(title=ylabel),
                 )
-
+                
+        self._on_add_KT_change()
+        
     # view
     def inject_tune_plot_box(
         self,
@@ -352,17 +354,23 @@ class UndiPlotWidget(ipw.VBox):
     def _on_plotting_quantity_change(self, change):
         self._update_plot()
     
-    def _on_add_KT_change(self, change):
-       self.fig.add_trace(
-                go.Scatter(
-                    x=self._model.KT_output["t"],
-                    y=self._model.KT_output["KT"],
-                    name="Kubo-Toyabe",
-                    mode="lines",
-                    marker=dict(size=10),
-                    line=dict(width=2),
-                ),
-            )
+    def _on_add_KT_change(self, change = None):
+    
+        if self._model.plot_KT:
+            # add the trace
+            if self._model.KT_output:
+                self.KT_trace = go.Scatter(
+                        x=self._model.KT_output["t"],
+                        y=self._model.KT_output["KT"],
+                        name="Kubo-Toyabe",
+                        mode="lines",
+                        marker=dict(size=10),
+                        line=dict(width=2),
+                    )
+                self.fig.add_trace(self.KT_trace)
+        else:
+            # remove the trace
+            if hasattr(self, "KT_trace"): self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
 
     def _download_pol(self, _=None):
         data, filename = self._model.prepare_data_for_download()
