@@ -145,84 +145,89 @@ class UndiPlotWidget(ipw.VBox):
         direction = self._model.directions
         field_direction = self._model.field_direction
         selected_fields = self._model.selected_fields
+        selected_indexes = self._model.selected_indexes
 
-        for index in range(len(self._model.results)):
-            # shell_node = node #orm.load_node(2582)
-            if self._model.fields[index] not in selected_fields:
-                continue
-            if self._model.mode == "plot":
-                Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
-                label = f"B<sub>ext</sub>={Bmod} mT"
-                ydata = self._model.data["y"][field_direction][index][
-                    f"signal_{direction}"
-                ]
-                ylabel = "P(t)"
-                title = None
-            elif self._model.mode == "analysis":
-                to_be_plotted = self._model.plotting_quantity
-                Bmod = self._model.results[index][0]["B_ext"] * 1000  # mT
-                label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
+        for muon_index in selected_indexes:
+            muon_index_string = f" (site {muon_index})" if len(selected_indexes) > 1 else ""
+            for index in range(len(self._model.muons[muon_index].results)):
+                # shell_node = node #orm.load_node(2582)
+                if self._model.fields[index] not in selected_fields:
+                    raise ValueError(self._model.fields[index], selected_fields)
+                    continue
+                if self._model.mode == "plot":
+                    Bmod = self._model.muons[muon_index].results[index][0]["B_ext"] * 1000  # mT
+                    label = f"B<sub>ext</sub>={Bmod} mT"+muon_index_string
+                    ydata = self._model.muons[muon_index].data["y"][field_direction][index][
+                        f"signal_{direction}"
+                    ]
+                    ylabel = "P(t)"
+                    title = None
+                elif self._model.mode == "analysis":
+                    to_be_plotted = self._model.plotting_quantity
+                    Bmod = self._model.muons[muon_index].results[index][0]["B_ext"] * 1000  # mT
+                    label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
 
-                highest_res = self._model.results[-1]
+                    highest_res = self._model.muons[muon_index].results[-1]
 
-                ydata = np.array(
-                    self._model.data["y"][field_direction][index][f"signal_{direction}"]
-                )
-                ylabel = "P(t)"
-                if "delta" in to_be_plotted:
-                    ydata = np.array(highest_res[0][f"signal_{direction}_lf"]) - ydata
-                    ylabel = "ΔP(t)"
-                if "rel" in to_be_plotted:
-                    ydata /= 100 * np.array(highest_res[0][f"signal_{direction}_lf"])
-                    ylabel = "Δ<sub>%</sub>P(t)"
-                title = None  # "$$\Delta P(t) = P_{max\_hdim=10^9}(t) - P(t)$$"
+                    ydata = np.array(
+                        self._model.muons[muon_index].data["y"][field_direction][index][f"signal_{direction}"]
+                    )
+                    ylabel = "P(t)"
+                    if "delta" in to_be_plotted:
+                        ydata = np.array(highest_res[0][f"signal_{direction}_lf"]) - ydata
+                        ylabel = "ΔP(t)"
+                    if "rel" in to_be_plotted:
+                        ydata /= 100 * np.array(highest_res[0][f"signal_{direction}_lf"])
+                        ylabel = "Δ<sub>%</sub>P(t)"
+                    title = None  # "$$\Delta P(t) = P_{max\_hdim=10^9}(t) - P(t)$$"
 
-            if not self.rendered:
-                self.fig.update_layout(
-                    barmode="overlay",
-                    yaxis=dict(title=ylabel),
-                    xaxis=dict(title="time (μs)"),
-                    title={
-                        "text": title,
-                        "x": 0.5,  # Center the title
-                        "xanchor": "center",
-                        "yanchor": "top",
-                    },
-                    margin=dict(
-                        t=5 if not title else 35, r=20
-                    ),  # Reduce the top margin
-                    # width=500, # Width of the plot
-                    # height=500, # Height of the plot
-                    font=dict(  # Font size and color of the labels
-                        size=12,
-                        color="#333333",
-                    ),
-                    plot_bgcolor="gainsboro",  # Background color of the plot
-                    # paper_bgcolor='white', # Background color of the paper
-                    legend=dict(
-                        x=0.02,  # x position of the legend
-                        y=0.02,  # y position of the legend
-                        traceorder="normal",
-                        bgcolor="rgba(255, 255, 255, 0.5)",  # Background color with transparency
-                        # bordercolor='Black',
-                        # borderwidth=1
+                self.fig.add_trace(
+                    go.Scatter(
+                        x=self._model.muons[muon_index].data["x"],
+                        y=ydata,
+                        name=label,
+                        mode="lines",
+                        marker=dict(size=10),
+                        line=dict(width=2),
                     ),
                 )
-
-            self.fig.add_trace(
-                go.Scatter(
-                    x=self._model.data["x"],
-                    y=ydata,
-                    name=label,
-                    mode="lines",
-                    marker=dict(size=10),
-                    line=dict(width=2),
+        
+        if self._model.mode == "analysis":
+            self.fig.update_layout(
+                yaxis=dict(title=ylabel),
+            )
+                
+        if not self.rendered:
+            self.fig.update_layout(
+                barmode="overlay",
+                yaxis=dict(title=ylabel),
+                xaxis=dict(title="time (μs)"),
+                title={
+                    "text": title,
+                    "x": 0.5,  # Center the title
+                    "xanchor": "center",
+                    "yanchor": "top",
+                },
+                margin=dict(
+                    t=5 if not title else 35, r=20
+                ),  # Reduce the top margin
+                # width=500, # Width of the plot
+                # height=500, # Height of the plot
+                font=dict(  # Font size and color of the labels
+                    size=12,
+                    color="#333333",
+                ),
+                plot_bgcolor="gainsboro",  # Background color of the plot
+                # paper_bgcolor='white', # Background color of the paper
+                legend=dict(
+                    x=0.02,  # x position of the legend
+                    y=0.02,  # y position of the legend
+                    traceorder="normal",
+                    bgcolor="rgba(255, 255, 255, 0.5)",  # Background color with transparency
+                    # bordercolor='Black',
+                    # borderwidth=1
                 ),
             )
-            if self._model.mode == "analysis":
-                self.fig.update_layout(
-                    yaxis=dict(title=ylabel),
-                )
                 
         self._on_add_KT_change()
         
@@ -355,22 +360,24 @@ class UndiPlotWidget(ipw.VBox):
         self._update_plot()
     
     def _on_add_KT_change(self, change = None):
-    
-        if self._model.plot_KT:
-            # add the trace
-            if self._model.KT_output:
-                self.KT_trace = go.Scatter(
-                        x=self._model.KT_output["t"],
-                        y=self._model.KT_output["KT"],
-                        name="Kubo-Toyabe",
-                        mode="lines",
-                        marker=dict(size=10),
-                        line=dict(width=2),
-                    )
-                self.fig.add_trace(self.KT_trace)
-        else:
-            # remove the trace
-            if hasattr(self, "KT_trace"): self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
+        
+        for muon_index in self._model.selected_indexes:
+            muon_index_string = f" (site {muon_index})" if len(self._model.selected_indexes) > 1 else ""
+            if self._model.plot_KT:
+                # add the trace
+                if self._model.muons[muon_index].KT_output:
+                    self.KT_trace = go.Scatter(
+                            x=self._model.muons[muon_index].KT_output["t"],
+                            y=self._model.muons[muon_index].KT_output["KT"],
+                            name="Kubo-Toyabe" + muon_index_string,
+                            mode="lines",
+                            marker=dict(size=10),
+                            line=dict(width=2),
+                        )
+                    self.fig.add_trace(self.KT_trace)
+            else:
+                # remove the trace
+                if hasattr(self, "KT_trace"): self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
 
     def _download_pol(self, _=None):
         data, filename = self._model.prepare_data_for_download()

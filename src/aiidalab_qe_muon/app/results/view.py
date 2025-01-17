@@ -54,4 +54,8 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
         for child in self.children:
             child.render()
             
+        if needs_findmuon_rendering and needs_undi_rendering:
+            pass
+            # link the selected indexes....
+            
         self.rendered = True

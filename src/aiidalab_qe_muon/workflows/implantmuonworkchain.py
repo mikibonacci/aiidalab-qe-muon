@@ -231,7 +231,7 @@ class ImplantMuonWorkChain(WorkChain):
         if self.ctx.implant_muon:
             self.ctx.structure_group = self.get_structures_group_from_findmuon(self.ctx.findmuon)
         else:  # we want only polarization, so use the input structure.
-            self.ctx.structure_group = [self.inputs.structure]
+            self.ctx.structure_group = {'0':self.inputs.structure}
 
     def compute_polarization(self):
         # this is a placeholder for the future.
@@ -239,21 +239,21 @@ class ImplantMuonWorkChain(WorkChain):
         # need to parse all the output structures, and loop on them.
         from aiida_workgraph import WorkGraph
         from aiida_workgraph.engine.workgraph import WorkGraphEngine
-        #from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
-        #    UndiAndKuboToyabe,
-        #)
+        from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
+            UndiAndKuboToyabe,
+        )
 
         # which code to use?
         workgraph = WorkGraph(name="polarization")
-        for i,structure in enumerate(self.ctx.structure_group):
+        for i,idx,structure in enumerate(self.ctx.structure_group.items()):
             workgraph.add_task(
                 UndiAndKuboToyabe,
                 structure=structure,
-                B_mods=[0, 2e-3, 4e-3, 6e-3],  # for now, hardcoded.
-                max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
+                B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
+                max_hdims=[10**2, 10**4, 10**6],  # for now, hardcoded.
                 convergence_check=i==0,  # maybe the convergence can be done for only one site...
                 algorithm='fast',
-                name=f"polarization_structure_{structure.pk}",
+                name=f"polarization_structure_{idx}",
             )
 
         inputs = {
@@ -264,6 +264,7 @@ class ImplantMuonWorkChain(WorkChain):
         self.report(
             f"submitting `Workgraph` for polarization calculation: <PK={process.pk}>"
         )
+        process.base.extras.set("muon_index", str(idx))
         self.to_context(workgraph=process)
 
     def results(self):
@@ -297,10 +298,10 @@ class ImplantMuonWorkChain(WorkChain):
     @staticmethod
     def get_structures_group_from_findmuon(findmuon: FindMuonWorkChain):
         """Return the structures group from the FindMuonWorkChain."""
-        structure_group = []
+        structure_group = {}
         for idx, uuid in findmuon.outputs.all_index_uuid.get_dict().items():
             if idx in findmuon.outputs.unique_sites.get_dict().keys():
                 relaxwc = orm.load_node(uuid)
-                structure_group.append(relaxwc.outputs.output_structure)
+                structure_group[idx] = relaxwc.outputs.output_structure
                 
         return structure_group

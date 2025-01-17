@@ -53,6 +53,9 @@ class PolarizationModel(Model):
     )
     field_direction = tl.Enum(["lf", "tf"], default_value="lf")
     plot_KT = tl.Bool(False)
+    selected_indexes = tl.List( # muon selected indexes. Relevant if multiple sites are computed at the same time.
+        trait=tl.Int(),
+    )
     
     def __init__(self, undi_nodes=[], KT_node=None, mode="plot"):
         self.mode = mode
@@ -67,16 +70,18 @@ class PolarizationModel(Model):
     ):
         """Prepare the data to just be plugged in in the FigureWidget."""
 
-        self.data = {
-            "y": {
-                "lf": self.compute_isotopic_averages(field_direction="lf"),
-                "tf": self.compute_isotopic_averages(field_direction="tf")
-                if self.mode == "plot"
-                else None,  # one element each node. These elements are dictionaries containing x,y,z signals averaged wrt the isotopes.
+        for muon_index in self.muons.keys():
+            
+            self.muons[muon_index].data = {
+                "y": {
+                    "lf": self.compute_isotopic_averages(field_direction="lf", muon_index=muon_index),
+                    "tf": self.compute_isotopic_averages(field_direction="tf", muon_index=muon_index)
+                    if self.mode == "plot"
+                    else None,  # one element each node. These elements are dictionaries containing x,y,z signals averaged wrt the isotopes.
+                }
             }
-        }
 
-        self.data["x"] = np.array(self.results[0][0]["t"]) * 1e6
+            self.muons[muon_index].data["x"] = np.array(self.muons[muon_index].results[0][0]["t"]) * 1e6
 
     def create_cluster_matrix(
         self,
@@ -105,42 +110,54 @@ class PolarizationModel(Model):
         """
 
         # workgraph case - always the case in standard situations (qe app usage)
-        if len(self.nodes) == 1 and "workgraph" in self.nodes[0].process_type:
+        if "workgraph" in self.nodes[0].process_type:
             # this loops can be improved, for sure there is a smarter way to do this.
-            main_node = self.nodes[0].called[0]
+            
+            self.muons = {} # each muon will be a key of this dictionary.
+            
+            for muon in self.nodes:
+                
+                muon_index = muon.base.extras.get("muon_index", 0 )
+                self.muons[muon_index] = AttributeDict()
+                
+                main_node = self.nodes[0].called[0]
 
-            search = "undi_runs"
-            if self.mode == "analysis":
-                search = "convergence_check"
+                search = "undi_runs"
+                if self.mode == "analysis":
+                    search = "convergence_check"
 
-            descendants = (
-                main_node.base.links.get_outgoing().get_node_by_label(search).called
-            )
-            self.fields = [
-                node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
-            ]  # mT
-            self.selected_fields = [
-                node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
-            ]  # mT
-            self.max_hdims = [
-                node.inputs.function_inputs.max_hdim.value for node in descendants
-            ]
-            self.results = [
-                node.outputs.results.value for node in descendants
-            ]
-            self.isotopes = [
-                [res["cluster_isotopes"], res["spins"], res["probability"]]
-                for res in self.results[0]
-            ]
-
-            self.selected_isotopes = list(range(len(self.isotopes)))
-
-            if self.mode == "plot":
-                self.KT_output = (
-                    main_node.base.links.get_outgoing()
-                    .get_node_by_label("KuboToyabe_run")
-                    .outputs.results.get_dict()
+                descendants = (
+                    main_node.base.links.get_outgoing().get_node_by_label(search).called
                 )
+                
+                self.muons[muon_index].results = [
+                    node.outputs.results.value for node in descendants
+                ]
+                
+                self.fields = [
+                    node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
+                ]  # mT
+                self.selected_fields = [
+                    node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
+                ]  # mT
+                self.max_hdims = [
+                    node.inputs.function_inputs.max_hdim.value for node in descendants
+                ]
+                
+                self.isotopes = [
+                    [res["cluster_isotopes"], res["spins"], res["probability"]]
+                    for res in self.muons[muon_index].results[0]
+                ]
+
+                self.selected_isotopes = list(range(len(self.isotopes)))
+
+                if self.mode == "plot":
+                    self.muons[muon_index].KT_output = (
+                        main_node.base.links.get_outgoing()
+                        .get_node_by_label("KuboToyabe_run")
+                        .outputs.results.get_dict()
+                    )
+            self.selected_indexes = [list(self.muons.keys())[0]]
         else:
             # shelljob case - Will never be the case in the app.
             self.fields = [
@@ -197,18 +214,18 @@ class PolarizationModel(Model):
         filename = f"muon_1_dir_{self.directions}_{self.field_direction}.csv"
         return data, filename
     
-    def compute_isotopic_averages(self, field_direction="lf"):
+    def compute_isotopic_averages(self, field_direction="lf", muon_index = "0"):
         selected_isotopes = list(range(len(self.isotopes)))
         weights = [self.isotopes[int(i)][-1] for i in selected_isotopes if i != ""]
         averages_full = []
-        for index in range(len(self.results)):
+        for index in range(len(self.muons[muon_index].results)):
             averages = {}
             for direction in ["z", "x", "y", "powder"]:
                 if self.mode == "analysis" and direction in ["x", "y", "powder"]:
                     continue
 
                 values = [
-                    self.results[index][int(i)][f"signal_{direction}_{field_direction}"]
+                    self.muons[muon_index].results[index][int(i)][f"signal_{direction}_{field_direction}"]
                     for i in selected_isotopes
                     if i != ""
                 ]
