@@ -353,8 +353,16 @@ class UndiPlotWidget(ipw.VBox):
         self._update_plot()
     
     def _on_add_KT_change(self, change):
-       raise NotImplementedError("The Kubo-Toyabe is not implemented yet.")
-       self._update_plot()
+       self.fig.add_trace(
+                go.Scatter(
+                    x=self._model.KT_output["t"],
+                    y=self._model.KT_output["KT"],
+                    name="Kubo-Toyabe",
+                    mode="lines",
+                    marker=dict(size=10),
+                    line=dict(width=2),
+                ),
+            )
 
     def _download_pol(self, _=None):
         data, filename = self._model.prepare_data_for_download()

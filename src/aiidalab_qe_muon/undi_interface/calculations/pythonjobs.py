@@ -2,45 +2,45 @@ from ase import Atoms
 from aiida_workgraph import task
 
 
-@task.pythonjob()
+@task.pythonjob(outputs=["results"])
 def undi_run(
     structure: Atoms,
-    Bmod = 0.0,
+    B_mod = 0.0,
     atom_as_muon = 'H',
-    max_hdim = 1000,
+    max_hdim = 10e6,
     convergence_check = False,
     algorithm  = 'fast',
-    sample_size_average  = 1000
+    angular_integration_steps  = 7
 ) -> dict:
     from undi.undi_analysis import execute_undi_analysis
 
     results = execute_undi_analysis(
         structure,
-        Bmod=Bmod,
+        B_mod=B_mod,
         atom_as_muon=atom_as_muon,
         max_hdim=max_hdim,
         convergence_check=convergence_check,
         algorithm=algorithm,
-        sample_size_average=sample_size_average
+        angular_integration_steps=angular_integration_steps
     )
 
     return {"results": results}
 
 
-@task.pythonjob()
+@task.pythonjob(outputs=["results"])
 def compute_KT(
     structure: Atoms,
 ):
     import numpy as np
     from aiidalab_qe_muon.utils.KT import compute_second_moments, kubo_toyabe
 
-    t = np.linspace(0, 20e-6, 1000)  # time is microseconds
+    t = np.linspace(0, 20e-6, 1000)  # time is seconds
     sm = compute_second_moments(structure)
     KT = kubo_toyabe(t, np.sum(list(sm.values())))
 
     return {
         "results": {
-            "t": t,
+            "t": (np.array(t)*1e6).tolist(), # this time is in microseconds
             "KT": KT,
         },
     }

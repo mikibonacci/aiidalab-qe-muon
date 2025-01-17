@@ -239,9 +239,9 @@ class ImplantMuonWorkChain(WorkChain):
         # need to parse all the output structures, and loop on them.
         from aiida_workgraph import WorkGraph
         from aiida_workgraph.engine.workgraph import WorkGraphEngine
-        from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
-            UndiAndKuboToyabe,
-        )
+        #from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
+        #    UndiAndKuboToyabe,
+        #)
 
         # which code to use?
         workgraph = WorkGraph(name="polarization")
@@ -249,11 +249,10 @@ class ImplantMuonWorkChain(WorkChain):
             workgraph.add_task(
                 UndiAndKuboToyabe,
                 structure=structure,
-                Bmods=[0, 2e-3, 4e-3, 6e-3],  # for now, hardcoded.
+                B_mods=[0, 2e-3, 4e-3, 6e-3],  # for now, hardcoded.
                 max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
                 convergence_check=i==0,  # maybe the convergence can be done for only one site...
                 algorithm='fast',
-                sample_size_average=10,
                 name=f"polarization_structure_{structure.pk}",
             )
 

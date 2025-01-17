@@ -7,6 +7,7 @@ from aiidalab_qe.common.panel import (
 class MuonResourceSettingsModel(PluginResourceSettingsModel):
     """Resource settings for the muon calculations."""
     
+    title = "Muon Resources"
     identifier = "muonic"
     
     def __init__(self, **kwargs):

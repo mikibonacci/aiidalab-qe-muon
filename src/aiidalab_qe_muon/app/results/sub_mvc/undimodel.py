@@ -111,22 +111,22 @@ class PolarizationModel(Model):
 
             search = "undi_runs"
             if self.mode == "analysis":
-                search = "Convergence"
+                search = "convergence_check"
 
             descendants = (
                 main_node.base.links.get_outgoing().get_node_by_label(search).called
             )
             self.fields = [
-                node.inputs.function_kwargs.Bmod.value * 1000 for node in descendants
+                node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
             ]  # mT
             self.selected_fields = [
-                node.inputs.function_kwargs.Bmod.value * 1000 for node in descendants
+                node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
             ]  # mT
             self.max_hdims = [
-                node.inputs.function_kwargs.max_hdim.value for node in descendants
+                node.inputs.function_inputs.max_hdim.value for node in descendants
             ]
             self.results = [
-                node.outputs.result.value["results"] for node in descendants
+                node.outputs.results.value for node in descendants
             ]
             self.isotopes = [
                 [res["cluster_isotopes"], res["spins"], res["probability"]]
@@ -139,19 +139,19 @@ class PolarizationModel(Model):
                 self.KT_output = (
                     main_node.base.links.get_outgoing()
                     .get_node_by_label("KuboToyabe_run")
-                    .outputs.result.get_dict()
+                    .outputs.results.get_dict()
                 )
         else:
             # shelljob case - Will never be the case in the app.
             self.fields = [
-                node.inputs.nodes.Bmod.value * 1000 for node in self.nodes
+                node.inputs.nodes.B_mod.value * 1000 for node in self.nodes
             ]  # mT
             self.selected_fields = [
-                node.inputs.nodes.Bmod.value * 1000 for node in self.nodes
+                node.inputs.nodes.B_mod.value * 1000 for node in self.nodes
             ]  # mT
             self.max_hdims = [node.inputs.nodes.max_hdim.value for node in self.nodes]
             self.results = [
-                json.loads(node.outputs.results_json.get_content())
+                json.loads(node.outputs.resultss_json.get_content())
                 for node in self.nodes
             ]
             self.isotopes = [

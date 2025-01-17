@@ -19,7 +19,8 @@ requires-python = ">=3.8"
 dependencies = [
     "aiida-muon @ git+https://github.com/positivemuon/aiida-muon.git@v1.0.2",
     "pymatgen>=2023.9.25",
-    "aiida-workgraph"
+    "aiida-workgraph",
+    "aiida-pythonjob @ git+https://github.com/aiidateam/aiida-pythonjob.git"
 ]
 
 [project.optional-dependencies]
