@@ -46,7 +46,11 @@ def multiple_undi_analysis(
     return wg
 
 
-@task.graph_builder()
+@task.graph_builder(
+    outputs=[
+        {"name": "results", "from": "context.res"},
+        ]
+)
 def UndiAndKuboToyabe(
     structure: t.Union[
         StructureData, Atoms
@@ -76,6 +80,7 @@ def UndiAndKuboToyabe(
         name="KuboToyabe_run",
         metadata=metadata,
     )
+    KT_task.set_context({f"res.KT_task": "results"})
     
     # Convergence check
     # in the future, we can add a logic to first converge, and then run UNDI for the B_mods list
@@ -91,6 +96,7 @@ def UndiAndKuboToyabe(
             angular_integration_steps=angular_integration_steps,
             name="convergence_check",
         )
+        undi_conv_task.set_context({f"res.undi_conv_task": "results"})
 
     undi_task = wg.add_task(
         multiple_undi_analysis,
@@ -103,5 +109,27 @@ def UndiAndKuboToyabe(
         angular_integration_steps=angular_integration_steps,
         name="undi_runs",
     )
+    undi_task.set_context({f"res.undi_task": "results"})
 
+    return wg
+
+@task.graph_builder(outputs=[{"name": "results", "from": "context.res"}])
+def MultiSites(
+    structure_group,
+    ):
+    
+    wg = WorkGraph("PolarizationMultiSites")
+    
+    for i, (idx, structure) in enumerate(structure_group.items()):
+        res = wg.add_task(
+            UndiAndKuboToyabe,
+            structure=structure,
+            B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
+            max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
+            convergence_check=i==0,  # maybe the convergence can be done for only one site...
+            algorithm='fast',
+            name=f"polarization_structure_{idx}",
+        )
+        res.set_context({f"res.site_{idx}": "results"})
+    
     return wg

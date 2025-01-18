@@ -149,28 +149,28 @@ class UndiPlotWidget(ipw.VBox):
 
         for muon_index in selected_indexes:
             muon_index_string = f" (site {muon_index})" if len(selected_indexes) > 1 else ""
-            for index in range(len(self._model.muons[muon_index].results)):
+            for index in range(len(self._model.muons[str(muon_index)].results)):
                 # shell_node = node #orm.load_node(2582)
                 if self._model.fields[index] not in selected_fields:
                     raise ValueError(self._model.fields[index], selected_fields)
                     continue
                 if self._model.mode == "plot":
-                    Bmod = self._model.muons[muon_index].results[index][0]["B_ext"] * 1000  # mT
+                    Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"B<sub>ext</sub>={Bmod} mT"+muon_index_string
-                    ydata = self._model.muons[muon_index].data["y"][field_direction][index][
+                    ydata = self._model.muons[str(muon_index)].data["y"][field_direction][index][
                         f"signal_{direction}"
                     ]
                     ylabel = "P(t)"
                     title = None
                 elif self._model.mode == "analysis":
                     to_be_plotted = self._model.plotting_quantity
-                    Bmod = self._model.muons[muon_index].results[index][0]["B_ext"] * 1000  # mT
+                    Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
 
-                    highest_res = self._model.muons[muon_index].results[-1]
+                    highest_res = self._model.muons[str(muon_index)].results[-1]
 
                     ydata = np.array(
-                        self._model.muons[muon_index].data["y"][field_direction][index][f"signal_{direction}"]
+                        self._model.muons[str(muon_index)].data["y"][field_direction][index][f"signal_{direction}"]
                     )
                     ylabel = "P(t)"
                     if "delta" in to_be_plotted:
@@ -183,7 +183,7 @@ class UndiPlotWidget(ipw.VBox):
 
                 self.fig.add_trace(
                     go.Scatter(
-                        x=self._model.muons[muon_index].data["x"],
+                        x=self._model.muons[str(muon_index)].data["x"],
                         y=ydata,
                         name=label,
                         mode="lines",
@@ -365,10 +365,10 @@ class UndiPlotWidget(ipw.VBox):
             muon_index_string = f" (site {muon_index})" if len(self._model.selected_indexes) > 1 else ""
             if self._model.plot_KT:
                 # add the trace
-                if self._model.muons[muon_index].KT_output:
+                if self._model.muons[str(muon_index)].KT_output:
                     self.KT_trace = go.Scatter(
-                            x=self._model.muons[muon_index].KT_output["t"],
-                            y=self._model.muons[muon_index].KT_output["KT"],
+                            x=self._model.muons[str(muon_index)].KT_output["t"],
+                            y=self._model.muons[str(muon_index)].KT_output["KT"],
                             name="Kubo-Toyabe" + muon_index_string,
                             mode="lines",
                             marker=dict(size=10),

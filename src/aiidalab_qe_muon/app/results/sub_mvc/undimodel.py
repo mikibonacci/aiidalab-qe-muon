@@ -115,12 +115,13 @@ class PolarizationModel(Model):
             
             self.muons = {} # each muon will be a key of this dictionary.
             
-            for muon in self.nodes:
+            for muon in self.nodes: # this need to be the called of the MultiSites task.
                 
-                muon_index = muon.base.extras.get("muon_index", 0 )
+                #muon_index = muon.base.extras.get("muon_index", 0)
+                muon_index = muon.base.attributes.all.get("metadata_inputs",{}).get("metadata",{}).get("call_link_label","0").replace("polarization_structure_","")
                 self.muons[muon_index] = AttributeDict()
                 
-                main_node = self.nodes[0].called[0]
+                main_node = muon
 
                 search = "undi_runs"
                 if self.mode == "analysis":
@@ -157,7 +158,7 @@ class PolarizationModel(Model):
                         .get_node_by_label("KuboToyabe_run")
                         .outputs.results.get_dict()
                     )
-            self.selected_indexes = [list(self.muons.keys())[0]]
+            self.selected_indexes = [int(s) for s in self.muons.keys()]
         else:
             # shelljob case - Will never be the case in the app.
             self.fields = [
@@ -207,10 +208,10 @@ class PolarizationModel(Model):
         
         # prepare the data for download as csv file
         for muon_index in self.selected_indexes:
-            csv_dict = {"t (μs)": self.muons[muon_index].data["x"]}
+            csv_dict = {"t (μs)": self.muons[str(muon_index)].data["x"]}
 
             for i, Bvalue in enumerate(self.fields):
-                csv_dict[f"B={Bvalue}_mT"] = self.muons[muon_index].data["y"][
+                csv_dict[f"B={Bvalue}_mT"] = self.muons[str(muon_index)].data["y"][
                     self.field_direction
                 ][i][f"signal_{self.directions}"]
 

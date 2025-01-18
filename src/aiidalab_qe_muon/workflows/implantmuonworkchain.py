@@ -6,6 +6,12 @@ from aiida import orm
 from aiida.plugins import WorkflowFactory
 from aiida.engine import if_
 
+from aiida_workgraph import WorkGraph
+from aiida_workgraph.engine.workgraph import WorkGraphEngine
+from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
+    MultiSites,
+)
+
 
 MusconvWorkChain = WorkflowFactory("impuritysupercellconv")
 FindMuonWorkChain = WorkflowFactory("muon.find_muon")
@@ -102,8 +108,9 @@ class ImplantMuonWorkChain(WorkChain):
             },
         )
         
-        # expose a dictionary for polarization with dynamic output
-        spec.output("polarization", valid_type=orm.Dict, required=False, help="The polarization results.")
+        
+        spec.output('polarization')
+        
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
         spec.exit_code(
@@ -237,34 +244,17 @@ class ImplantMuonWorkChain(WorkChain):
         # this is a placeholder for the future.
         # here we will submit the workgraph for the polarization estimation. Via Undi and KT.
         # need to parse all the output structures, and loop on them.
-        from aiida_workgraph import WorkGraph
-        from aiida_workgraph.engine.workgraph import WorkGraphEngine
-        from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
-            UndiAndKuboToyabe,
-        )
 
         # which code to use?
-        workgraph = WorkGraph(name="polarization")
-        for i,idx,structure in enumerate(self.ctx.structure_group.items()):
-            workgraph.add_task(
-                UndiAndKuboToyabe,
-                structure=structure,
-                B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
-                max_hdims=[10**2, 10**4, 10**6],  # for now, hardcoded.
-                convergence_check=i==0,  # maybe the convergence can be done for only one site...
-                algorithm='fast',
-                name=f"polarization_structure_{idx}",
-            )
-
+        workgraph = MultiSites(structure_group=self.ctx.structure_group)
         inputs = {
             "wg": workgraph.to_dict(),
-            "metadata": {"call_link_label": "UndiPolarizationAndKT"},
+            "metadata": {"call_link_label": "MultiSiteUndiPolarizationAndKT"},
         }
         process = self.submit(WorkGraphEngine, **inputs)
         self.report(
             f"submitting `Workgraph` for polarization calculation: <PK={process.pk}>"
         )
-        process.base.extras.set("muon_index", str(idx))
         self.to_context(workgraph=process)
 
     def results(self):
@@ -280,7 +270,7 @@ class ImplantMuonWorkChain(WorkChain):
             if self.ctx.implant_muon:
                 self.out_many(
                     self.exposed_outputs(
-                        self.ctx["findmuon"],
+                        workchain,
                         self.ctx.workchain_class,
                         namespace="findmuon",
                     )
@@ -293,7 +283,12 @@ class ImplantMuonWorkChain(WorkChain):
                 self.report(f"the child WorkGraph with <PK={polarization.pk}> failed")
                 return self.exit_codes.ERROR_POLARIZATION_FAILED
             else:
-                self.out_many(polarization.outputs)
+                self.out(
+                        "polarization",
+                        polarization.outputs.execution_count,
+                    )
+                self.report(f"Undi calculation was successful.")
+                
 
     @staticmethod
     def get_structures_group_from_findmuon(findmuon: FindMuonWorkChain):
@@ -303,5 +298,5 @@ class ImplantMuonWorkChain(WorkChain):
             if idx in findmuon.outputs.unique_sites.get_dict().keys():
                 relaxwc = orm.load_node(uuid)
                 structure_group[idx] = relaxwc.outputs.output_structure
-                
+                relaxwc.outputs.output_structure.base.extras.set("muon_index", str(idx))
         return structure_group
