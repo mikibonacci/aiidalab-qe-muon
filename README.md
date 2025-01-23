@@ -30,6 +30,7 @@ create_conda_env(
     pip=[
         "numpy",
         "ase",
+        "tqdm",
         "git+https://github.com/mikibonacci/undi.git@fix/H",
         ],  # Python packages to install via pip
     conda={                   # Conda-specific settings
