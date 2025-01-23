@@ -29,7 +29,7 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
         if self.rendered:
             return
 
-        muon_node = self._model.get_muon_node()
+        muon_node = self._model._get_child_outputs()
 
         self.children = ()
         
@@ -55,7 +55,9 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
             child.render()
             
         if needs_findmuon_rendering and needs_undi_rendering:
-            pass
-            # link the selected indexes....
+            ipw.dlink(
+                (muon_model, "selected_muons"),
+                (undi_model, "selected_indexes"),
+            )
             
         self.rendered = True

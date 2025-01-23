@@ -16,18 +16,15 @@ class MuonResultsModel(ResultsModel):
     _this_process_label = "ImplantMuonWorkChain"
 
     tab_titles = tl.List([])
-    
-    def get_muon_node(self):
-        return self._get_child_outputs() # this gets: qepp.outputs.muonic
-    
+
     def needs_findmuon_rendering(self):
-        node = self.get_muon_node()
+        node = self._get_child_outputs()
         if not any(key in node for key in ["findmuon"]):
             return False
         return True
     
     def needs_undi_rendering(self):
-        node = self.get_muon_node()
+        node = self._get_child_outputs()
         # Querybuilder to find node with a given label, outgoing from this node
         if not any(key in node for key in ["polarization"]):
             return False

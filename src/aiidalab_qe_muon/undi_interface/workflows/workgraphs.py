@@ -8,7 +8,9 @@ from aiidalab_qe_muon.undi_interface.calculations.pythonjobs import undi_run, co
 
 @task.graph_builder(outputs=[{"name": "results", "from": "context.tmp_out"}])
 def multiple_undi_analysis(
-    structure: Atoms,
+    structure: t.Union[
+        StructureData, Atoms
+    ],  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
     B_mods: t.List[t.Union[float, int]] = [0.0],
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
@@ -54,7 +56,7 @@ def multiple_undi_analysis(
 def UndiAndKuboToyabe(
     structure: t.Union[
         StructureData, Atoms
-    ],  # should be StructureData, and then inside here we transform into ASE. for provenance.
+    ],  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
     B_mods: t.List[t.Union[float, int]] = [0.0],
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
@@ -64,8 +66,9 @@ def UndiAndKuboToyabe(
 ):
     wg = WorkGraph()
 
-    if isinstance(structure, StructureData):
-        structure = structure.get_ase()
+    # This conversion is done in the pythonjob de-serialization
+    #if isinstance(structure, StructureData):
+    #    structure = structure.get_ase()
 
     # KT
     # KT RUNS ON 1 THREAD!

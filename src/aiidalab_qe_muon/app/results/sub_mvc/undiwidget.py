@@ -2,6 +2,8 @@ import numpy as np
 import base64
 import pandas as pd
 
+import copy
+
 import ipywidgets as ipw
 import plotly.graph_objects as go
 
@@ -23,13 +25,14 @@ class UndiPlotWidget(ipw.VBox):
                                    Needs to already have loaded the nodes inside it.
     """
 
-    def __init__(self, model: PolarizationModel, **kwargs):
+    def __init__(self, model: PolarizationModel, node, **kwargs):
 
         super().__init__(
             children=[LoadingWidget("Loading widgets")],
             **kwargs,
         )
         self._model = model
+        self._model.muon = node
         self.rendered = False
         
     def render(self):
@@ -43,7 +46,17 @@ class UndiPlotWidget(ipw.VBox):
 
         if self._model.mode == "plot":
             self.plot_box = self.inject_tune_plot_box()
-
+            
+            selected_indexes_widget = ipw.HTML(
+                f"Selected muon sites: {self._model.selected_indexes}",
+            )
+            ipw.dlink(
+                (self._model, "selected_indexes"),
+                (selected_indexes_widget, "value"),
+                lambda x: f"Selected muon sites: {x}",
+            )
+            selected_indexes_widget.observe(self._on_selected_indexes_change, "value")
+            
             table = self._model.create_html_table(
                 first_row=["cluster index", "isotopes", "spins", "probability"],
             )
@@ -81,6 +94,7 @@ class UndiPlotWidget(ipw.VBox):
                 layout=ipw.Layout(width="auto"),
             )
             download_data_button.on_click(self._model._download_pol)
+        
 
             self.children = [
                 self.fig,
@@ -91,6 +105,7 @@ class UndiPlotWidget(ipw.VBox):
                     ],
                     layout=ipw.Layout(justify_content="space-between"),
                 ),
+                selected_indexes_widget,
                 self.plot_box,
                 self.info_on_the_approximations,
             ]
@@ -152,7 +167,7 @@ class UndiPlotWidget(ipw.VBox):
             for index in range(len(self._model.muons[str(muon_index)].results)):
                 # shell_node = node #orm.load_node(2582)
                 if self._model.fields[index] not in selected_fields:
-                    raise ValueError(self._model.fields[index], selected_fields)
+                    #raise ValueError(self._model.fields[index], selected_fields)
                     continue
                 if self._model.mode == "plot":
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
@@ -299,8 +314,10 @@ class UndiPlotWidget(ipw.VBox):
             select mutiple field values using CTRL+cursor.
             """
         )
+        fields = copy.deepcopy(self._model.fields)
+        fields.sort()
         field_magnitudes = ipw.SelectMultiple(
-            options=self._model.fields,
+            options=fields,
             value=self._model.selected_fields,
             disabled=False,
             layout=ipw.Layout(width="200px", height="100px"),
@@ -358,6 +375,10 @@ class UndiPlotWidget(ipw.VBox):
     # for the convergence analysis:
     def _on_plotting_quantity_change(self, change):
         self._update_plot()
+        
+    # if selected_muons in the findmuonwidget changes, we need to update the plot also here:
+    def _on_selected_indexes_change(self, change):
+        self._update_plot()
     
     def _on_add_KT_change(self, change = None):
         
@@ -377,7 +398,9 @@ class UndiPlotWidget(ipw.VBox):
                     self.fig.add_trace(self.KT_trace)
             else:
                 # remove the trace
-                if hasattr(self, "KT_trace"): self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
+                if hasattr(self, "KT_trace"): 
+                    self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
+                    delattr(self, "KT_trace")
         
     def init_undi_plots(self):
         self._update_plot()

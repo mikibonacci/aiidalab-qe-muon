@@ -57,11 +57,17 @@ class PolarizationModel(Model):
         trait=tl.Int(),
     )
     
-    def __init__(self, undi_nodes=[], KT_node=None, mode="plot"):
+    def __init__(self, node=None, undi_nodes=None, KT_node=None, mode="plot"):
+        
         self.mode = mode
-        self.nodes = [orm.load_node(node_pk) for node_pk in undi_nodes]
-        if len(self.nodes):
-            self.fetch_data()
+        
+        if node:
+            self.muon = node
+            
+        if undi_nodes:
+            self.nodes = [orm.load_node(node_pk) for node_pk in undi_nodes]
+            if len(self.nodes):
+                self.fetch_data()
         if KT_node:
             self.load_KT(KT_node)
 
@@ -108,7 +114,8 @@ class PolarizationModel(Model):
         we distinguish if nodes are shelljobs (done as in examples_aiida/shelljob.py) or not,
         i.e. in case we submitted pythonjobs via the aiida-workgraph plugin.
         """
-
+        if not hasattr(self, "nodes"):
+            self.nodes = self.muon.polarization.get_incoming().get_node_by_label('execution_count').called
         # workgraph case - always the case in standard situations (qe app usage)
         if "workgraph" in self.nodes[0].process_type:
             # this loops can be improved, for sure there is a smarter way to do this.
@@ -130,9 +137,9 @@ class PolarizationModel(Model):
                 descendants = (
                     main_node.base.links.get_outgoing().get_node_by_label(search).called
                 )
-                
+
                 self.muons[muon_index].results = [
-                    node.outputs.results.value for node in descendants
+                    node.outputs.results.get_list() for node in descendants
                 ]
                 
                 self.fields = [
@@ -177,6 +184,7 @@ class PolarizationModel(Model):
                 for res in self.results[0]
             ]
             self.selected_isotopes = list(range(len(self.isotopes)))
+
 
     def create_html_table(self, first_row=[]):
         """

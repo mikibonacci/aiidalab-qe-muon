@@ -39,7 +39,7 @@ class FindMuonModel(Model):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
         self.findmuon_data = export_findmuon_data(self.muon.findmuon)
         self.muon_index_list = self.findmuon_data["table"].index.tolist()
-        self.selected_muons = [self.muon_index_list[0]]
+        self.selected_muons = self.muon_index_list
 
     def select_structure(self):
         """Select a structure to be displayed.
