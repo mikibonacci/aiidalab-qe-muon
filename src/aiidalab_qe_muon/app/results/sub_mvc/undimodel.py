@@ -145,6 +145,7 @@ class PolarizationModel(Model):
                 self.fields = [
                     node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
                 ]  # mT
+                self.muons[muon_index].fields = self.fields
                 self.selected_fields = [
                     node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
                 ]  # mT

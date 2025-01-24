@@ -164,11 +164,10 @@ class UndiPlotWidget(ipw.VBox):
 
         for muon_index in selected_indexes:
             muon_index_string = f" (site {muon_index})" if len(selected_indexes) > 1 else ""
-            for index in range(len(self._model.muons[str(muon_index)].results)):
+            #for index in range(len(self._model.muons[str(muon_index)].results)):
+            for field in selected_fields:
+                index = self._model.muons[str(muon_index)].fields.index(field)
                 # shell_node = node #orm.load_node(2582)
-                if self._model.fields[index] not in selected_fields:
-                    #raise ValueError(self._model.fields[index], selected_fields)
-                    continue
                 if self._model.mode == "plot":
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"B<sub>ext</sub>={Bmod} mT"+muon_index_string
