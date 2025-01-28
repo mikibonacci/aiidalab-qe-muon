@@ -21,6 +21,7 @@ from aiidalab_qe_muon.app.utils_results import spinner_html
 
 class Setting(Panel):
     title = "Muon Settings"
+    identifier = "muonic"
 
     input_structure = tl.Instance(orm.StructureData, allow_none=True)
 

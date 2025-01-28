@@ -1,36 +1,35 @@
-from aiidalab_qe_muon.app.settings import Setting
-from aiidalab_qe_muon.app.structure import ImportMagnetism
+from aiidalab_qe.common.panel import PluginOutline
+
+from aiidalab_qe_muon.app.configuration.model import MuonConfigurationSettingsModel
+from aiidalab_qe_muon.app.configuration.view import MuonConfigurationSettingPanel
+from aiidalab_qe_muon.app.codes.mvc import (
+    MuonResourceSettingsModel,
+    MuonResourcesSettingsPanel,
+)
+from aiidalab_qe_muon.app.results.view import MuonResultsPanel
+from aiidalab_qe_muon.app.results.model import MuonResultsModel
 from aiidalab_qe_muon.app.workchain import workchain_and_builder
-from aiidalab_qe_muon.app.result import Result
+from aiidalab_qe_muon.app.structure_importer.structure import ImportMagnetism
 
-from aiidalab_qe.common.panel import OutlinePanel
 
-from aiidalab_qe.common.widgets import (
-    QEAppComputationalResourcesWidget,
-    PwCodeResourceSetupWidget,
-)
+class MuonPluginOutline(PluginOutline):
+    title = "Muon Spectroscopy (MUON)"
 
-MuonWorkChainPwCode = PwCodeResourceSetupWidget(
-    description="pw.x for muons",  # code for the PhononWorkChain workflow",
-    default_calc_job_plugin="quantumespresso.pw",
-)
 
-PpCalculationCode = QEAppComputationalResourcesWidget(
-    description="pp.x",
-    default_calc_job_plugin="quantumespresso.pp",
-)
-
-class Outline(OutlinePanel):
-    title = "Muon spectroscopy"
-
-property ={
-"outline": Outline,
-"importer":ImportMagnetism,
-"setting": Setting,
-"workchain": workchain_and_builder,
-"result": Result,
-"code": {
-    "pw_muons": MuonWorkChainPwCode,
-    "pp_code": PpCalculationCode,
+property = {
+    "outline": MuonPluginOutline,
+    "configuration": {
+        "panel": MuonConfigurationSettingPanel,
+        "model": MuonConfigurationSettingsModel,
     },
+    "resources": {
+        "panel": MuonResourcesSettingsPanel,
+        "model": MuonResourceSettingsModel,
+    },
+    "result": {
+        "panel": MuonResultsPanel,
+        "model": MuonResultsModel,
+    },
+    "workchain": workchain_and_builder,
+    "importer": ImportMagnetism,
 }

@@ -1,11 +1,16 @@
 """Implementation of the VibroWorkchain for managing the aiida-vibroscopy workchains."""
+
 from aiida.common import AttributeDict
-from aiida.engine import ToContext, WorkChain, calcfunction
-from aiida.orm import AbstractCode, Int, Float, Dict, Code, StructureData, load_code
+from aiida.engine import WorkChain
+from aiida import orm
 from aiida.plugins import WorkflowFactory
-from aiida_quantumespresso.utils.mapping import prepare_process_inputs
-from aiida_quantumespresso.common.types import ElectronicType, SpinType
-from aiida.engine import WorkChain, calcfunction, if_
+from aiida.engine import if_
+
+from aiida_workgraph import WorkGraph
+from aiida_workgraph.engine.workgraph import WorkGraphEngine
+from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
+    MultiSites,
+)
 
 
 MusconvWorkChain = WorkflowFactory("impuritysupercellconv")
@@ -31,6 +36,7 @@ def implant_input_validator(inputs, ctx=None):
 
 class ImplantMuonWorkChain(WorkChain):
     "WorkChain to compute muon stopping sites in a crystal."
+
     label = "muon"
 
     @classmethod
@@ -39,13 +45,16 @@ class ImplantMuonWorkChain(WorkChain):
         super().define(spec)
 
         spec.input(
-            "structure", valid_type=StructureData
+            "structure", valid_type=orm.StructureData
         )  # Maybe not needed as input... just in the protocols. but in this way it is not easy to automate it in the app, after the relaxation. So let's keep it for now.
 
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
-            exclude=("clean_workdir","structure"),  # AAA check this... maybe not needed.
+            exclude=(
+                "clean_workdir",
+                "structure",
+            ),  # AAA check this... maybe not needed.
             namespace_options={
                 "required": False,
                 "populate_defaults": False,
@@ -56,11 +65,37 @@ class ImplantMuonWorkChain(WorkChain):
             },
             # exclude=('symmetry')
         )
+        spec.input(
+            "implant_muon",
+            valid_type=bool,
+            default=True,
+            non_db=True,
+            help="Whether to implant the muon or not.",
+        )
+        spec.input(
+            "compute_polarization",
+            valid_type=bool,
+            default=True,
+            non_db=True,
+            help="Whether to compute the polarization or not.",
+        )
+
+        # I think the following is not needed, as we may want to just provide the structure and the fields, max_hdims
+        # and then initialise the workgraph with the structure and the fields and max_hdims.
+        # TOBE understood how to provide a given code (probably the computer... but I need the code)
+        # spec.input_namespace('undi_workgraph', dynamic=True)
 
         ###
         spec.outline(
             cls.setup,
-            cls.implant_muon,
+            if_(cls.need_implant)(
+                cls.prepare_implant,
+                cls.implant_muon,
+            ),
+            if_(cls.need_polarization)(
+                cls.prepare_polarization,
+                cls.compute_polarization,
+            ),
             cls.results,
         )
         ###
@@ -69,11 +104,20 @@ class ImplantMuonWorkChain(WorkChain):
             namespace="findmuon",
             namespace_options={
                 "required": False,
-                "help": "Outputs of the `PhononWorkChain`.",
+                "help": "Outputs of the `FindMuonWorkChain`.",
             },
         )
+        
+        
+        spec.output('polarization')
+        
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
+        spec.exit_code(
+            401,
+            "ERROR_POLARIZATION_FAILED",
+            message="The polarization calculation failed.",
+        )
         ###
         spec.inputs.validator = implant_input_validator
 
@@ -85,6 +129,8 @@ class ImplantMuonWorkChain(WorkChain):
         pseudo_family: str = "SSSP/1.2/PBE/efficiency",
         pp_code=None,
         protocol=None,
+        compute_findmuon: bool = True,
+        compute_polarization_undi: bool = True,
         overrides: dict = {},
         trigger=None,
         relax_musconv: bool = False,  # in the end you relax in the first step of the QeAppWorkchain.
@@ -109,7 +155,6 @@ class ImplantMuonWorkChain(WorkChain):
             sub processes that are called by this workchain.
         :return: a process builder instance with all inputs defined ready for launch.
         """
-        from aiida_quantumespresso.workflows.protocols.utils import recursive_merge
 
         if magmom and not pp_code:
             raise ValueError(
@@ -141,44 +186,117 @@ class ImplantMuonWorkChain(WorkChain):
         # If I don't pop here, when we set this builder as QeAppWorkChain builder attribute,
         # it will be validated and it will fail because it tries anyway to detect IMPURITY inputs...
         if sc_matrix:
-            builder.findmuon.pop('impuritysupercellconv')
+            builder.findmuon.pop("impuritysupercellconv")
         #    builder.findmuon.impuritysupercellconv.pwscf.pw.parameters = Dict({})
-            
+
         if pp_metadata:
             builder.findmuon.pp_metadata = pp_metadata
 
         builder.structure = structure
+        
+        builder.implant_muon = compute_findmuon
+        builder.compute_polarization = compute_polarization_undi
 
         return builder
 
     def setup(self):
         # key, class, outputs namespace.
-        self.ctx.workchain = FindMuonWorkChain
+        self.ctx.implant_muon = self.inputs.implant_muon
+        self.ctx.compute_polarization = self.inputs.compute_polarization
+        self.ctx.workchain_class = FindMuonWorkChain
+
+    def need_implant(self):
+        """Return True if the muon is not implanted,
+        i.e. we need to run the full WorkChain."""
+        # is False if only undi run. PP
+        # a smart check is to see if the structure contain as last element the muon, and if it contains
+        # the extra: muon_implanted == True, fixed in the settings (so we can trigger only the undi run).
+        # in the settings we need also a check that H is the only H....
+        return self.ctx.implant_muon
+
+    def prepare_implant(self):
+        return
 
     def implant_muon(self):
-        """Run a WorkChain for vibrational properties."""
+        """Run a WorkChain for to find muon rest site candidates."""
         # maybe we can unify this, thanks to a wise setup.
         inputs = AttributeDict(
-            self.exposed_inputs(self.ctx.workchain, namespace="findmuon")
+            self.exposed_inputs(self.ctx.workchain_class, namespace="findmuon")
         )
         inputs.metadata.call_link_label = "findmuon"
 
         inputs.structure = self.inputs.structure
 
-        future = self.submit(self.ctx.workchain, **inputs)
+        future = self.submit(self.ctx.workchain_class, **inputs)
         self.report(f"submitting `WorkChain` <PK={future.pk}>")
         self.to_context(**{"findmuon": future})
 
+    def need_polarization(self):
+        return self.ctx.compute_polarization
+
+    def prepare_polarization(self):
+        if self.ctx.implant_muon:
+            self.ctx.structure_group = self.get_structures_group_from_findmuon(self.ctx.findmuon)
+        else:  # we want only polarization, so use the input structure.
+            self.ctx.structure_group = {'0':self.inputs.structure}
+
+    def compute_polarization(self):
+        # this is a placeholder for the future.
+        # here we will submit the workgraph for the polarization estimation. Via Undi and KT.
+        # need to parse all the output structures, and loop on them.
+
+        # which code to use?
+        workgraph = MultiSites(structure_group=self.ctx.structure_group)
+        inputs = {
+            "wg": workgraph.to_dict(),
+            "metadata": {"call_link_label": "MultiSiteUndiPolarizationAndKT"},
+        }
+        process = self.submit(WorkGraphEngine, **inputs)
+        self.report(
+            f"submitting `Workgraph` for polarization calculation: <PK={process.pk}>"
+        )
+        self.to_context(workgraph=process)
+
     def results(self):
         """Inspect all sub-processes."""
-        workchain = self.ctx["findmuon"]
+        workchain = self.ctx.get("findmuon", None)
+        polarization = self.ctx.get("workgraph", None)
 
-        if not workchain.is_finished_ok:
-            self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
-            return self.exit_codes.ERROR_WORKCHAIN_FAILED
+        if workchain:
+            if not workchain.is_finished_ok:
+                self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
+                return self.exit_codes.ERROR_WORKCHAIN_FAILED
 
-        self.out_many(
-            self.exposed_outputs(
-                self.ctx["findmuon"], self.ctx.workchain, namespace="findmuon"
-            )
-        )
+            if self.ctx.implant_muon:
+                self.out_many(
+                    self.exposed_outputs(
+                        workchain,
+                        self.ctx.workchain_class,
+                        namespace="findmuon",
+                    )
+                )
+
+        # should we output the wgraph results here?
+        # Yes, we should collect them in order to easily recover the site index.
+        if polarization:
+            if not polarization.is_finished_ok:
+                self.report(f"the child WorkGraph with <PK={polarization.pk}> failed")
+                return self.exit_codes.ERROR_POLARIZATION_FAILED
+            else:
+                self.out(
+                        "polarization",
+                        polarization.outputs.execution_count,
+                    )
+                self.report(f"Undi calculation was successful.")
+                
+
+    @staticmethod
+    def get_structures_group_from_findmuon(findmuon: FindMuonWorkChain):
+        """Return the structures group from the FindMuonWorkChain."""
+        structure_group = {}
+        for idx, uuid in findmuon.outputs.all_index_uuid.get_dict().items():
+            if idx in findmuon.outputs.unique_sites.get_dict().keys():
+                relaxwc = orm.load_node(uuid)
+                structure_group[idx] = relaxwc.outputs.output_structure
+                relaxwc.outputs.output_structure.base.extras.set("muon_index", str(idx))
+        return structure_group
