@@ -130,14 +130,14 @@ class UndiPlotWidget(ipw.VBox):
             self.children = [
                 description,
                 self.fig,
+                selected_indexes_widget,
                 ipw.HBox(
                     [
-                        ipw.HTML("Plot options:"),
+                        ipw.HTML("<b>Plot options:</b>"),
                         download_data_button,
                     ],
                     layout=ipw.Layout(justify_content="space-between"),
                 ),
-                selected_indexes_widget,
                 self.plot_box,
                 self.info_on_the_approximations, # I will render it in the MultipleUndiMVC
             ]
