@@ -49,6 +49,20 @@ class UndiPlotWidget(ipw.VBox):
     def render(self):
         if self.rendered:
             return
+        
+        description = ipw.HTML(
+            """
+            <h3>Polarization data</h3>
+            Here you can see the polarization data for the detected muon stopping sites. <br>
+            It is possible to select several quantities:
+            <ul>
+            <li>sample orientation;</li>
+            <li>magnetic field directions and magnitudes;</li>
+            <li>Kubo-Toyabe plot.</li>
+            </ul>
+            Details on the approximations and code used, the isotope combinations and the convergence analysis are provided below.
+            """
+        )
 
         self._initial_view()
 
@@ -114,6 +128,7 @@ class UndiPlotWidget(ipw.VBox):
         
 
             self.children = [
+                description,
                 self.fig,
                 ipw.HBox(
                     [

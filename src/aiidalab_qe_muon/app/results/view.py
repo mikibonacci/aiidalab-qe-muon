@@ -60,13 +60,17 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
 
             self.children += (undi_widget,)
         
-        for child in self.children:
-            child.render()
-            
         if needs_findmuon_rendering and needs_undi_rendering:
             ipw.dlink(
                 (muon_model, "selected_muons"),
                 (undi_model, "selected_indexes"),
             )
+            self.children = (muon_widget, ipw.HTML("<br>"), undi_widget)
             
+        for index, child in enumerate(self.children):
+            if index == 1 and len(self.children) > 2: 
+                continue # we skip the HTML rendering if there are more than 2 children (i.e. the undi_widget is present)
+            else:
+                child.render()
+        
         self.rendered = True

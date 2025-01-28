@@ -39,12 +39,11 @@ class FindMuonWidget(ipw.VBox):
             <h3>Muon resting sites</h3>
             Inspect the results of the search for muon resting sites. <br
             <ul>
-            <li>For each muon site, the table and plot show:
+            <li>For each muon site, the table and plot show several quantities, such as:</li>
                 <ul>
-                <li>Total energy</li>
-                <li>Magnetic field at the muon site (if computed)</li>
-                <li>Muon site index</li>
-                <li>And more</li>
+                <li>Total energy;</li>
+                <li>Magnetic field at the muon site (if computed);</li>
+                <li>Muon site index.</li>
                 </ul>
             </li>
             <li>Click on a row in the table to inspect the corresponding muon site in the structure view.</li>
