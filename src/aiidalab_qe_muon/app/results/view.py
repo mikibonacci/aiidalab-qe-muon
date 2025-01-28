@@ -9,6 +9,8 @@ from aiidalab_qe_muon.app.results.sub_mvc.findmuonwidget import FindMuonWidget
 from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel as UndiModel
 from aiidalab_qe_muon.app.results.sub_mvc.undiwidget import UndiPlotWidget as UndiWidget
 
+from aiidalab_qe_muon.app.results.sub_mvc.multiple_undi_mvc import MultipleUndiMVC
+
 import ipywidgets as ipw
 
 class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
@@ -44,12 +46,19 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
         
         needs_undi_rendering = self._model.needs_undi_rendering()
         if needs_undi_rendering:
-            undi_model = UndiModel()
+            undi_model = UndiModel(mode="plot")
             undi_widget = UndiWidget(
                 model=undi_model,
                 node=muon_node,
             )
-            self.children += (undi_widget,)
+            
+            conv_undi_model = UndiModel(mode="analysis")
+            conv_undi_widget = UndiWidget(
+                model=conv_undi_model,
+                node=muon_node,
+            )
+
+            self.children += (MultipleUndiMVC(undi_widget, conv_undi_widget),)
         
         for child in self.children:
             child.render()

@@ -129,7 +129,7 @@ def MultiSites(
             structure=structure,
             B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
             max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
-            convergence_check=i==0,  # maybe the convergence can be done for only one site...
+            convergence_check=i==0,  # maybe the convergence can be done for only one site, as done here now.
             algorithm='fast',
             name=f"polarization_structure_{idx}",
         )

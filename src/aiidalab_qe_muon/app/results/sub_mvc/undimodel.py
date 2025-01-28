@@ -115,7 +115,7 @@ class PolarizationModel(Model):
         i.e. in case we submitted pythonjobs via the aiida-workgraph plugin.
         """
         if not hasattr(self, "nodes"):
-            self.nodes = self.muon.polarization.get_incoming().get_node_by_label('execution_count').called
+            self.nodes = self.muon.polarization.base.links.get_incoming().get_node_by_label('execution_count').called
         # workgraph case - always the case in standard situations (qe app usage)
         if "workgraph" in self.nodes[0].process_type:
             # this loops can be improved, for sure there is a smarter way to do this.
@@ -124,6 +124,7 @@ class PolarizationModel(Model):
             
             for muon in self.nodes: # this need to be the called of the MultiSites task.
                 
+                if self.mode == "analysis" and self.nodes.index(muon) > 0: break
                 #muon_index = muon.base.extras.get("muon_index", 0)
                 muon_index = muon.base.attributes.all.get("metadata_inputs",{}).get("metadata",{}).get("call_link_label","0").replace("polarization_structure_","")
                 self.muons[muon_index] = AttributeDict()
@@ -149,8 +150,9 @@ class PolarizationModel(Model):
                 self.selected_fields = [
                     node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
                 ]  # mT
+                
                 self.max_hdims = [
-                    node.inputs.function_inputs.max_hdim.value for node in descendants
+                    int(node.inputs.function_inputs.max_hdim.value) for node in descendants
                 ]
                 
                 self.isotopes = [

@@ -159,16 +159,21 @@ class UndiPlotWidget(ipw.VBox):
         self.fig.data = ()
         direction = self._model.directions
         field_direction = self._model.field_direction
-        selected_fields = self._model.selected_fields
+        if self._model.mode == "plot":
+            quantity_to_iterate = self._model.selected_fields
+        else:
+            quantity_to_iterate = self._model.max_hdims
         selected_indexes = self._model.selected_indexes
+        ylabel=None
 
         for muon_index in selected_indexes:
+            
             muon_index_string = f" (site {muon_index})" if len(selected_indexes) > 1 else ""
             #for index in range(len(self._model.muons[str(muon_index)].results)):
-            for field in selected_fields:
-                index = self._model.muons[str(muon_index)].fields.index(field)
+            for value in quantity_to_iterate:
                 # shell_node = node #orm.load_node(2582)
                 if self._model.mode == "plot":
+                    index = self._model.muons[str(muon_index)].fields.index(value)
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"B<sub>ext</sub>={Bmod} mT"+muon_index_string
                     ydata = self._model.muons[str(muon_index)].data["y"][field_direction][index][
@@ -177,6 +182,7 @@ class UndiPlotWidget(ipw.VBox):
                     ylabel = "P(t)"
                     title = None
                 elif self._model.mode == "analysis":
+                    index = self._model.max_hdims.index(value)
                     to_be_plotted = self._model.plotting_quantity
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
@@ -205,13 +211,10 @@ class UndiPlotWidget(ipw.VBox):
                         line=dict(width=2),
                     ),
                 )
-        
-        if self._model.mode == "analysis":
-            self.fig.update_layout(
-                yaxis=dict(title=ylabel),
-            )
+                self.fig.update_layout(yaxis=dict(title=ylabel))
                 
         if not self.rendered:
+            title = None
             self.fig.update_layout(
                 barmode="overlay",
                 yaxis=dict(title=ylabel),
