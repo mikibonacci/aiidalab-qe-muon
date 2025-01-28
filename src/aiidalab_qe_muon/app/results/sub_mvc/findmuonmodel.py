@@ -25,7 +25,7 @@ class FindMuonModel(Model):
     selected_muons = tl.List(
         trait=tl.Int(),
     )
-    selected_view_mode = tl.Int(0)
+    selected_view_mode = tl.Int(1)
     structure = tl.Union(
         [
             tl.Instance(ase.Atoms),
@@ -34,6 +34,7 @@ class FindMuonModel(Model):
         allow_none=True,
     )
     html_table = tl.Unicode("")
+    table_data = tl.List(tl.List())
     
     def fetch_data(self):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
@@ -48,7 +49,7 @@ class FindMuonModel(Model):
         Otherwise, we show the relaxed supercell with the single selected site.
         And then in the view we select only the one we want to inspect.
         """
-        if len(self.muon_index_list) == 1:
+        if len(self.muon_index_list) == 1 and self.selected_view_mode == 0:
             self.structure = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"])
         elif len(self.selected_muons) == 1 and self.selected_view_mode == 0:
             self.structure = orm.load_node(self.findmuon_data["table"].loc[self.selected_muons[0],"structure_pk"])
@@ -93,12 +94,19 @@ class FindMuonModel(Model):
                 
         return self.data_plot
     
-    def _generate_html_table(self,) -> str:
-        """Generate an html table from the selected data.
+    def _generate_table_data(self,) -> str:
+        """Generate a table from the selected data.
         
         This method is called by the controller to get the html table.
         """
-        self.html_table = self.findmuon_data["table"].loc[self.selected_muons].to_html()
+        #self.html_table = self.findmuon_data["table"].loc[self.selected_muons].to_html()
+        #self.html_table = self.findmuon_data["table"].to_html()
+        data = [[self.convert_label_to_html(entry) for entry in self.findmuon_data["table"].columns.to_list()]]
+        #data[-1].pop(-3)
+        for index in self.findmuon_data["table"].index:
+            data.append(self.findmuon_data["table"].loc[index].to_list())
+            #data[-1].pop(-3)
+        self.table_data = data
         
     def _prepare_data_for_download(self) -> str:
         """Prepare the data for download.

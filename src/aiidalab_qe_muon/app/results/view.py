@@ -9,8 +9,6 @@ from aiidalab_qe_muon.app.results.sub_mvc.findmuonwidget import FindMuonWidget
 from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel as UndiModel
 from aiidalab_qe_muon.app.results.sub_mvc.undiwidget import UndiPlotWidget as UndiWidget
 
-from aiidalab_qe_muon.app.results.sub_mvc.multiple_undi_mvc import MultipleUndiMVC
-
 import ipywidgets as ipw
 
 class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
@@ -57,8 +55,10 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
                 model=conv_undi_model,
                 node=muon_node,
             )
+            
+            undi_widget.convergence_undi_widget = conv_undi_widget
 
-            self.children += (MultipleUndiMVC(undi_widget, conv_undi_widget),)
+            self.children += (undi_widget,)
         
         for child in self.children:
             child.render()

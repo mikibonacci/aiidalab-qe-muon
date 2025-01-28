@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 
 from aiidalab_qe_muon.app.results.sub_mvc.findmuonmodel import FindMuonModel
 
-
+from aiidalab_qe.common.widgets import TableWidget
 from aiidalab_qe.common.widgets import LoadingWidget
 
 from aiidalab_widgets_base.viewers import StructureDataViewer
@@ -35,22 +35,46 @@ class FindMuonWidget(ipw.VBox):
         
         self._initial_view() # fetch data and maybe some initial choice (if only one site, switch...)
         
+        description = ipw.HTML("""
+            <h3>Muon resting sites</h3>
+            Inspect the results of the search for muon resting sites. <br
+            <ul>
+            <li>For each muon site, the table and plot show:
+                <ul>
+                <li>Total energy</li>
+                <li>Magnetic field at the muon site (if computed)</li>
+                <li>Muon site index</li>
+                <li>And more</li>
+                </ul>
+            </li>
+            <li>Click on a row in the table to inspect the corresponding muon site in the structure view.</li>
+            <li>Click on the "Visualize all sites in the unit cell" checkbox to visualize all muon sites in the unit cell.</li>
+            </ul>
+        """)
+        
         selected_muons = ipw.SelectMultiple(
-                description="Select muon sites:",
-                options=self._model.muon_index_list,
-                value=[self._model.muon_index_list[0]],
-            )
+            options=self._model.muon_index_list,
+            value=self._model.muon_index_list,
+            layout=ipw.Layout(width='50%')
+        )
         ipw.link(
             (selected_muons, "value"),
             (self._model, "selected_muons"),
         )
         selected_muons.observe(self._on_selected_muons_change, names="value")
         
-        select_all_button = ipw.Button(
-            description="Select all",
+        self.select_all_button = ipw.Checkbox(
+            #description="Visualize all sites in the unit cell",
             button_style="primary",
+            value=True,
+            layout=ipw.Layout(width='50%'),
         )
-        select_all_button.on_click(self._select_all)
+        ipw.dlink(
+            (self.select_all_button, "value"),
+            (self._model, "selected_view_mode"),
+            lambda value: 1 if value else 0,
+        )
+        self.select_all_button.observe(self._select_all, names="value")
         
         self.structure_view_container = ipw.VBox(
             children=[
@@ -60,13 +84,18 @@ class FindMuonWidget(ipw.VBox):
                 flex="1",
             ),
         )
+        #self.structure_view_container.children[0].observe(
+        #    self._on_displayed_selection_change, 
+        #    names="displayed_selection"
+        #    )
         
-        table = ipw.HTML()
+        self.table = TableWidget(layout=ipw.Layout(width='100%'))
         ipw.dlink(
-            (self._model, "html_table"), 
-            (table, "value"),
+            (self._model, "table_data"), 
+            (self.table, "data"),
         )
         self._update_table()
+        self.table.observe(self._on_selected_rows_change,"selected_rows")
         
         download_button = ipw.Button(
             description="Download Table", 
@@ -77,15 +106,28 @@ class FindMuonWidget(ipw.VBox):
         download_button.on_click(self.download_data)
         
         self.barplot = go.FigureWidget()
+        self.barplot_container = ipw.VBox([self.barplot])
         self._update_barplot()
         
         self.children = [
-            selected_muons,
-            select_all_button,
+            ipw.HBox([
+                description,
+                ipw.VBox([
+                    ipw.HTML("Select muon indexes:"),
+                    selected_muons,
+                    ipw.HBox(
+                        [
+                            ipw.HTML("Visualize all sites in the unit cell: ", layout=ipw.Layout(width="100%"),),
+                            self.select_all_button
+                        ],
+                        ),
+                    ],
+                    ),
+                ]),
             self.structure_view_container,
-            table,
+            self.table,
             download_button,
-            self.barplot,
+            self.barplot_container,
         ]
         
         self.rendered = True
@@ -98,24 +140,52 @@ class FindMuonWidget(ipw.VBox):
         self._update_structure_view()
         self._update_picked_atoms()
         self._update_barplot()
-        self._update_table()
+        #self._update_table()
+        
+    def _on_selected_rows_change(self, change):
+        self._model.selected_muons = [
+            int(self._model.findmuon_data["table"].iloc[index].muon_index) # because are store as strings!
+            for index in self.table.selected_rows
+            ]
+        
+    def _on_displayed_selection_change(self, change):
+        if self.select_all_button.value:
+            self._model.selected_muons = [
+                self._model.findmuon_data["table"][self._model.findmuon_data["table"].muon_index_global_unitcell == index].muon_index.values
+                for index in self.structure_view_container.children[0].displayed_selection
+                ]
         
     def _select_all(self, _=None):
-        self._model.selected_muons = self._model.muon_index_list
+        
+        if self.select_all_button.value:
+            self._model.selected_muons = self._model.muon_index_list
     
     def _update_structure_view(self, _=None):
         self._model.select_structure() # switch between the structure to be displayed
-        self.structure_view_container.children = [StructureDataViewer(self._model.structure)]
+        #self.structure_view_container.children = [StructureDataViewer(self._model.structure)]
+        self.structure_view_container.children[0].structure = self._model.structure
     
     def _update_picked_atoms(self, _=None):
-        if len(self._model.selected_muons) > 1 and len(self._model.selected_muons) < len(self._model.muon_index_list):
-            self.structure_view_container.children[0].displayed_selection = [self.structure.tags[i] for i in self._model.selected_muons]
+        if self.select_all_button.value:
+            selected_muons = [
+                self._model.findmuon_data["table"].loc[index_selected].muon_index_global_unitcell - 1
+                for index_selected in self._model.selected_muons
+                ]
+            self.structure_view_container.children[0].displayed_selection = selected_muons
         else:
             self.structure_view_container.children[0].displayed_selection = []
             
     def _update_barplot(self, _=None):
         
         data_to_plot = self._model.get_data_plot() # to have more compact code below
+        
+        if not "B_T_norm" in data_to_plot["entry"]:
+            # hide the figure and return
+            self.barplot_container.layout.display = "none"
+            self.rendered = True
+            return
+            
+        # if not B field is there, we can also avoid to render it.
         if not self.rendered:
             for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
                 
@@ -175,8 +245,7 @@ class FindMuonWidget(ipw.VBox):
                 side="right",
                 ),
             )
-            
-                
+                    
         elif self.rendered:
             data_to_plot = self._model.get_data_plot()
             for i, (entry, color, data_y) in enumerate(zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"])):
@@ -184,7 +253,7 @@ class FindMuonWidget(ipw.VBox):
                 self.barplot.data[i].y = data_y
            
     def _update_table(self, _=None):
-        self._model._generate_html_table()
+        self._model._generate_table_data()
         
     def download_data(self, _=None):
         """Function to download the data."""

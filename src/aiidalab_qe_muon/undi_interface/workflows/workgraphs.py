@@ -31,7 +31,8 @@ def multiple_undi_analysis(
     for B_mod in B_mods:
         for max_hdim in max_hdims:
             tmp = wg.add_task(
-                undi_run,
+                "PythonJob",
+                function=undi_run,
                 structure=structure,
                 B_mod=B_mod,
                 max_hdim=max_hdim,
@@ -40,7 +41,14 @@ def multiple_undi_analysis(
                 algorithm=algorithm,
                 angular_integration_steps=angular_integration_steps,
                 metadata=metadata,
-                name=f"iter_{t}"
+                name=f"iter_{t}",
+                deserializers={
+                    "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms"
+                },
+                # override the default `AtomsData`
+                serializers={
+                    "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
+                },
             )
             tmp.set_context({f"tmp_out.iter_{t}": "results"})
             t+=1
@@ -78,10 +86,18 @@ def UndiAndKuboToyabe(
         }
     }
     KT_task = wg.add_task(
-        compute_KT,
-        structure=structure,
+        "PythonJob",
         name="KuboToyabe_run",
+        function=compute_KT,
+        structure=structure,
         metadata=metadata,
+        deserializers={
+            "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms"
+        },
+        # override the default `AtomsData`
+        serializers={
+            "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
+        },
     )
     KT_task.set_context({f"res.KT_task": "results"})
     
@@ -128,7 +144,7 @@ def MultiSites(
             UndiAndKuboToyabe,
             structure=structure,
             B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
-            max_hdims=[10**2, 10**3, 10**4],  # for now, hardcoded.
+            max_hdims=[10**2, 10**4, 10**6, 10**8],  # for now, hardcoded.
             convergence_check=i==0,  # maybe the convergence can be done for only one site, as done here now.
             algorithm='fast',
             name=f"polarization_structure_{idx}",

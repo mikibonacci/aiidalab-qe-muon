@@ -21,15 +21,16 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
         ],
         "muons": {},
     }
-    for idx, uuid in findmuon_output_node.all_index_uuid.get_dict().items():
+    for i, (idx, uuid) in enumerate(findmuon_output_node.all_index_uuid.get_dict().items(), start=1):
         if idx in findmuon_output_node.unique_sites.get_dict().keys():
             relaxwc = orm.load_node(uuid)
             bars["muons"][idx] = {}
             bars["muons"][idx]["tot_energy"] = (
-                relaxwc.outputs.output_parameters.get_dict()["energy"]
+                np.round(relaxwc.outputs.output_parameters.get_dict()["energy"],7)
             )
             bars["muons"][idx]["structure_pk"] = relaxwc.outputs.output_structure.pk
             bars["muons"][idx]["muon_index"] = idx
+            bars["muons"][idx]["muon_index_global_unitcell"] = len(relaxwc.outputs.output_structure.sites) - 1 + i # we start counting from 1. 
             bars["muons"][idx]["muon_position_cc"] = list(
                 np.round(
                     np.array(
@@ -71,7 +72,9 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
     # sort
     df = df.sort_values("tot_energy", axis=1)
     # deltaE
-    df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min()
+    # round deltaE to 7 digits
+    df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min() 
+    df.loc["delta_E"] = np.round(df.loc["delta_E"], 7)
     
     # then swap row and columns (for sure can be done already above)
     df = df.transpose()

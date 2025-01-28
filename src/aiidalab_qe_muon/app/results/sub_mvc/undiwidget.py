@@ -23,6 +23,17 @@ class UndiPlotWidget(ipw.VBox):
     Args:
         model (PolarizationModel): The model that contains the data and the logic.
                                    Needs to already have loaded the nodes inside it.
+                                   
+    NB: you can put, as attribute, before rendering, the convergence_undi_widget, which is simply a UndiPlotWidget
+    with the convergence analysis of the polarization data. It can be obtained from the model doing:
+    
+    ```python
+    conv_undi_model = UndiModel(mode="analysis")
+    convergence_undi_widget = UndiPlotWidget(
+        model=conv_undi_model,
+        node=muon_node,
+    )
+    ```
     """
 
     def __init__(self, model: PolarizationModel, node, **kwargs):
@@ -83,6 +94,12 @@ class UndiPlotWidget(ipw.VBox):
                 0, "Details on the approximations"
             )
             self.info_on_the_approximations.set_title(1, "Isotopes combinations")
+            
+            # I don't like so much this logic, but fine:
+            if self.convergence_undi_widget:
+                self.info_on_the_approximations.children += (self.convergence_undi_widget,)
+                self.info_on_the_approximations.set_title(2, "Convergence analysis")
+                
             self.info_on_the_approximations.selected_index = None  # Collapse by default
 
             download_data_button = ipw.Button(
@@ -107,8 +124,11 @@ class UndiPlotWidget(ipw.VBox):
                 ),
                 selected_indexes_widget,
                 self.plot_box,
-                self.info_on_the_approximations,
+                self.info_on_the_approximations, # I will render it in the MultipleUndiMVC
             ]
+            if self.convergence_undi_widget:
+                self.convergence_undi_widget.render()
+            
 
             
 

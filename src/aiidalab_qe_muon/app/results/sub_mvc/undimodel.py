@@ -225,12 +225,22 @@ class PolarizationModel(Model):
                 csv_dict[f"B={Bvalue}_mT"] = self.muons[str(muon_index)].data["y"][
                     self.field_direction
                 ][i][f"signal_{self.directions}"]
-
+                
             df = pd.DataFrame.from_dict(csv_dict)
             data = base64.b64encode(df.to_csv(index=True).encode()).decode()
             filename = f"muon_{muon_index}_dir_{self.directions}_{self.field_direction}.csv"
-            
             data_file_list.append((data, filename))
+            
+            # we download KT if is there and is plotted.
+            if hasattr(self.muons[str(muon_index)], "KT_output") and self.plot_KT:
+                csv_dict_kt = {"t (μs)": self.muons[str(muon_index)].KT_output["t"]}
+                csv_dict_kt["Kubo-Toyabe"] = self.muons[str(muon_index)].KT_output["KT"]
+                
+                df = pd.DataFrame.from_dict(csv_dict_kt)
+                data = base64.b64encode(df.to_csv(index=True).encode()).decode()
+                filename = f"muon_{muon_index}_Kubo_Toyabe.csv"
+                data_file_list.append((data, filename))
+            
             
         return data_file_list
     
