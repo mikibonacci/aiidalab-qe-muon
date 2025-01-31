@@ -60,7 +60,7 @@ class UndiPlotWidget(ipw.VBox):
             <li>magnetic field directions and magnitudes;</li>
             <li>Kubo-Toyabe plot.</li>
             </ul>
-            Details on the approximations and code used, the isotope combinations and the convergence analysis are provided below.
+            Details on the approximations used, the isotope combinations and the convergence analysis are provided below.
             """
         )
 
@@ -89,15 +89,12 @@ class UndiPlotWidget(ipw.VBox):
             self.info_on_the_approximations = ipw.Accordion(
                 children=[
                     ipw.HTML(
-                        """
-                        The approximations used in this plots are: ... <br>
-                        You can find more information on the UNDI code here: ...
-                        """
+                        self._model.details_on_the_approximations
                     ),
                     ipw.VBox(
                         [
                             ipw.HTML(
-                                "The average is performed considering the probabilities..."
+                                self._model.details_on_the_isotope_combinations
                             ),
                             self.cluster_isotopes_table,
                         ],
@@ -148,6 +145,18 @@ class UndiPlotWidget(ipw.VBox):
             
 
         else:
+            
+            description = ipw.HTML(
+                """
+                This section allows you to examine the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>),
+                which is used to construct the Hamiltonian for muon-nuclei interactions. For more details, please refer to the 
+                <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
+                - A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, the same value used in the above 'Polarization data' plot. <br>
+                - If the results are not converging or require further refinement, please contact the developers via the 
+                <a href="https://github.com/mikibonacci/aiidalab-qe-muon" target="_blank">GitHub page</a>.
+                """
+            )
+            
             self.plotting_quantity = ipw.ToggleButtons(
                 options=[
                     ("P(t)", "P"),
@@ -162,19 +171,10 @@ class UndiPlotWidget(ipw.VBox):
             )
             self.plotting_quantity.observe(self._on_plotting_quantity_change, "value")
 
-
             self.children = [
+                description,
                 self.fig,
                 self.plotting_quantity,
-                ipw.HTML(
-                    """
-                                - Here you can check the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>)
-                                which is used to build the Hamiltonian containing the muon-nuclei interactions. For more details, please have a look here... <br>
-                                - We considered a reference P<sub>r</sub>(t) computed using max<sub>hdim</sub>=10<sup>9</sup> (the same value used in the the 'Polarization plot' tab.). <br>
-                                - If you think the results are not at convergence and/or need further improvement, you can contact the developers from the corresponding
-                                <a href="https://github.com/mikibonacci/aiidalab-qe-muon" target="_blank">github page</a>.
-                                """
-                ),
             ]
 
         self.rendered = True

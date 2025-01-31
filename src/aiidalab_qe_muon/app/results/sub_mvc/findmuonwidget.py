@@ -32,7 +32,7 @@ class FindMuonWidget(ipw.VBox):
     def render(self):
         if self.rendered:
             return
-        
+                
         self._initial_view() # fetch data and maybe some initial choice (if only one site, switch...)
         
         description = ipw.HTML("""
@@ -66,7 +66,7 @@ class FindMuonWidget(ipw.VBox):
             #description="Visualize all sites in the unit cell",
             button_style="primary",
             value=True,
-            layout=ipw.Layout(width='50%'),
+            layout=ipw.Layout(width='50%', margin='0px 0px 0px 0px'),
         )
         ipw.dlink(
             (self.select_all_button, "value"),

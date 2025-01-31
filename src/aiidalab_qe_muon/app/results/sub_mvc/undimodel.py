@@ -57,6 +57,34 @@ class PolarizationModel(Model):
         trait=tl.Int(),
     )
     
+    details_on_the_approximations = (
+        """
+        The polarization spectra are computed using the <b><a href="https://undi.readthedocs.io/en/latest/index.html"
+        target="_blank">UNDI</b></a> package (mUon Nuclear Dipolar Interaction) code (<a href="https://doi.org/10.1016/j.cpc.2020.107719"
+        target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>), 
+        a package to obtain the time evolution of the muon spin polarization originating from its 
+        interaction with nuclear magnetic dipoles in standard experimental conditions (i.e. when thermal 
+        energy is much larger that nuclear interactions). <br>
+        Some important approximations are made in the computation of the polarization spectra:
+        <ul>
+            <li> We compute the polarization function using the Celio's approximated approach, via the Trotter decomposition formula for bounded operators 
+            (<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.56.2720"target="_blank">Celio, Phys. Rev. Lett. 56, 2720, 1986</a>). The exact (and much more computationally
+            expensive) solution is usually in very good agreement with this approximation.</li>
+            <li> UNDI assumes that the spin polarization is along 
+                and that observation is done along the same direction. You must rotate the sample definition accordingly 
+                (there is a function to do that). Initial polarization along arbitrary directions is 
+                presently implemented only in Celio’s method. </li>
+            <li> As a consequence, in general, an external field applied along 
+                is a Longitudinal Field (LF) while external fields in the plane perpendicular to 
+                are Transverse Fields (TF). </li>
+        </ul>
+        """
+    )
+    
+    details_on_the_isotope_combinations = (
+        "The polarization spectra are computed considering a weighted average of the isotopes combinations, with respect to their relative probability (abundance)."
+    )
+    
     def __init__(self, node=None, undi_nodes=None, KT_node=None, mode="plot"):
         
         self.mode = mode
