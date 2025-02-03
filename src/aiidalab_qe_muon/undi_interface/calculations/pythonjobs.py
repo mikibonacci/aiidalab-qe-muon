@@ -1,3 +1,6 @@
+from aiida_workgraph import task
+
+@task.pythonjob(outputs=["results"])
 def undi_run(
     structure, # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
     B_mod = 0.0,
@@ -21,7 +24,7 @@ def undi_run(
 
     return {"results": results}
 
-
+@task.pythonjob(outputs=["results"])
 def compute_KT(
     structure,  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
 ):

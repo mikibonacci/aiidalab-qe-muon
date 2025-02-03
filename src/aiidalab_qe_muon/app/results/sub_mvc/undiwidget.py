@@ -57,7 +57,7 @@ class UndiPlotWidget(ipw.VBox):
             It is possible to select several quantities:
             <ul>
             <li>sample orientation;</li>
-            <li>magnetic field directions and magnitudes;</li>
+            <li>magnetic field magnitudes and directions (we consider the muon spin along z);</li>
             <li>Kubo-Toyabe plot.</li>
             </ul>
             Details on the approximations used, the isotope combinations and the convergence analysis are provided below.
@@ -151,9 +151,12 @@ class UndiPlotWidget(ipw.VBox):
                 This section allows you to examine the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>),
                 which is used to construct the Hamiltonian for muon-nuclei interactions. For more details, please refer to the 
                 <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
-                - A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, the same value used in the above 'Polarization data' plot. <br>
-                - If the results are not converging or require further refinement, please contact the developers via the 
-                <a href="https://github.com/mikibonacci/aiidalab-qe-muon" target="_blank">GitHub page</a>.
+                <ul>
+                    <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, 
+                    the same value used in the above 'Polarization data' plot; </li>
+                    <li> If the results are not converging or require further refinement, please contact the developers via the 
+                <a href="https://github.com/mikibonacci/aiidalab-qe-muon#contact" target="_blank">GitHub page</a>.</li>
+            </ul>
                 """
             )
             
@@ -220,7 +223,7 @@ class UndiPlotWidget(ipw.VBox):
                     index = self._model.max_hdims.index(value)
                     to_be_plotted = self._model.plotting_quantity
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
-                    label = f"max<sub>hdim</sub> = {self._model.max_hdims[index]}"
+                    label = f"max<sub>hdim</sub> = 10<sup>{np.log10(self._model.max_hdims[index])}</sup>"
 
                     highest_res = self._model.muons[str(muon_index)].results[-1]
 

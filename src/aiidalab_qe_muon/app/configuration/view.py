@@ -359,7 +359,17 @@ class MuonConfigurationSettingPanel(
         # we display the findmuon settings only if the compute_findmuon is selected
         # we link the display of each
 
-        self.polarization_settings = [] # TODO: add polarization settings
+        self.polarization_settings = [
+            ipw.HTML(
+                """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
+                <h5><b>Polarization</b></h5>
+                The polarization is computed for the muon site(s) found in the previous 
+                step (or provided in the structure as last atom, using H). We compute the 
+                polarization for different values of external magnetic field (0, 2, 4, 6, 8 mT) and different orientation of the sample. <br>
+                The third lattice vector of the structure should be aligned with the z cartesian direction.
+                """
+                )
+            ] # TODO: add polarization settings
         
         self.children = general_settings + self.findmuon_settings + self.polarization_settings
         self.rendered = True

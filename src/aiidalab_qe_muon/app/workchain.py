@@ -48,6 +48,7 @@ def get_builder(codes, structure, parameters):
     protocol = parameters["workchain"].pop("protocol", "fast")
     pw_code = codes.get("pw_muons")["code"]
     pp_code = codes.get("pp_muons")["code"]
+    undi_code = codes.get("undi_code")["code"]
 
     # TODO: magmoms are not parsed up to now!!!
     magmom = parameters["muonic"].pop("magmoms", None)
@@ -106,6 +107,8 @@ def get_builder(codes, structure, parameters):
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_muons_code=pw_code,
         pp_code=pp_code,
+        undi_code=undi_code,
+        undi_metadata=create_resource_config(codes.get("undi_code")),
         #pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
