@@ -56,8 +56,8 @@ class UndiPlotWidget(ipw.VBox):
             Here you can see the polarization data for the detected muon stopping sites. <br>
             It is possible to select several quantities:
             <ul>
-            <li>sample orientation;</li>
-            <li>magnetic field magnitudes and directions (we consider the muon spin along z);</li>
+            <li>sample orientation (considering as reference its third lattice vector);</li>
+            <li>magnetic field magnitudes and directions (we consider the muon spin directed along the z axis);</li>
             <li>Kubo-Toyabe plot.</li>
             </ul>
             Details on the approximations used, the isotope combinations and the convergence analysis are provided below.
@@ -292,7 +292,7 @@ class UndiPlotWidget(ipw.VBox):
     ):
         sample_description = ipw.HTML(
             """
-            <b>Sample direction</b>
+            <b>Sample orientation</b>
             """,
             layout=ipw.Layout(
                 width="80%",
