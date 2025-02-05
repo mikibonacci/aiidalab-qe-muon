@@ -60,7 +60,9 @@ class UndiPlotWidget(ipw.VBox):
             <li>magnetic field magnitudes and directions (we consider the muon spin directed along the z axis);</li>
             <li>Kubo-Toyabe plot.</li>
             </ul>
-            Details on the approximations used, the isotope combinations and the convergence analysis are provided below.
+            Details on the approximations used, the isotope combinations and the convergence analysis are provided below. <br>
+            If you use this results in your work, please cite the following paper: <a href="https://doi.org/10.1016/j.cpc.2020.107719"
+            target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>.
             """
         )
 
