@@ -329,6 +329,8 @@ class MuonConfigurationSettingPanel(
             (self._model, "number_of_supercells"),
             (self.number_of_supercells, "value"),
         )
+        
+        self._model.compute_mesh_grid()
             
         general_settings = [
             self.settings_help,
@@ -378,11 +380,13 @@ class MuonConfigurationSettingPanel(
             ] # TODO: add polarization settings
         
         self.children = general_settings + self.findmuon_settings + self.polarization_settings
+
         self.rendered = True
     
     def _on_input_structure_change(self, _):
         self.refresh(specific="structure")
         self._model.on_input_structure_change()
+        self._model.compute_suggested_supercell()
     
     def _on_compute_findmuon_change(self, _):
         with self.hold_trait_notifications():

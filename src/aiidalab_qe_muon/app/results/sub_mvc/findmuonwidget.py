@@ -46,15 +46,22 @@ class FindMuonWidget(ipw.VBox):
         
         self.title = ipw.HTML("""
             <h3>Muon stopping sites</h3>
-            Inspect the results by a row in the table, each of them
+            Inspect the results by selecting different rows in the following table, each of them
             corresponding to a different detected muon sites. Structures are 
             ordered by increasing total energy with respect to the lowest one 
-            (labeled ad "A"). 
+            (labeled as "A"). <br>
+            If you use this results in your work, please cite the following paper: <a href="https://doi.org/10.1039/D4DD00314D"
+            target="_blank">Onuorah et al., Digital Discovery, 2025</a>, which describes the approach used here to find the muon sites (as implemented
+            in the <b><a href="https://positivemuon.github.io/aiida-muon/" target="_blank">aiida-muon</b></a> plugin).
         """)
+        
+        if self._model.supercell_was_small:
+            self.title.value = self.title.value + "<br><b>Warning:</b> The supercell used for the calculations was too small to properly represent the muon sites."
+        
         if self._model.no_B_in_DFT:
             self.title.value = self.title.value + no_Bfield_sentence
         
-        self.table = TableWidget(layout=ipw.Layout(width='100%'))
+        self.table = TableWidget(layout=ipw.Layout(width='auto', height='auto'))
         ipw.dlink(
             (self._model, "table_data"), 
             (self.table, "data"),
@@ -241,19 +248,27 @@ class FindMuonWidget(ipw.VBox):
             for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
                 
                 if entry == 'ΔE<sub>total</sub> (meV)':
-                    trace_callback = go.Scatter
-                else:
-                    trace_callback = go.Bar
-                
-                self.barplot.add_trace(
-                    trace_callback(
-                        x=data_to_plot["x"],
-                        y=data_y,
-                        name=entry,
-                        #mode="markers+lines",
-                        marker=dict(color=color),
+                    self.barplot.add_trace(
+                        go.Scatter(
+                            x=data_to_plot["x"],
+                            y=data_y,
+                            name=entry,
+                            yaxis='y',
+                            #mode="markers+lines",
+                            marker=dict(color=color, opacity=0.8),
+                        )
                     )
-                )
+                else:
+                    self.barplot.add_trace(
+                        go.Bar(
+                            x=data_to_plot["x"],
+                            y=data_y,
+                            name=entry,
+                            yaxis='y2',
+                            #mode="markers+lines",
+                            marker=dict(color=color, opacity=0.65),
+                        )
+                    )
             
             color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
             self.barplot.update_layout(
@@ -270,6 +285,9 @@ class FindMuonWidget(ipw.VBox):
                 title='ΔE<sub>total</sub> (meV)',
                 titlefont=dict(color=color_tot_E),
                 tickfont=dict(color=color_tot_E),
+                side="right",
+                showticklabels=True,
+                showgrid=False,
             ),
             legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
             # width=400, # Width of the plot
@@ -293,7 +311,9 @@ class FindMuonWidget(ipw.VBox):
                 titlefont=dict(color=color_B),
                 tickfont=dict(color=color_B),
                 overlaying="y",
-                side="right",
+                side="left",
+                showticklabels=True,
+                showgrid=False,
                 ),
             )
                     

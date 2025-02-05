@@ -99,42 +99,36 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             except:
                 self.warning_banner[1] = f"Could not load pseudopotential family '{change['new']}'"        
     
-    def suggest_supercell(self, _=None):
+    def compute_suggested_supercell(self, _=None):
         if self.input_structure:
             with self.hold_trait_notifications():
                 self.supercell_hint_reset()
                 s = self.input_structure.get_ase()
-                s = make_supercell(
-                    s,
-                    [
-                        [self.supercell[0], 0, 0],
-                        [0, self.supercell[1], 0],
-                        [0, 0, self.supercell[2]],
-                    ],
-                )
-                suggested_3D = np.round(s.cell.cellpar()[:3], 3)
-                alfa_beta_gamma = np.round(s.cell.cellpar()[3:], 1)
+                suggested_3D = 9 // np.array(s.cell.cellpar()[:3]) + 1
+
                 # Update only dimensions that are not disabled
                 if not self.disable_x:
-                    self.supercell_x = int(suggested_3D[0])
+                    self.suggested_supercell_x = int(suggested_3D[0])
                 if not self.disable_y:
-                    self.supercell_y = int(suggested_3D[1])
+                    self.suggested_supercell_y = int(suggested_3D[1])
                 if not self.disable_z:
-                    self.supercell_z = int(suggested_3D[2])
+                    self.suggested_supercell_z = int(suggested_3D[2])
 
                 # Sync the updated values to the supercell list
-                self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
-                
-                '''sc_html += f"a=" + str(abc[0]) + "Å, "
-                sc_html += f"b=" + str(abc[1]) + "Å, "
-                sc_html += f"c=" + str(abc[2]) + "Å; "
-
-                sc_html += f"α=" + str(alfa_beta_gamma[0]) + "Å, "
-                sc_html += f"β=" + str(alfa_beta_gamma[1]) + "Å, "
-                sc_html += f"γ=" + str(alfa_beta_gamma[2]) + "Å; "
-
-                sc_html += f"V={round(s.get_volume(),3)}Å<sup>3</sup>"
-                '''
+                self.suggested_supercell = [self.suggested_supercell_x, self.suggested_supercell_y, self.suggested_supercell_z]
+                self.input_structure.base.extras.set('suggested_supercell', self.suggested_supercell)
+    
+    def suggest_supercell(self, _=None):
+        if self.input_structure:
+            if not hasattr(self, "suggested_supercell"):
+                self.compute_suggested_supercell()
+            
+            self.supercell_x = self.suggested_supercell_x
+            self.supercell_y = self.suggested_supercell_y
+            self.supercell_z = self.suggested_supercell_z
+            self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
+            
+            self.compute_mesh_grid()
             
     def supercell_hint_reset(self, _=None):
         if not self.disable_x:
@@ -144,6 +138,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if not self.disable_z:
             self.supercell_z = self._get_default("supercell_x")
         self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
+        
+        self.compute_mesh_grid()
     
     def estimate_number_of_supercells(self, _=None):
         """estimate the number of supercells, given sc_matrix and mu_spacing.
