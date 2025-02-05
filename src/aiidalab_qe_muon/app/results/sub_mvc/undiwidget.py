@@ -52,14 +52,12 @@ class UndiPlotWidget(ipw.VBox):
         
         description = ipw.HTML(
             """
-            <h3>Polarization data</h3>
-            Here you can see the polarization data for the detected muon stopping sites. <br>
-            It is possible to select several quantities:
-            <ul>
-            <li>sample orientation (considering as reference its third lattice vector);</li>
-            <li>magnetic field magnitudes and directions (we consider the muon spin directed along the z axis);</li>
-            <li>Kubo-Toyabe plot.</li>
-            </ul>
+            <h3>Nuclear contribution to muon relaxation</h3>
+            
+            Here you can analyse the muon relaxation function P<sub>r</sub>(t) resulting from the muon-nuclear interaction and 
+            computed (via the <a href="https://undi.readthedocs.io/en/latest/index.html"
+        target="_blank">UNDI</a> package) following the approach by Celio 
+            (<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.56.2720"target="_blank">Celio, Phys. Rev. Lett. 56, 2720, 1986</a>). <br> 
             Details on the approximations used, the isotope combinations and the convergence analysis are provided below. <br>
             If you use this results in your work, please cite the following paper: <a href="https://doi.org/10.1016/j.cpc.2020.107719"
             target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>.
@@ -116,7 +114,7 @@ class UndiPlotWidget(ipw.VBox):
             self.info_on_the_approximations.selected_index = None  # Collapse by default
 
             download_data_button = ipw.Button(
-                description="Download P(t) data in csv format",
+                description="Download plotted P(t) data (CSV)",
                 icon="download",
                 button_style="primary",
                 disabled=False,
@@ -128,8 +126,6 @@ class UndiPlotWidget(ipw.VBox):
 
             self.children = [
                 description,
-                self.fig,
-                selected_indexes_widget,
                 ipw.HBox(
                     [
                         ipw.HTML("<b>Plot options:</b>"),
@@ -139,13 +135,12 @@ class UndiPlotWidget(ipw.VBox):
                 ),
                 self.plot_box,
                 self.info_on_the_approximations, # I will render it in the MultipleUndiMVC
+                self.fig,
+                selected_indexes_widget,
             ]
             if self.convergence_undi_widget:
                 self.convergence_undi_widget.render()
             
-
-            
-
         else:
             
             description = ipw.HTML(
@@ -156,9 +151,7 @@ class UndiPlotWidget(ipw.VBox):
                 <ul>
                     <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, 
                     the same value used in the above 'Polarization data' plot; </li>
-                    <li> If the results are not converging or require further refinement, please contact the developers via the 
-                <a href="https://github.com/mikibonacci/aiidalab-qe-muon#contact" target="_blank">GitHub page</a>.</li>
-            </ul>
+                </ul>
                 """
             )
             
@@ -225,7 +218,7 @@ class UndiPlotWidget(ipw.VBox):
                     index = self._model.max_hdims.index(value)
                     to_be_plotted = self._model.plotting_quantity
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
-                    label = f"max<sub>hdim</sub> = 10<sup>{np.log10(self._model.max_hdims[index])}</sup>"
+                    label = f"max<sub>hdim</sub> = 10<sup>{int(np.log10(self._model.max_hdims[index]))}</sup>"
 
                     highest_res = self._model.muons[str(muon_index)].results[-1]
 
