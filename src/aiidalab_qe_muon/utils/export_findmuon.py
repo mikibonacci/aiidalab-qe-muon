@@ -15,8 +15,8 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
             "B_T",
             "Bdip",
             "B_T_norm",
-            "hyperfine_norm",
-            "hyperfine",
+            "B_hf_norm",
+            #"hyperfine",
             "Bdip_norm",
         ],
         "muons": {},
@@ -25,12 +25,12 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
         if idx in findmuon_output_node.unique_sites.get_dict().keys():
             relaxwc = orm.load_node(uuid)
             bars["muons"][idx] = {}
+            bars["muons"][idx]["structure_id_pk"] = relaxwc.outputs.output_structure.pk
+            bars["muons"][idx]["label"] = idx # a label to recognise the supercell/muon site
+            bars["muons"][idx]["muon_index"] = idx # sure that we need it?
             bars["muons"][idx]["tot_energy"] = (
-                np.round(relaxwc.outputs.output_parameters.get_dict()["energy"],7)
+                np.round(relaxwc.outputs.output_parameters.get_dict()["energy"]*10**3,1)
             )
-            bars["muons"][idx]["structure_pk"] = relaxwc.outputs.output_structure.pk
-            bars["muons"][idx]["muon_index"] = idx
-            bars["muons"][idx]["muon_index_global_unitcell"] = len(relaxwc.outputs.output_structure.sites) - 1 + i # we start counting from 1. 
             bars["muons"][idx]["muon_position_cc"] = list(
                 np.round(
                     np.array(
@@ -41,8 +41,11 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
                     3,
                 ),
             )
+            bars["muons"][idx]["muon_index_global_unitcell"] = len(relaxwc.outputs.output_structure.sites) - 1 + i # we start counting from 1. 
 
+    fields_list = []
     if "unique_sites_dipolar" in findmuon_output_node:
+        fields_list = ["B_T", "Bdip", "B_T_norm", "Bdip_norm", "B_hf_norm"] # "hyperfine", 
         for configuration in findmuon_output_node.unique_sites_dipolar.get_list():
             for B in ["B_T", "Bdip"]:
                 bars["muons"][str(configuration["idx"])][B] = list(
@@ -61,21 +64,33 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
                     str(configuration["idx"])
                 ]
                 # bars["muons"][str(configuration["idx"])]["hyperfine"] = v
-                bars["muons"][str(configuration["idx"])]["hyperfine_norm"] = round(
+                bars["muons"][str(configuration["idx"])]["B_hf_norm"] = round(
                     abs(v[-1]), 3
                 )  # <-- we select the last, is in T (the first is in Atomic units).
 
-    # <HERE>: filter only unique sites.
-    # </HERE>
+
     df = pd.DataFrame.from_dict(bars["muons"])
     df.columns = df.columns.astype(int)
     # sort
     df = df.sort_values("tot_energy", axis=1)
-    # deltaE
-    # round deltaE to 7 digits
-    df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min() 
-    df.loc["delta_E"] = np.round(df.loc["delta_E"], 7)
     
+    # deltaE
+    # round deltaE to integer meV
+    df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min() 
+    
+    # Insert the delta_E row as third row
+    df = df.reindex(
+        [
+            "structure_id_pk", 
+            "label", 
+            "delta_E", 
+            "tot_energy", 
+            "muon_position_cc",
+        ]+ fields_list
+        +["muon_index_global_unitcell"]
+        +["muon_index"],
+    )
+        
     # then swap row and columns (for sure can be done already above)
     df = df.transpose()
     return df

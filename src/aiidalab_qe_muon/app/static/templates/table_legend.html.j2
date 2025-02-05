@@ -1,0 +1,29 @@
+<div>
+    <p>
+        The table shows the results of the muon resting sites search:<br>
+        <ul>
+            <li>Structure id (pk): the AiiDA id (or pk) of the structure in the database.</li>
+            <li>Label: a label for the given supercell.</li>
+            <li>ΔE<sub>total</sub> (meV): the total energy difference with respect to the lowest energy.</li>
+            {% if advanced_table %}
+            <li>E<sub>total</sub> (meV): the total energy of the calculation - only shown in the advanced mode.</li>
+            {% endif %}
+            <li><vec>R</vec><sub>μ</sub>: the position of the muon in crystal coordinates.</li>
+            {% if B_fields %}
+            <li>B<sub>total</sub> (T): the total magnetic field at the muon site.</li>
+            <li>B<sub>dipolar</sub> (T): the dipolar magnetic field at the muon site.</li>
+            <li>|B<sub>total</sub>| (T): the norm of the total magnetic field.</li>
+            <li>|B<sub>dip</sub>| (T): the norm of the dipolar magnetic field.</li>
+            <li>|B<sub>hf</sub>| (T): the norm of the hyperfine magnetic field.</li>
+            {% endif %}
+            {% if advanced_table %}
+            <li>μ<sub>index</sub>: the index of the muon site in the "Compare muon sites mode" (see below) - only shown in the advanced mode.</li>
+            {% endif %}
+        </ul>
+        {% if advanced_table %}
+        To see less details, untick the "Advanced table mode" checkbox.
+        {% else %}
+        To see more details, tick the "Advanced table mode" checkbox.
+        {% endif %}
+    </p>
+</div>

@@ -5,8 +5,17 @@ from aiidalab_qe_muon.app.results.sub_mvc.findmuonmodel import FindMuonModel
 
 from aiidalab_qe.common.widgets import TableWidget
 from aiidalab_qe.common.widgets import LoadingWidget
+from aiidalab_qe.common.infobox import InfoBox
 
 from aiidalab_widgets_base.viewers import StructureDataViewer
+
+from aiidalab_qe_muon.utils.data import (
+    dictionary_of_names_for_html, 
+    no_Bfield_sentence,
+    color_code,
+    unit_cell_explanation_text
+)
+
 
 
 class FindMuonWidget(ipw.VBox):
@@ -21,7 +30,7 @@ class FindMuonWidget(ipw.VBox):
 
     def __init__(self, model: FindMuonModel, node: None, **kwargs):
         super().__init__(
-            children=[LoadingWidget("Loading widgets")],
+            children=[LoadingWidget("Loading muon resting sites results")],
             **kwargs,
         )
         self._model = model
@@ -32,48 +41,87 @@ class FindMuonWidget(ipw.VBox):
     def render(self):
         if self.rendered:
             return
-                
+                        
         self._initial_view() # fetch data and maybe some initial choice (if only one site, switch...)
         
-        description = ipw.HTML("""
-            <h3>Muon resting sites</h3>
-            Inspect the results of the search for muon resting sites. <br
-            <ul>
-            <li>For each muon site, the table and plot show several quantities, such as:</li>
-                <ul>
-                <li>Total energy;</li>
-                <li>Magnetic field at the muon site (if computed);</li>
-                <li>Muon site index.</li>
-                </ul>
-            </li>
-            <li>Click on a row in the table to inspect the corresponding muon site in the structure view.</li>
-            <li>Click on the "Visualize all sites in the unit cell" checkbox to visualize all muon sites in the unit cell.</li>
-            </ul>
+        self.title = ipw.HTML("""
+            <h3>Muon stopping sites</h3>
+            Inspect the results by a row in the table, each of them
+            corresponding to a different detected muon sites. Structures are 
+            ordered by increasing total energy with respect to the lowest one 
+            (labeled ad "A"). 
         """)
+        if self._model.no_B_in_DFT:
+            self.title.value = self.title.value + no_Bfield_sentence
         
-        selected_muons = ipw.SelectMultiple(
-            options=self._model.muon_index_list,
-            value=self._model.muon_index_list,
-            layout=ipw.Layout(width='50%')
+        self.table = TableWidget(layout=ipw.Layout(width='100%'))
+        ipw.dlink(
+            (self._model, "table_data"), 
+            (self.table, "data"),
         )
-        ipw.link(
-            (selected_muons, "value"),
-            (self._model, "selected_muons"),
-        )
-        selected_muons.observe(self._on_selected_muons_change, names="value")
+        self._update_table()
+        self.table.observe(self._on_selected_rows_change,"selected_rows")
         
-        self.select_all_button = ipw.Checkbox(
-            #description="Visualize all sites in the unit cell",
+        self.advanced_table = ipw.Checkbox(
+            description="Advanced table mode",
             button_style="primary",
-            value=True,
-            layout=ipw.Layout(width='50%', margin='0px 0px 0px 0px'),
+            value=False,
         )
         ipw.dlink(
-            (self.select_all_button, "value"),
+            (self.advanced_table, "value"),
+            (self._model, "advanced_table"),
+        )
+        self.advanced_table.observe(self.on_advanced_table_change, names="value")
+        
+        self.about_toggle = ipw.ToggleButton(
+            layout=ipw.Layout(width="auto"),
+            button_style="",
+            icon="info",
+            value=False,
+            description="Table legend",
+            tooltip="Info on the table",
+            disabled=False,
+        )
+        self.about_toggle.observe(self.display_table_legend, names="value")
+        
+        self.table_legend = ipw.HTML("")
+        ipw.dlink(
+            (self._model, "table_legend_text"),
+            (self.table_legend, "value"),
+        )
+        self.table_legend_infobox = InfoBox(
+            children=[self.table_legend],
+        )
+        self.table_legend_infobox.layout.display = "none"
+
+        
+        self.compare_muons_button = ipw.Checkbox(
+            description="Compare muon sites mode",
+            button_style="primary",
+            value=False,
+        )
+        ipw.dlink(
+            (self.compare_muons_button, "value"),
             (self._model, "selected_view_mode"),
             lambda value: 1 if value else 0,
         )
-        self.select_all_button.observe(self._select_all, names="value")
+        self.compare_muons_button.observe(self._compare_mode, names="value")
+        self.about_unit_cell_toggle = ipw.ToggleButton(
+            layout=ipw.Layout(width="auto"),
+            button_style="",
+            icon="info",
+            value=False,
+            description="About the compare mode",
+            disabled=False,
+        )
+        self.about_unit_cell_toggle.observe(self.display_unit_cell_explanation, names="value")
+        
+        self.unit_cell_explanation = ipw.HTML(unit_cell_explanation_text)
+        self.unit_cell_explanation_infobox = InfoBox(
+            children=[self.unit_cell_explanation],
+        )
+        self.unit_cell_explanation_infobox.layout.display = "none"
+        
         
         self.structure_view_container = ipw.VBox(
             children=[
@@ -88,14 +136,7 @@ class FindMuonWidget(ipw.VBox):
         #    names="displayed_selection"
         #    )
         
-        self.table = TableWidget(layout=ipw.Layout(width='100%'))
-        ipw.dlink(
-            (self._model, "table_data"), 
-            (self.table, "data"),
-        )
-        self._update_table()
-        self.table.observe(self._on_selected_rows_change,"selected_rows")
-        
+                
         download_button = ipw.Button(
             description="Download Table", 
             tooltip="Download the data for the selected muons in CSV format",
@@ -109,23 +150,16 @@ class FindMuonWidget(ipw.VBox):
         self._update_barplot()
         
         self.children = [
-            ipw.HBox([
-                description,
-                ipw.VBox([
-                    ipw.HTML("Select muon indexes:"),
-                    selected_muons,
-                    ipw.HBox(
-                        [
-                            ipw.HTML("Visualize all sites in the unit cell: ", layout=ipw.Layout(width="100%"),),
-                            self.select_all_button
-                        ],
-                        ),
-                    ],
-                    ),
-                ]),
-            self.structure_view_container,
+            self.title,
             self.table,
-            download_button,
+            ipw.HBox([self.advanced_table, self.about_toggle, download_button,],),
+            self.table_legend_infobox,
+            self.structure_view_container,
+            ipw.HBox([
+                self.compare_muons_button,
+                self.about_unit_cell_toggle,
+            ],),
+            self.unit_cell_explanation_infobox,
             self.barplot_container,
         ]
         
@@ -134,30 +168,49 @@ class FindMuonWidget(ipw.VBox):
     def _initial_view(self):
         self._model.fetch_data()
         self._model.select_structure()
+        self._model.generate_table_legend()
+        
+    def on_advanced_table_change(self, change):
+        self._model.generate_table_legend()
+        self._model._generate_table_data()
+        
+    def display_table_legend(self, change):
+        self.table_legend_infobox.layout.display = "block" if change["new"] else "none"
+        
+    def display_unit_cell_explanation(self, change):
+        self.unit_cell_explanation_infobox.layout.display = "block" if change["new"] else "none"
     
-    def _on_selected_muons_change(self, change):
+    def _on_selected_muons_change(self):
         self._update_structure_view()
         self._update_picked_atoms()
         self._update_barplot()
         #self._update_table()
         
     def _on_selected_rows_change(self, change):
+        
+        if not self.compare_muons_button.value:
+            self.table.selected_rows = self.table.selected_rows[-1:]
+            
         self._model.selected_muons = [
-            int(self._model.findmuon_data["table"].iloc[index].muon_index) # because are store as strings!
+            int(self._model.findmuon_data["table"].iloc[index].muon_index) # because are stored as strings!
             for index in self.table.selected_rows
             ]
         
+        self._on_selected_muons_change()
+
     def _on_displayed_selection_change(self, change):
-        if self.select_all_button.value:
+        if self.compare_muons_button.value:
             self._model.selected_muons = [
                 self._model.findmuon_data["table"][self._model.findmuon_data["table"].muon_index_global_unitcell == index].muon_index.values
                 for index in self.structure_view_container.children[0].displayed_selection
                 ]
         
-    def _select_all(self, _=None):
-        
-        if self.select_all_button.value:
+    def _compare_mode(self, _=None):
+        if self.compare_muons_button.value:
             self._model.selected_muons = self._model.muon_index_list
+        else:
+            self._model.selected_muons = self._model.muon_index_list[0:1]
+        self._on_selected_rows_change(None)
     
     def _update_structure_view(self, _=None):
         self._model.select_structure() # switch between the structure to be displayed
@@ -165,7 +218,7 @@ class FindMuonWidget(ipw.VBox):
         self.structure_view_container.children[0].structure = self._model.structure
     
     def _update_picked_atoms(self, _=None):
-        if self.select_all_button.value:
+        if self.compare_muons_button.value:
             selected_muons = [
                 self._model.findmuon_data["table"].loc[index_selected].muon_index_global_unitcell - 1
                 for index_selected in self._model.selected_muons
@@ -178,17 +231,16 @@ class FindMuonWidget(ipw.VBox):
         
         data_to_plot = self._model.get_data_plot() # to have more compact code below
         
-        if not "B_T_norm" in data_to_plot["entry"]:
+        if not '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
             # hide the figure and return
             self.barplot_container.layout.display = "none"
-            self.rendered = True
             return
             
         # if not B field is there, we can also avoid to render it.
         if not self.rendered:
             for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
                 
-                if entry == "ΔE<sub>total</sub> (eV)":
+                if entry == 'ΔE<sub>total</sub> (meV)':
                     trace_callback = go.Scatter
                 else:
                     trace_callback = go.Bar
@@ -198,24 +250,24 @@ class FindMuonWidget(ipw.VBox):
                         x=data_to_plot["x"],
                         y=data_y,
                         name=entry,
-                        mode="markers+lines",
+                        #mode="markers+lines",
                         marker=dict(color=color),
                     )
                 )
             
-            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index("ΔE<sub>total</sub> (eV)")]
+            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
             self.barplot.update_layout(
             # title='Summary',
             barmode="group",
             xaxis=dict(
-                title="Muon site index",
+                title="Muon label",
                 tickmode="linear",
                 dtick=1,
                 #titlefont=dict(color="mediumslateblue"),
                 #tickfont=dict(color="mediumslateblue"),
             ),
             yaxis=dict(
-                title="ΔE<sub>total</sub> (eV)",
+                title='ΔE<sub>total</sub> (meV)',
                 titlefont=dict(color=color_tot_E),
                 tickfont=dict(color=color_tot_E),
             ),
@@ -231,13 +283,13 @@ class FindMuonWidget(ipw.VBox):
             # bargap=0.000001, # Gap between bars
             # bargroupgap=0.4, # Gap between bar groups
             )
-            if "B_T_norm" in data_to_plot["entry"]:
-                color_B = data_to_plot["color_code"][data_to_plot["entry"].index("|B<sub>total</sub>| (T)")]
+            if '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
+                color_B = data_to_plot["color_code"][data_to_plot["entry"].index('|B<sub>total</sub>| (T)')]
             else:
                 color_B = "blue"
             self.barplot.update_layout(
             yaxis2=dict(
-                title="B (T)",
+                title='|B<sub>total</sub>| (T)',
                 titlefont=dict(color=color_B),
                 tickfont=dict(color=color_B),
                 overlaying="y",

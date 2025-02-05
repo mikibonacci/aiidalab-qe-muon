@@ -39,7 +39,7 @@ class UndiPlotWidget(ipw.VBox):
     def __init__(self, model: PolarizationModel, node, **kwargs):
 
         super().__init__(
-            children=[LoadingWidget("Loading widgets")],
+            children=[LoadingWidget("Loading muon polarization results")],
             **kwargs,
         )
         self._model = model
