@@ -53,8 +53,13 @@ class MuonConfigurationSettingPanel(
             in the crystal, so we should select a supercell in which the muon will stay and do not interact with its replica.
             If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing set of simulation will be submitted
             to estimate it.<br>
-            You can select the three main steps of the workflow: <b>Compute supercell</b>, <b>Search for muon sites</b>, and <b>Compute polarization</b>.
-            Computing only the polarization requires the muon (H atom) already placed in the structure as last site.
+            You can select the three main steps of the workflow: <b>Compute supercell size</b>, <b>Search for muon sites</b>, and <b>Compute polarization</b>.
+            Computing only the polarization requires the muon (H atom) already placed in the structure as last site. 
+            Supercell size and muon stopping sites are computed by means of the <b><a href="https://positivemuon.github.io/aiida-muon/"
+            target="_blank">aiida-muon</b></a> plugin (<a href="https://doi.org/10.1039/D4DD00314D"
+            target="_blank">Onuorah et al., Digital Discovery, 2025</a>), whereas the polarization is computed via the <b><a href="https://undi.readthedocs.io/en/latest/index.html"
+            target="_blank">UNDI</b></a> package (<a href="https://doi.org/10.1016/j.cpc.2020.107719"
+            target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>)
             </div>"""
         )
         
@@ -354,7 +359,17 @@ class MuonConfigurationSettingPanel(
         # we display the findmuon settings only if the compute_findmuon is selected
         # we link the display of each
 
-        self.polarization_settings = [] # TODO: add polarization settings
+        self.polarization_settings = [
+            ipw.HTML(
+                """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
+                <h5><b>Polarization</b></h5>
+                The polarization is computed for the muon site(s) found in the previous 
+                step (or provided in the structure as last atom, using H). We compute the 
+                polarization for different values of external magnetic field (0, 2, 4, 6, 8 mT) and different orientation of the sample. <br>
+                The third lattice vector of the structure should be aligned with the z cartesian direction.
+                """
+                )
+            ] # TODO: add polarization settings
         
         self.children = general_settings + self.findmuon_settings + self.polarization_settings
         self.rendered = True

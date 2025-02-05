@@ -23,6 +23,11 @@ class MuonResourceSettingsModel(PluginResourceSettingsModel):
                     description="pp.x for post processing",
                     default_calc_job_plugin="quantumespresso.pp",
                 ),
+                "undi_code": CodeModel(
+                    name="python",
+                    description="Python code for polarization calculation",
+                    default_calc_job_plugin="pythonjob.pythonjob",
+                ),
             },
         )
 

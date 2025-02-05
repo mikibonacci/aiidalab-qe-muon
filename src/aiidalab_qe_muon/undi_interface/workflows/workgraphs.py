@@ -1,31 +1,46 @@
 import typing as t
-from aiida.orm import StructureData
-from ase import Atoms
-
 from aiida_workgraph import task, WorkGraph
+#from aiidalab_qe_muon.undi_interface.calculations.pythonjobs import undi_run, compute_KT
 
-from aiidalab_qe_muon.undi_interface.calculations.pythonjobs import undi_run, compute_KT
+from aiida_workgraph import task
 
 @task.graph_builder(outputs=[{"name": "results", "from": "context.tmp_out"}])
 def multiple_undi_analysis(
-    structure: t.Union[
-        StructureData, Atoms
-    ],  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
+    structure,
     B_mods: t.List[t.Union[float, int]] = [0.0],
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
     convergence_check: bool = False,
     algorithm: str = 'fast',
-    angular_integration_steps: int = 7
+    angular_integration_steps: int = 7,
+    code = None, # if None, default python3@localhost will be used.
+    metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}},
 ):
-    wg = WorkGraph()
+    
+    def undi_run(
+        structure, # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
+        B_mod = 0.0,
+        atom_as_muon = 'H',
+        max_hdim = 10e6,
+        convergence_check = False,
+        algorithm  = 'fast',
+        angular_integration_steps  = 7,
+        ) -> dict:
+        from undi.undi_analysis import execute_undi_analysis
 
-    # UNDI RUNS ON 1 THREAD!
-    metadata = {
-        "options": {
-            "custom_scheduler_commands": "export OMP_NUM_THREADS=1",
-        }
-    }
+        results = execute_undi_analysis(
+            structure,
+            B_mod=B_mod,
+            atom_as_muon=atom_as_muon,
+            max_hdim=max_hdim,
+            convergence_check=convergence_check,
+            algorithm=algorithm,
+            angular_integration_steps=angular_integration_steps
+        )
+
+        return {"result": results}
+    
+    wg = WorkGraph()
     
     t = 0
     for B_mod in B_mods:
@@ -49,8 +64,9 @@ def multiple_undi_analysis(
                 serializers={
                     "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
                 },
+                code = code,
             )
-            tmp.set_context({f"tmp_out.iter_{t}": "results"})
+            tmp.set_context({f"tmp_out.iter_{t}": "result"})
             t+=1
 
     return wg
@@ -62,34 +78,45 @@ def multiple_undi_analysis(
         ]
 )
 def UndiAndKuboToyabe(
-    structure: t.Union[
-        StructureData, Atoms
-    ],  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
+    structure,
     B_mods: t.List[t.Union[float, int]] = [0.0],
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
     convergence_check: bool = False,
     algorithm: str = 'fast',
-    angular_integration_steps: int = 7
+    angular_integration_steps: int = 7,
+    code=None, # if None, default python3@localhost will be used.
+    metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}},
 ):
     wg = WorkGraph()
 
-    # This conversion is done in the pythonjob de-serialization
+    # This conversion is done in the pythonjob de-serializat:qion
     #if isinstance(structure, StructureData):
     #    structure = structure.get_ase()
+    
+    def compute_KT(
+        structure,  # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
+        ):
+        import numpy as np
+        from undi.kubo_toyabe.KT import compute_second_moments, kubo_toyabe
 
-    # KT
-    # KT RUNS ON 1 THREAD!
-    metadata = {
-        "options": {
-            "custom_scheduler_commands": "export OMP_NUM_THREADS=1",
+        t = np.linspace(0, 20e-6, 1000)  # time is seconds
+        sm = compute_second_moments(structure)
+        KT = kubo_toyabe(t, np.sum(list(sm.values())))
+
+        return {
+            "result": {
+                "t": (np.array(t)*1e6).tolist(), # this time is in microseconds
+                "KT": KT,
+            },
         }
-    }
+
     KT_task = wg.add_task(
         "PythonJob",
-        name="KuboToyabe_run",
         function=compute_KT,
         structure=structure,
+        name="KuboToyabe_run",
+        code = code,
         metadata=metadata,
         deserializers={
             "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms"
@@ -99,7 +126,7 @@ def UndiAndKuboToyabe(
             "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
         },
     )
-    KT_task.set_context({f"res.KT_task": "results"})
+    KT_task.set_context({f"res.KT_task": "result"})
     
     # Convergence check
     # in the future, we can add a logic to first converge, and then run UNDI for the B_mods list
@@ -114,6 +141,8 @@ def UndiAndKuboToyabe(
             algorithm=algorithm,
             angular_integration_steps=angular_integration_steps,
             name="convergence_check",
+            code = code,
+            metadata=metadata,
         )
         undi_conv_task.set_context({f"res.undi_conv_task": "results"})
 
@@ -127,6 +156,8 @@ def UndiAndKuboToyabe(
         algorithm=algorithm,
         angular_integration_steps=angular_integration_steps,
         name="undi_runs",
+        code = code,
+        metadata=metadata,
     )
     undi_task.set_context({f"res.undi_task": "results"})
 
@@ -135,6 +166,8 @@ def UndiAndKuboToyabe(
 @task.graph_builder(outputs=[{"name": "results", "from": "context.res"}])
 def MultiSites(
     structure_group,
+    code=None, # if None, default python3@localhost will be used.
+    metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}},
     ):
     
     wg = WorkGraph("PolarizationMultiSites")
@@ -143,11 +176,13 @@ def MultiSites(
         res = wg.add_task(
             UndiAndKuboToyabe,
             structure=structure,
-            B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded.
-            max_hdims=[10**2, 10**4, 10**6, 10**8],  # for now, hardcoded.
+            B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded. Units are Tesla.
+            max_hdims=[10**3, 10**5, 10**7, 10**9],  # for now, hardcoded.
             convergence_check=i==0,  # maybe the convergence can be done for only one site, as done here now.
             algorithm='fast',
             name=f"polarization_structure_{idx}",
+            code=code,
+            metadata=metadata,
         )
         res.set_context({f"res.site_{idx}": "results"})
     

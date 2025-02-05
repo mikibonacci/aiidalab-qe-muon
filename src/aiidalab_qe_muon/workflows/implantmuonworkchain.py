@@ -47,7 +47,19 @@ class ImplantMuonWorkChain(WorkChain):
         spec.input(
             "structure", valid_type=orm.StructureData
         )  # Maybe not needed as input... just in the protocols. but in this way it is not easy to automate it in the app, after the relaxation. So let's keep it for now.
-
+        spec.input(
+            "undi_code", 
+            valid_type=orm.Code, 
+            required=False,
+            help="The code to run the UNDI calculations.",
+        )
+        spec.input(
+            "undi_metadata",
+            valid_type= dict, 
+            non_db=True,
+            required=False,
+            help=" Preferred metadata and scheduler options for undi",
+        )
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
@@ -128,6 +140,8 @@ class ImplantMuonWorkChain(WorkChain):
         structure,
         pseudo_family: str = "SSSP/1.2/PBE/efficiency",
         pp_code=None,
+        undi_code=None,
+        undi_metadata=None,
         protocol=None,
         compute_findmuon: bool = True,
         compute_polarization_undi: bool = True,
@@ -196,6 +210,11 @@ class ImplantMuonWorkChain(WorkChain):
         
         builder.implant_muon = compute_findmuon
         builder.compute_polarization = compute_polarization_undi
+        
+        if undi_code:
+            builder.undi_code = undi_code
+            if undi_metadata:
+                builder.undi_metadata = undi_metadata
 
         return builder
 
@@ -241,15 +260,19 @@ class ImplantMuonWorkChain(WorkChain):
             self.ctx.structure_group = {'0':self.inputs.structure}
 
     def compute_polarization(self):
-        # this is a placeholder for the future.
         # here we will submit the workgraph for the polarization estimation. Via Undi and KT.
         # need to parse all the output structures, and loop on them.
 
-        # which code to use?
-        workgraph = MultiSites(structure_group=self.ctx.structure_group)
+        metadata = self.inputs.get("undi_metadata", {})
+        workgraph = MultiSites(
+            structure_group=self.ctx.structure_group,
+            code = getattr(self.inputs, "undi_code", None),
+            metadata=metadata,
+            )
         inputs = {
             "wg": workgraph.to_dict(),
             "metadata": {"call_link_label": "MultiSiteUndiPolarizationAndKT"},
+            
         }
         process = self.submit(WorkGraphEngine, **inputs)
         self.report(

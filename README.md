@@ -17,7 +17,7 @@ To also install the needed codes, if not already there, you can then run:
 install_muon_codes
 ```
 
-To install on a local/remote computer (already set up in AiiDA) the needed conda environment for [undi](https://undi.readthedocs.io/en/latest/index.html) calculations,
+To automatically (nb: you can do it also by hands) install on a local/remote computer (already set up in AiiDA) the needed conda environment for [undi](https://undi.readthedocs.io/en/latest/index.html) calculations,
 open a verdi shell and run:
 
 ```python
@@ -25,17 +25,20 @@ from aiida_pythonjob.utils import create_conda_env
 
 ```python
 create_conda_env(
-    "<computer_label>",                # Remote computer, already stored in the AiiDA database
-    "<environment_name>",         # Name of the conda environment
+    "<computer_label>",           # Remote computer, already stored in the AiiDA database
+    "<environment_name>",         # Name of the conda environment you are going to create
+    modules=[],                   # Modules to be loaded in order to invoke conda
     pip=[
-        "numpy",
+        "numpy~=1.26",
         "ase",
         "tqdm",
-        "git+https://github.com/mikibonacci/undi.git@fix/H",
+        "pandas",
+        "pybind11",
+        "git+https://github.com/mikibonacci/undi.git@update",
         ],  # Python packages to install via pip
     conda={                   # Conda-specific settings
         "channels": ["conda-forge"],  # Channels to use
-        "dependencies": ["pybind11","cloudpickle"]
+        "dependencies": ["cloudpickle"]
     },
     install_conda=True,
 )
