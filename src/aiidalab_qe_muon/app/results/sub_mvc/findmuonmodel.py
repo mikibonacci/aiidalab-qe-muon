@@ -6,7 +6,11 @@ import base64
 import json
 
 from aiidalab_qe_muon.utils.export_findmuon import export_findmuon_data
-from aiidalab_qe_muon.utils.data import dictionary_of_names_for_html, color_code
+from aiidalab_qe_muon.utils.data import (
+    dictionary_of_names_for_html, 
+    no_Bfield_sentence,
+    color_code,
+)
 
 from aiida import orm
 import ase
@@ -25,7 +29,7 @@ class FindMuonModel(Model):
     selected_muons = tl.List(
         trait=tl.Int(),
     )
-    selected_view_mode = tl.Int(1)
+    selected_view_mode = tl.Int(0)
     structure = tl.Union(
         [
             tl.Instance(ase.Atoms),
@@ -36,11 +40,19 @@ class FindMuonModel(Model):
     html_table = tl.Unicode("")
     table_data = tl.List(tl.List())
     
+    advanced_table = tl.Bool(False)
+    table_legend_text = tl.Unicode("")
+    
     def fetch_data(self):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
         self.findmuon_data = export_findmuon_data(self.muon.findmuon)
         self.muon_index_list = self.findmuon_data["table"].index.tolist()
-        self.selected_muons = self.muon_index_list
+        self.selected_muons = self.muon_index_list[0:1]
+        
+        if "Bdip_norm" not in self.findmuon_data["table"].columns.tolist():
+            self.no_B_in_DFT = True
+        else: 
+            self.no_B_in_DFT = False
 
     def select_structure(self):
         """Select a structure to be displayed.
@@ -49,11 +61,9 @@ class FindMuonModel(Model):
         Otherwise, we show the relaxed supercell with the single selected site.
         And then in the view we select only the one we want to inspect.
         """
-        if len(self.muon_index_list) == 1 and self.selected_view_mode == 0:
-            self.structure = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"])
-        elif len(self.selected_muons) == 1 and self.selected_view_mode == 0:
-            self.structure = orm.load_node(self.findmuon_data["table"].loc[self.selected_muons[0],"structure_pk"])
-        elif len(self.selected_muons) > 1:
+        if len(self.selected_muons) == 1 and self.selected_view_mode == 0:
+            self.structure = orm.load_node(self.findmuon_data["table"].loc[self.selected_muons[0],"structure_id_pk"])
+        elif self.selected_view_mode == 1:
             self.structure = self.findmuon_data["unit_cell"]
     
     def convert_label_to_html(self, entry) -> str:
@@ -99,12 +109,14 @@ class FindMuonModel(Model):
         
         This method is called by the controller to get the html table.
         """
-        #self.html_table = self.findmuon_data["table"].loc[self.selected_muons].to_html()
-        #self.html_table = self.findmuon_data["table"].to_html()
-        data = [[self.convert_label_to_html(entry) for entry in self.findmuon_data["table"].columns.to_list()]]
+        excluded_columns = ["tot_energy","muon_index_global_unitcell","muon_index"]
+        if self.advanced_table:
+            excluded_columns = ["muon_index"]
+            
+        data = [[self.convert_label_to_html(entry) for entry in self.findmuon_data["table"].columns.to_list() if entry not in excluded_columns]]
         #data[-1].pop(-3)
         for index in self.findmuon_data["table"].index:
-            data.append(self.findmuon_data["table"].loc[index].to_list())
+            data.append(self.findmuon_data["table"].drop(excluded_columns, axis=1).loc[index].to_list())
             #data[-1].pop(-3)
         self.table_data = data
         
@@ -115,7 +127,7 @@ class FindMuonModel(Model):
         """
         # prepare the data for download as csv file
         data = base64.b64encode(self.findmuon_data['table'].to_csv(index=True).encode()).decode()
-        formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_pk"]).get_formula()
+        formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_id_pk"]).get_formula()
         filename = f"Summary_{formula}_muon_{'_'.join([str(muon_index) for muon_index in self.selected_muons])}.csv"
         return data, filename
     
@@ -135,4 +147,14 @@ class FindMuonModel(Model):
             """
         )
         display(javas)
+        
+    def generate_table_legend(self):
+        """Generate the table legend."""
+        from importlib_resources import files
+        from jinja2 import Environment
+        from aiidalab_qe_muon.app.static import templates
+        
+        env = Environment()
+        table_legend_template = files(templates).joinpath("table_legend.html.j2").read_text()
+        self.table_legend_text = env.from_string(table_legend_template).render({"B_fields": not self.no_B_in_DFT, "advanced_table":self.advanced_table})
            

@@ -52,6 +52,8 @@ def get_builder(codes, structure, parameters):
 
     # TODO: magmoms are not parsed up to now!!!
     magmom = parameters["muonic"].pop("magmoms", None)
+    if not magmom:
+        magmom = structure.base.extras.all.get("magmom", None)
     supercell_x = parameters["muonic"].pop("supercell_x", 1)
     supercell_y = parameters["muonic"].pop("supercell_y", 1)
     supercell_z = parameters["muonic"].pop("supercell_z", 1)

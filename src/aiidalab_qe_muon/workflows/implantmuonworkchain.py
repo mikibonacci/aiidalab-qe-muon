@@ -121,7 +121,7 @@ class ImplantMuonWorkChain(WorkChain):
         )
         
         
-        spec.output('polarization')
+        spec.output('polarization', required=False, help="The polarization results.")
         
         ###
         spec.exit_code(400, "ERROR_WORKCHAIN_FAILED", message="The workchain failed.")
