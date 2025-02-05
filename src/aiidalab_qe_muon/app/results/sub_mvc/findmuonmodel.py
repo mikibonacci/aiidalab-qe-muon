@@ -79,7 +79,7 @@ class FindMuonModel(Model):
         """
         
         self.data_plot = {
-            "x":self.selected_muons,
+            "x":self.findmuon_data["table"].loc[self.selected_muons, "label"].tolist(),
             "y":[],
             "entry":[],
             "color_code":[],

@@ -76,7 +76,7 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
     
     # deltaE
     # round deltaE to integer meV
-    df.loc["delta_E"] = df.loc["tot_energy"] - df.loc["tot_energy"].min() 
+    df.loc["delta_E"] = (df.loc["tot_energy"] - df.loc["tot_energy"].min()).astype(int)
     
     # Insert the delta_E row as third row
     df = df.reindex(
@@ -90,6 +90,9 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
         +["muon_index_global_unitcell"]
         +["muon_index"],
     )
+    
+    # redefine the "label" to be letters from A to Z
+    df.loc["label"] = [chr(65 + i) for i in range(len(df.columns))]
         
     # then swap row and columns (for sure can be done already above)
     df = df.transpose()
