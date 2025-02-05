@@ -85,7 +85,7 @@ class FindMuonModel(Model):
             "color_code":[],
         }
         
-        entries = ["delta_E", "B_T_norm", "Bdip_norm", "hyperfine_norm"]
+        entries = ["delta_E", "B_T_norm", "Bdip_norm", "B_hf_norm"]
         
         self.data_plot["y"] = [
             self.findmuon_data["table"].loc[self.selected_muons, entry].tolist() for entry in entries

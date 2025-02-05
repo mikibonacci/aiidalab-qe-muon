@@ -15,8 +15,8 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
             "B_T",
             "Bdip",
             "B_T_norm",
-            "hyperfine_norm",
-            "hyperfine",
+            "B_hf_norm",
+            #"hyperfine",
             "Bdip_norm",
         ],
         "muons": {},
@@ -45,7 +45,7 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
 
     fields_list = []
     if "unique_sites_dipolar" in findmuon_output_node:
-        fields_list = ["B_T", "Bdip", "hyperfine", "B_T_norm", "Bdip_norm", "hyperfine_norm"]
+        fields_list = ["B_T", "Bdip", "B_T_norm", "Bdip_norm", "B_hf_norm"] # "hyperfine", 
         for configuration in findmuon_output_node.unique_sites_dipolar.get_list():
             for B in ["B_T", "Bdip"]:
                 bars["muons"][str(configuration["idx"])][B] = list(
@@ -64,7 +64,7 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
                     str(configuration["idx"])
                 ]
                 # bars["muons"][str(configuration["idx"])]["hyperfine"] = v
-                bars["muons"][str(configuration["idx"])]["hyperfine_norm"] = round(
+                bars["muons"][str(configuration["idx"])]["B_hf_norm"] = round(
                     abs(v[-1]), 3
                 )  # <-- we select the last, is in T (the first is in Atomic units).
 

@@ -47,7 +47,9 @@ class FindMuonWidget(ipw.VBox):
         self.title = ipw.HTML("""
             <h3>Muon stopping sites</h3>
             Inspect the results by a row in the table, each of them
-            corresponding to a different detected muon site.
+            corresponding to a different detected muon sites. Structures are 
+            ordered by increasing total energy with respect to the lowest one 
+            (labeled ad "A"). 
         """)
         if self._model.no_B_in_DFT:
             self.title.value = self.title.value + no_Bfield_sentence
@@ -94,7 +96,7 @@ class FindMuonWidget(ipw.VBox):
 
         
         self.compare_muons_button = ipw.Checkbox(
-            #description="Visualize all sites in the unit cell",
+            description="Compare muon sites mode",
             button_style="primary",
             value=False,
         )
@@ -109,7 +111,7 @@ class FindMuonWidget(ipw.VBox):
             button_style="",
             icon="info",
             value=False,
-            description="About",
+            description="About the compare mode",
             disabled=False,
         )
         self.about_unit_cell_toggle.observe(self.display_unit_cell_explanation, names="value")
@@ -155,7 +157,6 @@ class FindMuonWidget(ipw.VBox):
             self.structure_view_container,
             ipw.HBox([
                 self.compare_muons_button,
-                ipw.HTML("Compare muon sites mode"),
                 self.about_unit_cell_toggle,
             ],),
             self.unit_cell_explanation_infobox,
@@ -180,7 +181,6 @@ class FindMuonWidget(ipw.VBox):
         self.unit_cell_explanation_infobox.layout.display = "block" if change["new"] else "none"
     
     def _on_selected_muons_change(self):
-        
         self._update_structure_view()
         self._update_picked_atoms()
         self._update_barplot()
@@ -210,6 +210,7 @@ class FindMuonWidget(ipw.VBox):
             self._model.selected_muons = self._model.muon_index_list
         else:
             self._model.selected_muons = self._model.muon_index_list[0:1]
+        self._on_selected_rows_change(None)
     
     def _update_structure_view(self, _=None):
         self._model.select_structure() # switch between the structure to be displayed
@@ -230,17 +231,16 @@ class FindMuonWidget(ipw.VBox):
         
         data_to_plot = self._model.get_data_plot() # to have more compact code below
         
-        if not "B_T_norm" in data_to_plot["entry"]:
+        if not '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
             # hide the figure and return
             self.barplot_container.layout.display = "none"
-            self.rendered = True
             return
             
         # if not B field is there, we can also avoid to render it.
         if not self.rendered:
             for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
                 
-                if entry == "ΔE<sub>total</sub> (eV)":
+                if entry == 'ΔE<sub>total</sub> (meV)':
                     trace_callback = go.Scatter
                 else:
                     trace_callback = go.Bar
@@ -250,24 +250,24 @@ class FindMuonWidget(ipw.VBox):
                         x=data_to_plot["x"],
                         y=data_y,
                         name=entry,
-                        mode="markers+lines",
+                        #mode="markers+lines",
                         marker=dict(color=color),
                     )
                 )
             
-            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index("ΔE<sub>total</sub> (eV)")]
+            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
             self.barplot.update_layout(
             # title='Summary',
             barmode="group",
             xaxis=dict(
-                title="Muon site index",
+                title="Muon label",
                 tickmode="linear",
                 dtick=1,
                 #titlefont=dict(color="mediumslateblue"),
                 #tickfont=dict(color="mediumslateblue"),
             ),
             yaxis=dict(
-                title="ΔE<sub>total</sub> (eV)",
+                title='ΔE<sub>total</sub> (meV)',
                 titlefont=dict(color=color_tot_E),
                 tickfont=dict(color=color_tot_E),
             ),
@@ -283,13 +283,13 @@ class FindMuonWidget(ipw.VBox):
             # bargap=0.000001, # Gap between bars
             # bargroupgap=0.4, # Gap between bar groups
             )
-            if "B_T_norm" in data_to_plot["entry"]:
-                color_B = data_to_plot["color_code"][data_to_plot["entry"].index("|B<sub>total</sub>| (T)")]
+            if '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
+                color_B = data_to_plot["color_code"][data_to_plot["entry"].index('|B<sub>total</sub>| (T)')]
             else:
                 color_B = "blue"
             self.barplot.update_layout(
             yaxis2=dict(
-                title="B (T)",
+                title='|B<sub>total</sub>| (T)',
                 titlefont=dict(color=color_B),
                 tickfont=dict(color=color_B),
                 overlaying="y",
