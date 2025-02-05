@@ -53,13 +53,14 @@ class MuonConfigurationSettingPanel(
             in the crystal, so we should select a supercell in which the muon will stay and do not interact with its replica.
             If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing set of simulation will be submitted
             to estimate it.<br>
-            You can select the three main steps of the workflow: <b>Compute supercell size</b>, <b>Search for muon sites</b>, and <b>Compute polarization</b>.
+            You can select the three main steps of the workflow: <b>Compute supercell size</b>, <b>Search for muon sites</b>, and <b>Compute polarization </b>.
             Computing only the polarization requires the muon (H atom) already placed in the structure as last site. 
             Supercell size and muon stopping sites are computed by means of the <b><a href="https://positivemuon.github.io/aiida-muon/"
             target="_blank">aiida-muon</b></a> plugin (<a href="https://doi.org/10.1039/D4DD00314D"
-            target="_blank">Onuorah et al., Digital Discovery, 2025</a>), whereas the polarization is computed via the <b><a href="https://undi.readthedocs.io/en/latest/index.html"
+            target="_blank">Onuorah et al., Digital Discovery, 2025</a>). The polarization is computed via the <b><a href="https://undi.readthedocs.io/en/latest/index.html"
             target="_blank">UNDI</b></a> package (<a href="https://doi.org/10.1016/j.cpc.2020.107719"
-            target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>)
+            target="_blank">Bonfà et al., Comput. Phys. Commun. 260, 107719, 2021</a>), using the method by Celio
+            (<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.56.2720"target="_blank">Celio, Phys. Rev. Lett. 56, 2720, 1986</a>), and considering only the muon-nuclear interactions.
             </div>"""
         )
         
@@ -98,17 +99,24 @@ class MuonConfigurationSettingPanel(
         self.compute_findmuon.observe(self._on_compute_findmuon_change, "value")
         
         self.compute_polarization_undi = ipw.Checkbox(
-            description="Compute polarization ",
+            description="""Compute polarization (only &mu;-nuclei interactions) """,
             indent=False,
             value=self._model.compute_polarization_undi,
             tooltip="Compute the compute polarization for muon resting site(s).",
-            layout=ipw.Layout(width="250px"),
+            layout=ipw.Layout(width="300px"),
         )
         ipw.link(
             (self.compute_polarization_undi, "value"),
             (self._model, "compute_polarization_undi"),
         )
         
+        self.compute_options_box = ipw.VBox(
+            children=[
+            self.compute_findmuon,
+            ipw.HBox([self.compute_supercell], layout=ipw.Layout(padding="0 0 0 20px")),
+            ipw.HBox([self.compute_polarization_undi], layout=ipw.Layout(padding="0 0 0 20px")),
+            ],
+        )
         
         # Charge state view and control (the control is the link, and observe() if any)
         self.charge_help = ipw.HTML(
@@ -132,12 +140,12 @@ class MuonConfigurationSettingPanel(
             (self._model, "charge_state"),
         )
         
-        supercell_hint_estimator = ipw.HTML(
+        supercell_size_text = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
             <h5><b>Muon supercell</b></h5>
-            Click the button to estimate the supercell size or defined it. 
-            If `compute_supercell` is not selected, this is be the supercell 
-            size used in the search of muon resting sites.
+            Here you can specify the supercell size for the search of muon resting sites in the infinite dilute defect limit. 
+            If `compute_supercell` is not selected, this will be the supercell 
+            size used in the search for muon resting sites.
             </div>"""
         )
         self.supercell_x = ipw.BoundedIntText(
@@ -191,17 +199,6 @@ class MuonConfigurationSettingPanel(
             (self.supercell_z, "disabled"),
             lambda x: not (not x and self._model.compute_findmuon),
         )
-
-        self.supercell_selector = ipw.VBox(
-            children=[
-                supercell_hint_estimator,
-                ipw.HBox([
-                    self.supercell_x,
-                    self.supercell_y,
-                    self.supercell_z,
-                ],),
-            ],
-        )
         
         ## Supercell size hint
         self.supercell_hint = ipw.Button(
@@ -211,6 +208,7 @@ class MuonConfigurationSettingPanel(
             button_style="info",
         )
         self.supercell_hint.on_click(self._suggest_supercell)
+        self.supercell_hint_text = ipw.HTML("""(Based on a rule of thumb of at least 9 &#8491; for each lattice vectors.)""")
         
         self.supercell_reset_button = ipw.Button(
             description="Reset supercell",
@@ -219,6 +217,20 @@ class MuonConfigurationSettingPanel(
         )
         # supercell hint (9A lattice params)
         self.supercell_reset_button.on_click(self._reset_supercell)
+        
+        self.supercell_selector = ipw.VBox(
+            children=[
+                supercell_size_text,
+                ipw.HBox([
+                    self.supercell_x,
+                    self.supercell_y,
+                    self.supercell_z,
+                    self.supercell_hint,
+                    self.supercell_hint_text,
+                ],),
+                self.supercell_reset_button
+            ],
+        )
         
         # Kpoints view and control
         self.kpoints_description = ipw.HTML(
@@ -321,19 +333,12 @@ class MuonConfigurationSettingPanel(
         general_settings = [
             self.settings_help,
             self.warning_banner, # TODO: use the one from the app.
-            self.compute_supercell,
-            self.compute_findmuon,
-            self.compute_polarization_undi,
+            self.compute_options_box,
         ]
         self.findmuon_settings = [
             self.charge_help,
             self.charge_options,
             self.supercell_selector,
-            ipw.HBox([
-                self.supercell_hint,
-                self.supercell_reset_button,
-                ],
-            ),
             self.kpoints_description,
             ipw.HBox([
                 self.kpoints_distance,
@@ -362,10 +367,11 @@ class MuonConfigurationSettingPanel(
         self.polarization_settings = [
             ipw.HTML(
                 """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-                <h5><b>Polarization</b></h5>
+                <h5><b>Nuclear contribution to the muon spin relaxation</b></h5>
                 The polarization is computed for the muon site(s) found in the previous 
-                step (or provided in the structure as last atom, using H). We compute the 
-                polarization for different values of external magnetic field (0, 2, 4, 6, 8 mT) and different orientation of the sample. <br>
+                step or, if not search for muon sites is requested, the structure choosen by the user. 
+                Please note that, in this second case, the simulation will not involve and DFT simulation (only the UNDI package will be used). <br>
+                We compute the polarization for different values of external magnetic field (0, 2, 4, 6, 8 mT) and different orientation of the sample. <br>
                 The third lattice vector of the structure should be aligned with the z cartesian direction.
                 """
                 )
