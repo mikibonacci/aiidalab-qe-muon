@@ -54,6 +54,10 @@ class FindMuonWidget(ipw.VBox):
             target="_blank">Onuorah et al., Digital Discovery, 2025</a>, which describes the approach used here to find the muon sites (as implemented
             in the <b><a href="https://positivemuon.github.io/aiida-muon/" target="_blank">aiida-muon</b></a> plugin).
         """)
+        
+        if self._model.supercell_was_small:
+            self.title.value = self.title.value + "<br><b>Warning:</b> The supercell used for the calculations was too small to properly represent the muon sites."
+        
         if self._model.no_B_in_DFT:
             self.title.value = self.title.value + no_Bfield_sentence
         

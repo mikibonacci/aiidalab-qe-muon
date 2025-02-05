@@ -43,12 +43,19 @@ class FindMuonModel(Model):
     advanced_table = tl.Bool(False)
     table_legend_text = tl.Unicode("")
     
+    supercell_was_small = tl.Bool(False)
+    
     def fetch_data(self):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
         self.findmuon_data = export_findmuon_data(self.muon.findmuon)
         self.muon_index_list = self.findmuon_data["table"].index.tolist()
         self.selected_muons = self.muon_index_list[0:1]
         
+        self.sc_matrix = self.muon.findmuon.all_index_uuid.creator.caller.inputs.sc_matrix.get_list()
+        suggested_supercell = self.muon.findmuon.all_index_uuid.creator.caller.inputs.structure.base.extras.get("suggested_supercell", [1,1,1])
+        if any([self.sc_matrix[i][i]<suggested_supercell[i] for i in range(3)]):
+            self.supercell_was_small = True
+            
         if "Bdip_norm" not in self.findmuon_data["table"].columns.tolist():
             self.no_B_in_DFT = True
         else: 
