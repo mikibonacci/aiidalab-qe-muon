@@ -1,29 +1,57 @@
+{% if not download_mode %}
 <div>
-    <p>
-        The table shows the results of the muon resting sites search:<br>
+    <p> 
+        {% if download_mode %}
+        The downloaded files are organized in the following way:
         <ul>
-            <li>Structure id (pk): the AiiDA id (or pk) of the structure in the database.</li>
-            <li>Label: a label for the given supercell.</li>
-            <li>ΔE<sub>total</sub> (meV): the total energy difference with respect to the lowest energy.</li>
+            <li>Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV;</li>
+            <li>Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is cif.</li>
+            <li>Allsites.cif: the unit cell of the system with all the muon sites together.</li>
+        </ul><br>
+        {% endif %}
+        The table collect the results of the muon resting sites search. The different columns shows:<br>
+        <ul>
+            <li>{{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.</li>
+            <li>{{ data["label"] if not download_mode else "label" }}: a label for the given supercell.</li>
+            <li>{{ data["delta_E"] if not download_mode else "delta_E" }}: the total energy difference with respect to the lowest energy.</li>
             {% if advanced_table %}
-            <li>E<sub>total</sub> (meV): the total energy of the calculation - only shown in the advanced mode.</li>
+            <li>{{ data["tot_energy"] if not download_mode else "tot_energy" }}: the total energy of the calculation - only shown in the advanced mode.</li>
             {% endif %}
-            <li><vec>R</vec><sub>μ</sub>: the position of the muon in crystal coordinates.</li>
+            <li>{{ data["muon_position_cc"] if not download_mode else "muon_position_cc" }}: the position of the muon in the supercell (crystal coordinates).</li>
             {% if B_fields %}
-            <li>B<sub>total</sub> (T): the total magnetic field at the muon site.</li>
-            <li>B<sub>dipolar</sub> (T): the dipolar magnetic field at the muon site.</li>
-            <li>|B<sub>total</sub>| (T): the norm of the total magnetic field.</li>
-            <li>|B<sub>dip</sub>| (T): the norm of the dipolar magnetic field.</li>
-            <li>|B<sub>hf</sub>| (T): the norm of the hyperfine magnetic field.</li>
+            <li>{{ data["B_T"] if not download_mode else "B_T" }}: the total magnetic field at the muon site.</li>
+            <li>{{ data["Bdip"] if not download_mode else "Bdip" }}: the dipolar magnetic field at the muon site.</li>
+            <li>{{ data["B_hf"] if not download_mode else "B_hf" }}: the norm of the total magnetic field.</li>
+            <li>{{ data["B_T_norm"] if not download_mode else "B_T_norm" }}: the norm of the dipolar magnetic field.</li>
+            <li>{{ data["Bdip_norm"] if not download_mode else "Bdip_norm" }}: the norm of the hyperfine magnetic field.</li>
             {% endif %}
             {% if advanced_table %}
-            <li>μ<sub>index</sub>: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode" (see below) - only shown in the advanced mode.</li>
+            <li>{{ data["muon_index_global_unitcell"] if not download_mode else "muon_index_global_unitcell" }}: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode" (see below) - only shown in the advanced mode.</li>
             {% endif %}
         </ul>
-        {% if advanced_table %}
+        {% if advanced_table and not download_mode %}
         To see less details, untick the "Advanced table mode" checkbox.
-        {% else %}
+        {% elif not download_mode %}
         To see more details, tick the "Advanced table mode" checkbox.
         {% endif %}
     </p>
 </div>
+{% else %}
+The downloaded files are organized in the following way:
+- Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV.
+- Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is CIF.
+- Allsites.cif: the unit cell of the system with all the muon sites together. 
+
+The table collects the results of the muon resting sites search. The different columns show:
+- {{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.
+- {{ data["label"] if not download_mode else "label" }}: a label for the given supercell.
+- {{ data["delta_E"] if not download_mode else "delta_E" }}: the total energy difference with respect to the lowest energy.
+- {{ data["tot_energy"] if not download_mode else "tot_energy" }}: the total energy of the calculation.
+- {{ data["muon_position_cc"] if not download_mode else "muon_position_cc" }}: the position of the muon in the supercell (crystal coordinates).
+{% if B_fields %}- {{ data["B_T"] if not download_mode else "B_T" }}: the total magnetic field at the muon site.
+- {{ data["Bdip"] if not download_mode else "Bdip" }}: the dipolar magnetic field at the muon site.
+- {{ data["B_hf"] if not download_mode else "B_hf" }}: the norm of the total magnetic field.
+- {{ data["B_T_norm"] if not download_mode else "B_T_norm" }}: the norm of the dipolar magnetic field.
+- {{ data["Bdip_norm"] if not download_mode else "Bdip_norm" }}: the norm of the hyperfine magnetic field.
+{% endif %}- {{ data["muon_index_global_unitcell"] if not download_mode else "muon_index_global_unitcell" }}: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode".
+{% endif %}

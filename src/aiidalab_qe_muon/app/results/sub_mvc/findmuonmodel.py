@@ -5,6 +5,7 @@ import numpy as np
 import base64
 import json
 
+
 from aiidalab_qe_muon.utils.export_findmuon import export_findmuon_data
 from aiidalab_qe_muon.utils.data import (
     dictionary_of_names_for_html, 
@@ -126,17 +127,79 @@ class FindMuonModel(Model):
             data.append(self.findmuon_data["table"].drop(excluded_columns, axis=1).loc[index].to_list())
             #data[-1].pop(-3)
         self.table_data = data
+    
+    @staticmethod
+    def _prepare_single_structure_for_download(structure) -> str:
+        from tempfile import NamedTemporaryFile
+
+        tmp = NamedTemporaryFile()
+        structure.write(tmp.name, format="cif")
+        with open(tmp.name, "rb") as raw:
+            return base64.b64encode(raw.read()).decode()
+    
+    def _prepare_structures_for_download(self) -> str:
+        """Prepare the structures for download.
         
+        This method is called by the controller to get the data for download.
+        """
+        # prepare the structures for download as ase atoms objects
+        structures = {}
+        for index, label in zip(self.findmuon_data["table"]["muon_index"],self.findmuon_data["table"]["label"]):
+            node_id = self.findmuon_data["table"].loc[self.findmuon_data["table"]["muon_index"] == index, "structure_id_pk"].values[0]
+            structure = orm.load_node(node_id).get_ase()
+            structures[label] = structure
+        
+        structures["unit_cell"] = self.findmuon_data["unit_cell"].get_ase()
+        return structures
+    
     def _prepare_data_for_download(self) -> str:
         """Prepare the data for download.
         
         This method is called by the controller to get the data for download.
         """
         # prepare the data for download as csv file
-        data = base64.b64encode(self.findmuon_data['table'].to_csv(index=True).encode()).decode()
+        files_dict = {}
+        files_dict["table"] = self.findmuon_data['table']
+        files_dict["structures"] = self._prepare_structures_for_download()
         formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_id_pk"]).get_formula()
-        filename = f"Summary_{formula}_muon_{'_'.join([str(muon_index) for muon_index in self.selected_muons])}.csv"
-        return data, filename
+        files_dict["filename"] = f"exported_mu_res_{formula}_WorkflowID_{self.muon.findmuon.all_index_uuid.creator.caller.caller.caller.pk}.zip"
+        
+        self.generate_table_legend(download_mode=True)
+        files_dict["readme"] = self.readme_text
+        return files_dict
+    
+    @staticmethod
+    def produce_bitestream(files_dict):
+        import tempfile
+        import pathlib
+        import shutil
+        import os
+        
+        with tempfile.TemporaryDirectory() as dirpath:
+            path = pathlib.Path(dirpath) / "downloadable_data"
+            output_zip_path = pathlib.Path(dirpath) / "downloadable_data.zip"
+            
+            os.mkdir(path)
+            
+            files_dict["table"].drop(columns="muon_index").to_csv(path / "Summary_table.csv", index=True)
+            for label, structure in files_dict["structures"].items():
+                if label == "unit_cell":
+                    structure.write(path / f"Allsites.cif", format="cif")
+                else:
+                    structure.write(path / f"Supercell_{label}.cif", format="cif")
+                
+            with open(path / "README.txt", "w") as f:
+                f.write(files_dict["readme"])
+            
+            shutil.make_archive(path, "zip", path)
+                    
+            with open(output_zip_path, "rb") as f:
+                    raw_data = f.read()
+
+            # Convert the raw_data to base64 so it can be used as a payload in JavaScript
+            bitestream = base64.b64encode(raw_data).decode()
+
+        return bitestream
     
     @staticmethod
     def _download(payload, filename):
@@ -155,7 +218,13 @@ class FindMuonModel(Model):
         )
         display(javas)
         
-    def generate_table_legend(self):
+    def download_data(self, _=None):
+        """Function to download the data."""
+        files_dict = self._prepare_data_for_download()
+        payload = self.produce_bitestream(files_dict)
+        self._download(payload=payload, filename=files_dict["filename"])
+        
+    def generate_table_legend(self, download_mode=False):
         """Generate the table legend."""
         from importlib_resources import files
         from jinja2 import Environment
@@ -163,5 +232,16 @@ class FindMuonModel(Model):
         
         env = Environment()
         table_legend_template = files(templates).joinpath("table_legend.html.j2").read_text()
-        self.table_legend_text = env.from_string(table_legend_template).render({"B_fields": not self.no_B_in_DFT, "advanced_table":self.advanced_table})
+        table_legend_text = env.from_string(table_legend_template).render(
+            {"B_fields": not self.no_B_in_DFT, 
+             "advanced_table":self.advanced_table,
+             "data":dictionary_of_names_for_html,
+             "download_mode":download_mode,
+            }
+        )
+        
+        if download_mode:
+            self.readme_text = table_legend_text 
+            
+        self.table_legend_text = table_legend_text
            

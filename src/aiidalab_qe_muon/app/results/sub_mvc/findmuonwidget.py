@@ -145,8 +145,8 @@ class FindMuonWidget(ipw.VBox):
         
                 
         download_button = ipw.Button(
-            description="Download Table", 
-            tooltip="Download the data for the selected muons in CSV format",
+            description="Download data", 
+            tooltip="Download the all the resting sites data",
             icon="download", 
             button_style="primary"
         )
@@ -328,5 +328,6 @@ class FindMuonWidget(ipw.VBox):
         
     def download_data(self, _=None):
         """Function to download the data."""
-        b64_str, file_name = self._model._prepare_data_for_download()
-        self._model._download(payload=b64_str, filename=file_name)
+        self._model.download_data()
+        
+        
