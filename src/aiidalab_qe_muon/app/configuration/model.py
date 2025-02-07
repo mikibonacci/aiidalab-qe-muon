@@ -15,6 +15,8 @@ from aiidalab_qe.common.panel import ConfigurationSettingsModel
 from ase.build import make_supercell
 from aiida_muon.workflows.find_muon import gensup, niche_add_impurities
 
+from undi.undi_analysis import check_enough_isotopes
+
 class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructure):
     
     title = "Muon Settings"
@@ -62,6 +64,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     supercell = tl.List(
         default_value=[1,1,1],
     )
+    
+    polarization_allowed = tl.Bool(True)
 
     def get_model_state(self):
         return {
@@ -203,11 +207,26 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     def mu_spacing_reset(self, _=None):
         self.mu_spacing = self._get_default("mu_spacing")
     
+    def check_polarization_allowed(self, _=None):
+        # This is needed to check that we can run a undi calculation:
+        # if no isotopes are found, the calculation will fail, so don't allow to run it.
+        if self.input_structure:
+            info, isotopes, isotope_list = check_enough_isotopes(self.input_structure.get_ase())
+            if len(isotope_list) == 0:
+                self.polarization_allowed = False
+            else:
+                self.polarization_allowed =  True
+        else:
+            self.polarization_allowed =  True
+        
+        if not self.polarization_allowed:
+            self.compute_polarization_undi = False
     
     def on_input_structure_change(self, _=None):
         if not self.input_structure:
             self.reset()
         else:
+            self.check_polarization_allowed
             self.disable_x, self.disable_y, self.disable_z = True, True, True
             pbc = self.input_structure.pbc
 

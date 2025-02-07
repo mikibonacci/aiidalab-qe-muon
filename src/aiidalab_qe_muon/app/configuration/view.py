@@ -67,6 +67,8 @@ class MuonConfigurationSettingPanel(
         self.warning_banner = ipw.HTML('Please select at list on among the three main steps of the workflow.')
         self.warning_banner.layout.display = "none"
         
+        self._model.check_polarization_allowed()
+        
         # Supercell size view and control
         self.compute_supercell = ipw.Checkbox(
             description="Compute supercell size ",
@@ -109,12 +111,24 @@ class MuonConfigurationSettingPanel(
             (self.compute_polarization_undi, "value"),
             (self._model, "compute_polarization_undi"),
         )
+        ipw.dlink(
+            (self._model, "polarization_allowed"),
+            (self.compute_polarization_undi, "disabled"),
+            lambda x: not x, # disable if polarization is not allowed
+        )
+        
+        self.why_no_pol_text = ipw.HTML(
+            """
+             - <b>Disabled</b>: no abundant isotopes with spin > 1/2 are found in the structure.        
+            """
+        )
+        self.why_no_pol_text.layout.display = "none" if self._model.polarization_allowed else "block"               
         
         self.compute_options_box = ipw.VBox(
             children=[
             self.compute_findmuon,
             ipw.HBox([self.compute_supercell], layout=ipw.Layout(padding="0 0 0 20px")),
-            ipw.HBox([self.compute_polarization_undi], layout=ipw.Layout(padding="0 0 0 20px")),
+            ipw.HBox([self.compute_polarization_undi, self.why_no_pol_text], layout=ipw.Layout(padding="0 0 0 20px")),
             ],
         )
         
@@ -387,6 +401,8 @@ class MuonConfigurationSettingPanel(
         self.refresh(specific="structure")
         self._model.on_input_structure_change()
         self._model.compute_suggested_supercell()
+        if hasattr(self, "why_no_pol_text"):
+            self.why_no_pol_text.layout.display = "none" if self._model.polarization_allowed else "block"
     
     def _on_compute_findmuon_change(self, _):
         with self.hold_trait_notifications():

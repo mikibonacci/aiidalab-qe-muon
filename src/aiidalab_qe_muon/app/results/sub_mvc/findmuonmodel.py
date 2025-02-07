@@ -242,6 +242,6 @@ class FindMuonModel(Model):
         
         if download_mode:
             self.readme_text = table_legend_text 
-            
-        self.table_legend_text = table_legend_text
+        else:
+            self.table_legend_text = table_legend_text
            
