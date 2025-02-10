@@ -54,7 +54,7 @@ class UndiPlotWidget(ipw.VBox):
             """
             <h3>Nuclear contribution to muon relaxation</h3>
             
-            Here you can analyse the muon relaxation function P<sub>r</sub>(t) resulting from the muon-nuclear interaction and 
+            Here you can analyse the muon relaxation function P(t) resulting from the muon-nuclear interaction and 
             computed (via the <a href="https://undi.readthedocs.io/en/latest/index.html"
         target="_blank">UNDI</a> package) following the approach by Celio 
             (<a href="https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.56.2720"target="_blank">Celio, Phys. Rev. Lett. 56, 2720, 1986</a>). <br> 

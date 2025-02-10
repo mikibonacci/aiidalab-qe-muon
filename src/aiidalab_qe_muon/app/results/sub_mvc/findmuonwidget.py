@@ -67,6 +67,7 @@ class FindMuonWidget(ipw.VBox):
             (self.table, "data"),
         )
         self._update_table()
+        self.table.selected_rows = [0]
         self.table.observe(self._on_selected_rows_change,"selected_rows")
         
         self.advanced_table = ipw.Checkbox(
