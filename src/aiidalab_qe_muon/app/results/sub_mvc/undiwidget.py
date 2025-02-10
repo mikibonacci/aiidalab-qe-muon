@@ -73,10 +73,10 @@ class UndiPlotWidget(ipw.VBox):
             self.plot_box = self.inject_tune_plot_box()
             
             selected_indexes_widget = ipw.HTML(
-                f"Selected muon sites: {self._model.selected_indexes}",
+                f"Selected muon sites: {self._model.selected_labels}",
             )
             ipw.dlink(
-                (self._model, "selected_indexes"),
+                (self._model, "selected_labels"),
                 (selected_indexes_widget, "value"),
                 lambda x: f"Selected muon sites: {x}",
             )
@@ -149,8 +149,8 @@ class UndiPlotWidget(ipw.VBox):
                 which is used to construct the Hamiltonian for muon-nuclei interactions. For more details, please refer to the 
                 <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
                 <ul>
-                    <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, 
-                    the same value used in the above 'Polarization data' plot; </li>
+                    <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, larger than the
+                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>9</sup>); </li>
                 </ul>
                 """
             )
@@ -197,11 +197,12 @@ class UndiPlotWidget(ipw.VBox):
         else:
             quantity_to_iterate = self._model.max_hdims
         selected_indexes = self._model.selected_indexes
+        selected_labels = self._model.selected_labels
         ylabel=None
 
-        for muon_index in selected_indexes:
+        for muon_index, muon_label in zip(selected_indexes,selected_labels):
             
-            muon_index_string = f" (site {muon_index})" if len(selected_indexes) > 1 else ""
+            muon_index_string = f" (site {muon_label})" if len(selected_indexes) > 1 else ""
             #for index in range(len(self._model.muons[str(muon_index)].results)):
             for value in quantity_to_iterate:
                 # shell_node = node #orm.load_node(2582)
@@ -417,8 +418,8 @@ class UndiPlotWidget(ipw.VBox):
     
     def _on_add_KT_change(self, change = None):
         
-        for muon_index in self._model.selected_indexes:
-            muon_index_string = f" (site {muon_index})" if len(self._model.selected_indexes) > 1 else ""
+        for muon_index, muon_label in zip(self._model.selected_indexes, self._model.selected_labels):
+            muon_index_string = f" (site {muon_label})" if len(self._model.selected_indexes) > 1 else ""
             if self._model.plot_KT:
                 # add the trace
                 if self._model.muons[str(muon_index)].KT_output:

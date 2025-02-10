@@ -150,7 +150,7 @@ def UndiAndKuboToyabe(
         multiple_undi_analysis,
         structure=structure,
         B_mods=B_mods,
-        max_hdims=max_hdims[-1:],
+        max_hdims=max_hdims[-2:-1],
         atom_as_muon=atom_as_muon,
         convergence_check=False,
         algorithm=algorithm,
@@ -167,7 +167,7 @@ def UndiAndKuboToyabe(
 def MultiSites(
     structure_group,
     code=None, # if None, default python3@localhost will be used.
-    metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}},
+    metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}}, # just a default.
     ):
     
     wg = WorkGraph("PolarizationMultiSites")
@@ -177,7 +177,7 @@ def MultiSites(
             UndiAndKuboToyabe,
             structure=structure,
             B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded. Units are Tesla.
-            max_hdims=[10**3, 10**5, 10**7, 10**9],  # for now, hardcoded.
+            max_hdims=[10**2, 10**4, 10**6, 10**9],  # for now, hardcoded. NB: in undi run, we use max_hdims[-2:-1], not the last one.
             convergence_check=i==0,  # maybe the convergence can be done for only one site, as done here now.
             algorithm='fast',
             name=f"polarization_structure_{idx}",

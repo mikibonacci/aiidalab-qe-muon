@@ -65,6 +65,10 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
                 (muon_model, "selected_muons"),
                 (undi_model, "selected_indexes"),
             )
+            ipw.dlink(
+                (muon_model, "selected_labels"),
+                (undi_model, "selected_labels"),
+            )
             self.children = (muon_widget, ipw.HTML("<br>"), undi_widget)
             
         for index, child in enumerate(self.children):

@@ -81,6 +81,8 @@ class PolarizationModel(Model):
         "The polarization spectra are computed considering a weighted average of the isotopes combinations, with respect to their relative probability (abundance)."
     )
     
+    selected_labels = tl.List(tl.Unicode())
+    
     def __init__(self, node=None, undi_nodes=None, KT_node=None, mode="plot"):
         
         self.mode = mode

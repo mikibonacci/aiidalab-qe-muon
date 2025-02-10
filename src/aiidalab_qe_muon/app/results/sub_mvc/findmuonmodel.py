@@ -1,5 +1,6 @@
 from aiidalab_qe.common.mvc import Model
 import traitlets as tl
+from traitlets import observe
 from aiida.common.extendeddicts import AttributeDict
 import numpy as np
 import base64
@@ -46,6 +47,12 @@ class FindMuonModel(Model):
     
     supercell_was_small = tl.Bool(False)
     
+    selected_labels = tl.List(tl.Unicode())
+    
+    @observe("selected_muons")
+    def _on_selected_muons(self, _=None):
+        self.selected_labels = self.findmuon_data["table"].loc[self.selected_muons, "label"].tolist()
+    
     def fetch_data(self):
         """Fetch the findmuon data from the FindMuonWorkChain outputs."""
         self.findmuon_data = export_findmuon_data(self.muon.findmuon)
@@ -87,7 +94,7 @@ class FindMuonModel(Model):
         """
         
         self.data_plot = {
-            "x":self.findmuon_data["table"].loc[self.selected_muons, "label"].tolist(),
+            "x":self.selected_labels,
             "y":[],
             "entry":[],
             "color_code":[],

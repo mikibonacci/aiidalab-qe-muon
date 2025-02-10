@@ -105,12 +105,16 @@ def get_builder(codes, structure, parameters):
         overrides["impuritysupercellconv"] = overrides
 
     overrides["base"]["pw"]["metadata"] = create_resource_config(codes.get("pw_muons"))
+    
+    undi_metadata = create_resource_config(codes.get("undi_code"))
+    #undi_metadata["options"]["prepend_text"] =  \
+    #    f'export OMP_NUM_THREADS={undi_metadata["options"]["resources"]["num_cores_per_mpiproc"]}'
 
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_muons_code=pw_code,
         pp_code=pp_code,
         undi_code=undi_code,
-        undi_metadata=create_resource_config(codes.get("undi_code")),
+        undi_metadata=undi_metadata,
         #pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
