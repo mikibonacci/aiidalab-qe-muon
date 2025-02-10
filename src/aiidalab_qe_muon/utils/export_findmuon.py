@@ -41,7 +41,8 @@ def produce_muonic_dataframe(findmuon_output_node: orm.Node) -> pd.DataFrame:
                     3,
                 ),
             )
-            bars["muons"][idx]["muon_index_global_unitcell"] = len(relaxwc.outputs.output_structure.sites) - 1 + i # we start counting from 1. 
+            bars["muons"][idx]["muon_index_global_unitcell"] = \
+                len(findmuon_output_node.all_index_uuid.creator.caller.inputs.structure.sites) + i # remember: i starts from 1
 
     fields_list = []
     if "unique_sites_dipolar" in findmuon_output_node:

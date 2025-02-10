@@ -105,7 +105,7 @@ class MuonConfigurationSettingPanel(
             indent=False,
             value=self._model.compute_polarization_undi,
             tooltip="Compute the compute polarization for muon resting site(s).",
-            layout=ipw.Layout(width="300px"),
+            layout=ipw.Layout(width="500px"),
         )
         ipw.link(
             (self.compute_polarization_undi, "value"),
@@ -179,6 +179,7 @@ class MuonConfigurationSettingPanel(
             (self.supercell_x, "disabled"),
             lambda x: not (not x and self._model.compute_findmuon), # disable if compute_supercell is selected or we don't want to compute findmuon
         )
+        self.supercell_x.observe(self._on_supercell_change, "value")
         self.supercell_y = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
@@ -196,6 +197,7 @@ class MuonConfigurationSettingPanel(
             (self.supercell_y, "disabled"),
             lambda x: not (not x and self._model.compute_findmuon),
         )
+        self.supercell_y.observe(self._on_supercell_change, "value")
         self.supercell_z = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
@@ -213,6 +215,7 @@ class MuonConfigurationSettingPanel(
             (self.supercell_z, "disabled"),
             lambda x: not (not x and self._model.compute_findmuon),
         )
+        self.supercell_z.observe(self._on_supercell_change, "value")
         
         ## Supercell size hint
         self.supercell_hint = ipw.Button(
@@ -277,7 +280,7 @@ class MuonConfigurationSettingPanel(
         self.reset_kpoints_distance.on_click(self._reset_kpoints_distance)
         
         self.mesh_grid = ipw.HTML(value=self._model.mesh_grid)
-        ipw.link(
+        ipw.dlink(
             (self._model, "mesh_grid"),
             (self.mesh_grid, "value"),
         )
@@ -409,7 +412,9 @@ class MuonConfigurationSettingPanel(
             for widget in self.findmuon_settings:
                 widget.layout.display = "none" if not self._model.compute_findmuon else "flex"
             
-    
+    def _on_supercell_change(self, _):
+        self._model.compute_mesh_grid()
+        
     def _suggest_supercell(self, _=None):
         """
         minimal supercell size for muons, imposing a minimum lattice parameter of 9 A.

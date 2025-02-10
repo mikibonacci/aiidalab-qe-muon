@@ -103,6 +103,7 @@ class ImplantMuonWorkChain(WorkChain):
             if_(cls.need_implant)(
                 cls.prepare_implant,
                 cls.implant_muon,
+                cls.output_implant_results,
             ),
             if_(cls.need_polarization)(
                 cls.prepare_polarization,
@@ -249,6 +250,24 @@ class ImplantMuonWorkChain(WorkChain):
         future = self.submit(self.ctx.workchain_class, **inputs)
         self.report(f"submitting `WorkChain` <PK={future.pk}>")
         self.to_context(**{"findmuon": future})
+        
+    def output_implant_results(self):
+        """Output the results of the FindMuonWorkChain."""
+        workchain = self.ctx.get("findmuon", None)
+
+        if workchain:
+            if not workchain.is_finished_ok:
+                self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
+                return self.exit_codes.ERROR_WORKCHAIN_FAILED
+
+            if self.ctx.implant_muon:
+                self.out_many(
+                    self.exposed_outputs(
+                        workchain,
+                        self.ctx.workchain_class,
+                        namespace="findmuon",
+                    )
+                )
 
     def need_polarization(self):
         return self.ctx.compute_polarization
@@ -263,7 +282,7 @@ class ImplantMuonWorkChain(WorkChain):
         # here we will submit the workgraph for the polarization estimation. Via Undi and KT.
         # need to parse all the output structures, and loop on them.
 
-        metadata = self.inputs.get("undi_metadata", {})
+        metadata = self.inputs.get("undi_metadata", None)
         workgraph = MultiSites(
             structure_group=self.ctx.structure_group,
             code = getattr(self.inputs, "undi_code", None),
@@ -281,23 +300,8 @@ class ImplantMuonWorkChain(WorkChain):
         self.to_context(workgraph=process)
 
     def results(self):
-        """Inspect all sub-processes."""
-        workchain = self.ctx.get("findmuon", None)
+        """Inspect pol sub-processes."""
         polarization = self.ctx.get("workgraph", None)
-
-        if workchain:
-            if not workchain.is_finished_ok:
-                self.report(f"the child WorkChain with <PK={workchain.pk}> failed")
-                return self.exit_codes.ERROR_WORKCHAIN_FAILED
-
-            if self.ctx.implant_muon:
-                self.out_many(
-                    self.exposed_outputs(
-                        workchain,
-                        self.ctx.workchain_class,
-                        namespace="findmuon",
-                    )
-                )
 
         # should we output the wgraph results here?
         # Yes, we should collect them in order to easily recover the site index.

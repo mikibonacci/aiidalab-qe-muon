@@ -127,13 +127,14 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             if not hasattr(self, "suggested_supercell"):
                 self.compute_suggested_supercell()
             
-            self.supercell_x = self.suggested_supercell_x
-            self.supercell_y = self.suggested_supercell_y
-            self.supercell_z = self.suggested_supercell_z
-            self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
-            
-            self.compute_mesh_grid()
-            
+            with self.hold_trait_notifications():
+                self.supercell_x = self.suggested_supercell_x
+                self.supercell_y = self.suggested_supercell_y
+                self.supercell_z = self.suggested_supercell_z
+                self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
+                
+                #self.compute_mesh_grid()
+                
     def supercell_hint_reset(self, _=None):
         if not self.disable_x:
             self.supercell_x = self._get_default("supercell_x")
@@ -176,6 +177,11 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             if self.kpoints_distance > 0:
                 # make supercell now supports only diagonal transformation matrices.
                 supercell_ = self.input_structure.get_ase()
+                
+                # just to make sure they synchronize:
+                self.supercell = [self.supercell_x, self.supercell_y, self.supercell_z]
+                
+                # then:
                 supercell_ = make_supercell(
                     supercell_,
                     [
@@ -226,7 +232,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if not self.input_structure:
             self.reset()
         else:
-            self.check_polarization_allowed
+            self.check_polarization_allowed()
             self.disable_x, self.disable_y, self.disable_z = True, True, True
             pbc = self.input_structure.pbc
 
