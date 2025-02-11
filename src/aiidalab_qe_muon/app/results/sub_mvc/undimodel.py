@@ -96,6 +96,9 @@ class PolarizationModel(Model):
                 self.fetch_data()
         if KT_node:
             self.load_KT(KT_node)
+            
+        if mode == "analysis":
+            self.selected_labels = ["A"]
 
     def get_data_plot(
         self,
@@ -114,7 +117,7 @@ class PolarizationModel(Model):
             }
 
             self.muons[muon_index].data["x"] = np.array(self.muons[muon_index].results[0][0]["t"]) * 1e6
-
+            
     def create_cluster_matrix(
         self,
     ):
@@ -150,9 +153,13 @@ class PolarizationModel(Model):
             
             for muon in self.nodes: # this need to be the called of the MultiSites task.
                 
-                if self.mode == "analysis" and self.nodes.index(muon) > 0: break
                 #muon_index = muon.base.extras.get("muon_index", 0)
                 muon_index = muon.base.attributes.all.get("metadata_inputs",{}).get("metadata",{}).get("call_link_label","0").replace("polarization_structure_","")
+                
+                if self.mode == "analysis":
+                    if not "convergence_check" in muon.base.links.get_outgoing().all_link_labels():
+                        continue
+                    
                 self.muons[muon_index] = AttributeDict()
                 
                 main_node = muon

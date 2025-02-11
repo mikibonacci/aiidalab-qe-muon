@@ -23,10 +23,13 @@ open a verdi shell and run:
 ```python
 from aiida_pythonjob.utils import create_conda_env
 
+computer_label = "<computer_label>" # Remote computer label, already stored in the AiiDA database
+env_name = "<environment_name>"     # Desired name of the conda environment you are going to create
+
 ```python
 create_conda_env(
-    "<computer_label>",           # Remote computer, already stored in the AiiDA database
-    "<environment_name>",         # Name of the conda environment you are going to create
+    computer_label,          
+    env_name,         
     modules=[],                   # Modules to be loaded in order to invoke conda
     pip=[
         "numpy~=1.26",
@@ -35,10 +38,10 @@ create_conda_env(
         "pandas",
         "pybind11",
         "git+https://github.com/mikibonacci/undi.git@update",
-        ],  # Python packages to install via pip
+        ],  # Python packages to be installed via pip
     conda={                   # Conda-specific settings
         "channels": ["conda-forge"],  # Channels to use
-        "dependencies": ["cloudpickle"]
+        "dependencies": ["cloudpickle"] # package to install using conda
     },
     install_conda=True,
 )
