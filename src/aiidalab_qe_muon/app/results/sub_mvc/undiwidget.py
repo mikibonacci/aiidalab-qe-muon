@@ -72,15 +72,15 @@ class UndiPlotWidget(ipw.VBox):
         if self._model.mode == "plot":
             self.plot_box = self.inject_tune_plot_box()
             
-            selected_indexes_widget = ipw.HTML(
+            self.selected_indexes_widget = ipw.HTML(
                 f"Selected muon sites: {self._model.selected_labels}",
             )
             ipw.dlink(
                 (self._model, "selected_labels"),
-                (selected_indexes_widget, "value"),
+                (self.selected_indexes_widget, "value"),
                 lambda x: f"Selected muon sites: {x}",
             )
-            selected_indexes_widget.observe(self._on_selected_indexes_change, "value")
+            self.selected_indexes_widget.observe(self._on_selected_indexes_change, "value")
             
             table = self._model.create_html_table(
                 first_row=["cluster index", "isotopes", "spins", "probability"],
@@ -136,7 +136,7 @@ class UndiPlotWidget(ipw.VBox):
                 self.plot_box,
                 self.info_on_the_approximations, # I will render it in the MultipleUndiMVC
                 self.fig,
-                selected_indexes_widget,
+                self.selected_indexes_widget,
             ]
             if self.convergence_undi_widget:
                 self.convergence_undi_widget.render()
@@ -200,9 +200,13 @@ class UndiPlotWidget(ipw.VBox):
         selected_labels = self._model.selected_labels
         ylabel=None
 
+        if len(self._model.selected_indexes) != len(self._model.selected_labels):
+            raise ValueError(self._model.selected_indexes, self._model.selected_labels)
+        
         for muon_index, muon_label in zip(selected_indexes,selected_labels):
             
-            muon_index_string = f" (site {muon_label})" if len(selected_indexes) > 1 else ""
+            muon_index_string = f" (site {muon_label})" if len(selected_labels) > 1 else ""
+            
             #for index in range(len(self._model.muons[str(muon_index)].results)):
             for value in quantity_to_iterate:
                 # shell_node = node #orm.load_node(2582)
@@ -435,7 +439,7 @@ class UndiPlotWidget(ipw.VBox):
             else:
                 # remove the trace
                 if hasattr(self, "KT_trace"): 
-                    self.fig.data = tuple([trace for trace in self.fig.data[:-1]])
+                    self.fig.data = tuple([trace for trace in self.fig.data[:-(len(self._model.selected_indexes))]])
                     delattr(self, "KT_trace")
         
     def init_undi_plots(self):

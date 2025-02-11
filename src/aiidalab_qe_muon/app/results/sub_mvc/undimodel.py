@@ -53,8 +53,14 @@ class PolarizationModel(Model):
     )
     field_direction = tl.Enum(["lf", "tf"], default_value="lf")
     plot_KT = tl.Bool(False)
-    selected_indexes = tl.List( # muon selected indexes. Relevant if multiple sites are computed at the same time.
+
+    
+    full_muon_indexes = tl.List(
         trait=tl.Int(),
+    )
+    
+    full_muon_labels = tl.List(
+        trait=tl.Unicode(),
     )
     
     details_on_the_approximations = (
@@ -99,6 +105,23 @@ class PolarizationModel(Model):
             
         if mode == "analysis":
             self.selected_labels = ["A"]
+            
+            
+    @property
+    def selected_indexes(self):
+        # doing it explicitely dummy, we need to change this
+        if self.mode == "analysis":
+            return [self.full_muon_indexes[0]]
+        
+        selected_indexes = []
+        for label in self.selected_labels:
+            selected_indexes.append(
+                self.full_muon_indexes[self.full_muon_labels.index(label)]
+                )
+        if len(selected_indexes) != len(self.selected_labels):
+            raise ValueError(selected_indexes, self.selected_labels)
+        return selected_indexes
+    
 
     def get_data_plot(
         self,
@@ -201,7 +224,6 @@ class PolarizationModel(Model):
                         .get_node_by_label("KuboToyabe_run")
                         .outputs.result.get_dict()
                     )
-            self.selected_indexes = [int(s) for s in self.muons.keys()]
         else:
             # shelljob case - Will never be the case in the app.
             self.fields = [

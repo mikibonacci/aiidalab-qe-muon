@@ -62,12 +62,24 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
         
         if needs_findmuon_rendering and needs_undi_rendering:
             ipw.dlink(
-                (muon_model, "selected_muons"),
-                (undi_model, "selected_indexes"),
+                (muon_model, "full_muon_indexes"),
+                (undi_model, "full_muon_indexes"),
+            )
+            ipw.dlink(
+                (muon_model, "full_muon_labels"),
+                (undi_model, "full_muon_labels"),
             )
             ipw.dlink(
                 (muon_model, "selected_labels"),
                 (undi_model, "selected_labels"),
+            )
+            ipw.dlink(
+                (muon_model, "full_muon_indexes"),
+                (conv_undi_model, "full_muon_indexes"),
+            )
+            ipw.dlink(
+                (muon_model, "full_muon_labels"),
+                (conv_undi_model, "full_muon_labels"),
             )
             self.children = (muon_widget, ipw.HTML("<br>"), undi_widget)
             

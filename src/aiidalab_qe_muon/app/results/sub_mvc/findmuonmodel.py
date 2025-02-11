@@ -49,6 +49,14 @@ class FindMuonModel(Model):
     
     selected_labels = tl.List(tl.Unicode())
     
+    full_muon_indexes = tl.List(
+        trait=tl.Int(),
+    )
+    
+    full_muon_labels = tl.List(
+        trait=tl.Unicode(),
+    )
+    
     @observe("selected_muons")
     def _on_selected_muons(self, _=None):
         self.selected_labels = self.findmuon_data["table"].loc[self.selected_muons, "label"].tolist()
@@ -58,6 +66,11 @@ class FindMuonModel(Model):
         self.findmuon_data = export_findmuon_data(self.muon.findmuon)
         self.muon_index_list = self.findmuon_data["table"].index.tolist()
         self.selected_muons = self.muon_index_list[0:1]
+        
+        #needed to sync with undimodel stuff.
+        self.full_muon_indexes = self.muon_index_list
+        self.full_muon_labels = self.findmuon_data["table"]["label"].tolist()
+
         
         self.sc_matrix = self.muon.findmuon.all_index_uuid.creator.caller.inputs.sc_matrix.get_list()
         suggested_supercell = self.muon.findmuon.all_index_uuid.creator.caller.inputs.structure.base.extras.get("suggested_supercell", [1,1,1])

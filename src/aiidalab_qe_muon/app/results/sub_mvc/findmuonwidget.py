@@ -204,6 +204,11 @@ class FindMuonWidget(ipw.VBox):
             for index in self.table.selected_rows
             ]
         
+        self._model.selected_labels = [
+            self._model.findmuon_data["table"].iloc[index].label
+            for index in self.table.selected_rows
+            ]
+        
         self._on_selected_muons_change()
 
     def _on_displayed_selection_change(self, change):
