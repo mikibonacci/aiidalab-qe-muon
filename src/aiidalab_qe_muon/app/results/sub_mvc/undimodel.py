@@ -111,8 +111,7 @@ class PolarizationModel(Model):
     def selected_indexes(self):
         # doing it explicitely dummy, we need to change this
         if self.mode == "analysis":
-            return [self.full_muon_indexes[0]]
-        
+            return [s for s in self.muons.keys()]
         selected_indexes = []
         for label in self.selected_labels:
             selected_indexes.append(
