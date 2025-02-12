@@ -110,6 +110,10 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
                 s = self.input_structure.get_ase()
                 suggested_3D = 9 // np.array(s.cell.cellpar()[:3]) + 1
 
+                self.suggested_supercell_x = 1
+                self.suggested_supercell_y = 1
+                self.suggested_supercell_z = 1
+                
                 # Update only dimensions that are not disabled
                 if not self.disable_x:
                     self.suggested_supercell_x = int(suggested_3D[0])
