@@ -43,6 +43,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")
     
+    override_defaults = tl.Bool(False) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
+    
     # TODO: implement these two in MVC
     specific_pseudofamily = tl.Unicode("")
     warning_banner = tl.List(
@@ -158,13 +160,13 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if self.input_structure is None:
             return
         else:
-            mu_lst = niche_add_impurities(
+            self.mu_lst = niche_add_impurities(
                 self.input_structure.get_pymatgen_structure(),
                 niche_atom = "H",
                 niche_spacing = orm.Float(self.mu_spacing),
                 niche_distance = 1, # distance from hosting atoms,
             )
-            self.number_of_supercells = str(len(mu_lst))
+            self.number_of_supercells = str(len(self.mu_lst))
             
     def compute_mesh_grid(self, _=None):
         if self.input_structure:

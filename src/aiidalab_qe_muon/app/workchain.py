@@ -70,6 +70,7 @@ def get_builder(codes, structure, parameters):
 
     disable_hubbard = not parameters["muonic"].pop("hubbard", True) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
+    enforce_defaults = not parameters["muonic"].pop("override_defaults", False)
     #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
     # dummy logic.
     #pseudo_family = pseudo_family if pseudo_family != "" else "SSSP/1.3/PBE/efficiency"
@@ -86,6 +87,12 @@ def get_builder(codes, structure, parameters):
         #    },
         "pwscf": scf_overrides,
     }
+    
+    # we always enforce the mixing mode and num_steps
+    overrides["base"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] = "local-TF"
+    overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] ="local-TF"
+    overrides["base"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
+    overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] =500
     
     pp_metadata = {
         "options": {
@@ -118,6 +125,7 @@ def get_builder(codes, structure, parameters):
         #pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
+        enforce_defaults= enforce_defaults,
         compute_findmuon=compute_findmuon,
         compute_polarization_undi=compute_polarization_undi,
         overrides=overrides,

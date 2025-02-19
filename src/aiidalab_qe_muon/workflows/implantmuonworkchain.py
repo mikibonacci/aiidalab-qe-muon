@@ -144,6 +144,7 @@ class ImplantMuonWorkChain(WorkChain):
         undi_code=None,
         undi_metadata=None,
         protocol=None,
+        enforce_defaults: bool = True,
         compute_findmuon: bool = True,
         compute_polarization_undi: bool = True,
         overrides: dict = {},
@@ -183,6 +184,7 @@ class ImplantMuonWorkChain(WorkChain):
             pp_code=pp_code,
             structure=structure,
             protocol=protocol,
+            enforce_defaults = enforce_defaults,
             overrides=overrides,
             relax_musconv=relax_musconv,  # relaxation of unit cell already done if needed.
             magmom=magmom,

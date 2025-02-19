@@ -150,7 +150,7 @@ class UndiPlotWidget(ipw.VBox):
                 <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
                 <ul>
                     <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, larger than the
-                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>9</sup>); </li>
+                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>6</sup>); </li>
                 </ul>
                 """
             )

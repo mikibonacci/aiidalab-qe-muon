@@ -132,6 +132,25 @@ class MuonConfigurationSettingPanel(
             ],
         )
         
+        self.override_defaults_help = ipw.HTML(
+            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
+            <h5><b>On the suggested parameters</b></h5>
+            Due to the nature of muon calculations (infinite dilute defect), the suggested parameters are based on a rule of thumb/experience
+            of the experts (the develop of this plugin and the aiida-muon plugin).
+            It is possible to override this defaults (*only for experts*) and use the convergence settings and k-points distance defined in the "Advanced settings" tab.
+            </div>"""
+        )
+        self.override_defaults = ipw.Checkbox(
+            description="Override default settings",
+            indent=False,
+            value=False,
+            tooltip="Override the default settings for the workflow.",
+        )
+        ipw.dlink(
+            (self.override_defaults, "value"),
+            (self._model, "override_defaults"),
+        )
+        
         # Charge state view and control (the control is the link, and observe() if any)
         self.charge_help = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
@@ -255,7 +274,7 @@ class MuonConfigurationSettingPanel(
             <h5><b>K-points mesh density</b></h5>
             The k-points mesh density for the relaxation of the muon supecells.
             The value below represents the maximum distance between the k-points in each direction of
-            reciprocal space.</div>"""
+            reciprocal space. All grid will contain the Gamma point and are not shifted.</div>"""
         )
 
         self.kpoints_distance = ipw.BoundedFloatText(
@@ -270,6 +289,10 @@ class MuonConfigurationSettingPanel(
             (self.kpoints_distance, "value"),
             (self._model, "kpoints_distance"),
         )
+        ipw.dlink(
+            (self.override_defaults, "value"),
+            (self.kpoints_distance, "disabled"),
+        )
         self.kpoints_distance.observe(self._on_kpoints_distance_change, "value")
         
         self.reset_kpoints_distance = ipw.Button(
@@ -277,13 +300,40 @@ class MuonConfigurationSettingPanel(
             disabled=False,
             button_style="warning",
         )
+        ipw.dlink(
+            (self.override_defaults, "value"),
+            (self.reset_kpoints_distance, "disabled"),
+        )
         self.reset_kpoints_distance.on_click(self._reset_kpoints_distance)
-        
+                
         self.mesh_grid = ipw.HTML(value=self._model.mesh_grid)
         ipw.dlink(
             (self._model, "mesh_grid"),
             (self.mesh_grid, "value"),
         )
+        ipw.dlink(
+            (self.override_defaults, "value"),
+            (self.mesh_grid, "value"),
+            lambda x: "" if x else self._model.mesh_grid,
+        )
+        
+        self.kpoints_box = ipw.VBox(
+            [
+                self.kpoints_description,
+                ipw.HBox([
+                    self.kpoints_distance,
+                    self.reset_kpoints_distance,
+                    self.mesh_grid,
+                    ],
+                ),
+                ],
+        )
+        ipw.dlink(
+            (self.override_defaults, "value"),
+            (self.kpoints_box, "layout"),
+            lambda x: {"display": "none"} if x else {"display": "block"},
+        )
+        
         
         self.hubbard = ipw.Checkbox(
             description="Disable Hubbard correction (if any): ",
@@ -355,16 +405,12 @@ class MuonConfigurationSettingPanel(
             self.compute_options_box,
         ]
         self.findmuon_settings = [
+            self.override_defaults_help,
+            self.override_defaults,
             self.charge_help,
             self.charge_options,
             self.supercell_selector,
-            self.kpoints_description,
-            ipw.HBox([
-                self.kpoints_distance,
-                self.reset_kpoints_distance,
-                self.mesh_grid,
-                ],
-            ),
+            self.kpoints_box,
             self.hubbard,
             self.spin_polarized,
             self.mu_spacing_help,
