@@ -13,7 +13,8 @@ from aiida_quantumespresso.calculations.functions.create_kpoints_from_distance i
 from aiidalab_qe.common.mixins import HasInputStructure
 from aiidalab_qe.common.panel import ConfigurationSettingsModel
 from ase.build import make_supercell
-from aiida_muon.workflows.find_muon import gensup, niche_add_impurities
+
+from aiida_muon.utils.sites_supercells import niche_add_impurities, gensup, compute_suggest_supercell_size
 
 from undi.undi_analysis import check_enough_isotopes
 
@@ -107,8 +108,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if self.input_structure:
             with self.hold_trait_notifications():
                 self.supercell_hint_reset()
-                s = self.input_structure.get_ase()
-                suggested_3D = 9 // np.array(s.cell.cellpar()[:3]) + 1
+                suggested_3D = compute_suggest_supercell_size(self.input_structure.get_ase())
 
                 self.suggested_supercell_x = 1
                 self.suggested_supercell_y = 1
@@ -159,22 +159,12 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             return
         else:
             mu_lst = niche_add_impurities(
-                self.input_structure,
-                orm.Str("H"),
-                orm.Float(self.mu_spacing),
-                orm.Float(1.0),
-                metadata={"store_provenance": False},
+                self.input_structure.get_pymatgen_structure(),
+                niche_atom = "H",
+                niche_spacing = orm.Float(self.mu_spacing),
+                niche_distance = 1, # distance from hosting atoms,
             )
-
-            sc_matrix = [
-                [self.supercell[0], 0, 0],
-                [0, self.supercell[1], 0],
-                [0, 0, self.supercell[2]],
-            ]
-            supercell_list = gensup(
-                self.input_structure.get_pymatgen(), mu_lst, sc_matrix
-            )  # ordinary function
-            self.number_of_supercells = str(len(supercell_list))
+            self.number_of_supercells = str(len(mu_lst))
             
     def compute_mesh_grid(self, _=None):
         if self.input_structure:
