@@ -360,7 +360,9 @@ class MuonConfigurationSettingPanel(
         self.mu_spacing_help = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
             <h5><b>Muons site distance</b></h5>
-            Muons distance in Å for different candidate positions in the choosen supercell. Default is 1 Å.</div>"""
+            Muons distance in Å for different candidate positions in the choosen supercell. Default is 1 Å.
+            </div>
+            """
         ) 
         self.mu_spacing = ipw.BoundedFloatText(
             min=0.05,

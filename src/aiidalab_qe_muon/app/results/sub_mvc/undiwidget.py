@@ -275,15 +275,12 @@ class UndiPlotWidget(ipw.VBox):
                 plot_bgcolor="gainsboro",  # Background color of the plot
                 # paper_bgcolor='white', # Background color of the paper
                 legend=dict(
-                    x=0.02,  # x position of the legend
-                    y=0.02,  # y position of the legend
+                    x=0.85,  # x position of the legend
+                    y=0.98,  # y position of the legend
                     traceorder="normal",
                     bgcolor="rgba(255, 255, 255, 0.5)",  # Background color with transparency
-                    # bordercolor='Black',
-                    # borderwidth=1
                 ),
             )
-                
         self._on_add_KT_change()
         
     # view
