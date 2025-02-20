@@ -23,6 +23,8 @@ import ipywidgets as ipw
 from aiidalab_qe.common.panel import ConfigurationSettingsPanel
 from aiidalab_qe_muon.app.configuration.model import MuonConfigurationSettingsModel
 
+from aiidalab_qe_muon.app.configuration.helper_widgets import ExternalMagneticFieldUndiWidget, SettingsInfoBoxWidget
+
 from aiida.plugins import DataFactory
 
 HubbardStructureData = DataFactory("quantumespresso.hubbard_structure")
@@ -48,7 +50,7 @@ class MuonConfigurationSettingPanel(
            
         self.settings_help = ipw.HTML(
             """<div style="line-height: 140%; padding-top: 0px; padding-bottom: 5px">
-            <h4><b>Muon spectroscopy settings</b></h4>
+            <h3><b>Muon spectroscopy settings</b></h3>
             Please select desired inputs to compute muon stopping sites and related properties. The muon is considered infinite-dilute
             in the crystal, so we should select a supercell in which the muon will stay and do not interact with its replica.
             If you do not provide a size for the supercell size and select "Compute supercell", a pre-processing set of simulation will be submitted
@@ -132,13 +134,19 @@ class MuonConfigurationSettingPanel(
             ],
         )
         
-        self.override_defaults_help = ipw.HTML(
-            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-            <h5><b>On the suggested parameters</b></h5>
-            Due to the nature of muon calculations (infinite dilute defect), the suggested parameters are based on a rule of thumb/experience
-            of the experts (the develop of this plugin and the aiida-muon plugin).
-            It is possible to override this defaults (*only for experts*) and use the convergence settings and k-points distance defined in the "Advanced settings" tab.
-            </div>"""
+        self.override_defaults_help_title = ipw.HTML("<h5><b> - Override default DFT+&mu; parameters</b></h5>")
+        self.override_defaults_help = SettingsInfoBoxWidget(
+            info="""&#8613; Override defaults - <b>only for experts</b><br>Due to the large computational cost of muon calculations (infinite dilute defect), the suggested parameters are based on a rule of thumb/experience
+                of the experts (the develop of this plugin and the aiida-muon plugin): 
+                <br>
+                <ul>
+                    <li>the k-points distance is set to 0.3 Å<sup>-1</sup>;</li>
+                    <li>the convergence threshold for SCF step is set to 10<sup>-6</sup>;</li>
+                    <li>the smearing is "gaussian" with a width of 0.01 Ry;</li>
+                </ul>
+                <br>
+                It is possible to override this defaults and use the convergence settings and k-points distance defined in the "Advanced settings" tab.
+                """,
         )
         self.override_defaults = ipw.Checkbox(
             description="Override default settings",
@@ -150,19 +158,25 @@ class MuonConfigurationSettingPanel(
             (self.override_defaults, "value"),
             (self._model, "override_defaults"),
         )
+        self.override_defaults_box = ipw.VBox([
+            ipw.HBox([
+                self.override_defaults_help_title,
+                self.override_defaults_help,
+                self.override_defaults,
+                ]),
+                self.override_defaults_help.infobox,
+        ])
         
         # Charge state view and control (the control is the link, and observe() if any)
-        self.charge_help = ipw.HTML(
-            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-            <h5><b>Muon charge state</b></h5>
-            If you select a neutral muon, this will resemble the "muonium" state. It represents the analogous of the hydrogen
+        self.charge_help_title = ipw.HTML("<h5><b> - Muon charge state</b></h5>")
+        self.charge_help = SettingsInfoBoxWidget(
+            info="""&#8613; Charge of the muon<br>If you select a neutral muon, this will resemble the "muonium" state. It represents the analogous of the hydrogen
             atom (it can be thought as one of its lightest isotopes), which is the
             most simplest defects in a semiconductor. The electronic structure of H
             and muonium are then expected to be identical;
             at variance, vibrational properties are not, as their mass is different.
-            </div>"""
+                """,
         )
-
         self.charge_options = ipw.ToggleButtons(
             options=self._model.charge_options,
             value=True,
@@ -172,18 +186,28 @@ class MuonConfigurationSettingPanel(
             (self.charge_options, "value"),
             (self._model, "charge_state"),
         )
+        self.charge_box = ipw.VBox([
+            ipw.HBox([
+                self.charge_help_title,
+                self.charge_options,
+                self.charge_help,
+            ]),
+            self.charge_help.infobox,
+        ])
         
-        supercell_size_text = ipw.HTML(
-            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-            <h5><b>Muon supercell</b></h5>
-            Here you can specify the supercell size for the search of muon resting sites in the infinite dilute defect limit. 
+        supercell_size_title = ipw.HTML("<h5><b> - Muon supercell</b></h5>")
+        supercell_size_text = SettingsInfoBoxWidget(
+            info="""&#8613; Defective supercell<br>Here you can specify the supercell size for the search of muon resting sites in the infinite dilute defect limit. 
             If `compute_supercell` is not selected, this will be the supercell 
-            size used in the search for muon resting sites.
-            </div>"""
+            size used in the search for muon resting sites. <br>
+            
+            <b>Note</b>:The hint supercell is computed based on a minimum requirement of 9 Å for the length of each lattice vector of the cell.
+            """,
         )
         self.supercell_x = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
+            continuous_update=True,
         )
         ipw.link(
             (self._model, "supercell_x"),
@@ -202,6 +226,7 @@ class MuonConfigurationSettingPanel(
         self.supercell_y = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
+            continuous_update=True,
         )       
         ipw.link(
             (self._model, "supercell_y"),
@@ -220,6 +245,7 @@ class MuonConfigurationSettingPanel(
         self.supercell_z = ipw.BoundedIntText(
             min=1,
             layout={"width": "40px"},
+            continuous_update=True,
         )
         ipw.link(
             (self._model, "supercell_z"),
@@ -244,7 +270,6 @@ class MuonConfigurationSettingPanel(
             button_style="info",
         )
         self.supercell_hint.on_click(self._suggest_supercell)
-        self.supercell_hint_text = ipw.HTML("""(Based on a rule of thumb of at least 9 &#8491; for each lattice vectors.)""")
         
         self.supercell_reset_button = ipw.Button(
             description="Reset supercell",
@@ -256,34 +281,36 @@ class MuonConfigurationSettingPanel(
         
         self.supercell_selector = ipw.VBox(
             children=[
-                supercell_size_text,
                 ipw.HBox([
+                    supercell_size_title,
                     self.supercell_x,
                     self.supercell_y,
                     self.supercell_z,
                     self.supercell_hint,
-                    self.supercell_hint_text,
+                    self.supercell_reset_button,
+                    supercell_size_text,
                 ],),
-                self.supercell_reset_button
+                supercell_size_text.infobox,
             ],
         )
         
         # Kpoints view and control
-        self.kpoints_description = ipw.HTML(
-            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-            <h5><b>K-points mesh density</b></h5>
-            The k-points mesh density for the relaxation of the muon supecells.
-            The value below represents the maximum distance between the k-points in each direction of
-            reciprocal space. All grid will contain the Gamma point and are not shifted.</div>"""
+        self.kpoints_title = ipw.HTML("<h5><b> - K-points distance (Å<sup>-1</sup>)</b></h5>")
+        self.kpoints_description = SettingsInfoBoxWidget(
+            info="""&#8613; K-points distance<br>The k-points mesh density for the relaxation of the muon supecells.
+            The value below represents the maximum distance (in Å<sup>-1</sup>) between the k-points in each direction of
+            reciprocal space. <br> 
+            
+            <b>Note</b>: by default, the grids contain the Gamma point and are not shifted.
+                """,
         )
-
         self.kpoints_distance = ipw.BoundedFloatText(
             min=0.0,
             step=0.05,
             value=0.3,
-            description="K-points distance (1/Å):",
             disabled=False,
-            style={"description_width": "initial"},
+            continuous_update=True,
+            layout=ipw.Layout(width="10%"),
         )
         ipw.link(
             (self.kpoints_distance, "value"),
@@ -319,21 +346,22 @@ class MuonConfigurationSettingPanel(
         
         self.kpoints_box = ipw.VBox(
             [
-                self.kpoints_description,
                 ipw.HBox([
+                    self.kpoints_title,
                     self.kpoints_distance,
                     self.reset_kpoints_distance,
                     self.mesh_grid,
-                    ],
-                ),
+                    self.kpoints_description,
                 ],
+                ),
+                self.kpoints_description.infobox,
+            ],
         )
         ipw.dlink(
             (self.override_defaults, "value"),
             (self.kpoints_box, "layout"),
             lambda x: {"display": "none"} if x else {"display": "block"},
         )
-        
         
         self.hubbard = ipw.Checkbox(
             description="Disable Hubbard correction (if any): ",
@@ -357,20 +385,22 @@ class MuonConfigurationSettingPanel(
         )
         
         # Muon spacing view and control, included the estimator for the number of supercells
-        self.mu_spacing_help = ipw.HTML(
-            """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-            <h5><b>Muons site distance</b></h5>
-            Muons distance in Å for different candidate positions in the choosen supercell. Default is 1 Å.
-            </div>
-            """
-        ) 
+        self.mu_spacing_help_title = ipw.HTML("<h5><b> - Spacing for trial grid for initial muon sites (Å):</b></h5>")
+        self.mu_spacing_help = SettingsInfoBoxWidget(
+            info="""&#8613; &mu; spacing<br>Minimum muons distance in Å for different candidate positions in the choosen supercell. Default is 1 Å.
+                The positions are generated by the aiida-muon plugin, which uses a regularly spaced grid of points in the supercell to find the best muon site.
+                Symmetry equivalent sites are removed, as well as sites too close (< 1 Å) to the atoms of the structure. <br>
+                <br>
+                You can estimate the number of supercells (i.e. the number of trial sites) by clicking the button below.
+                """,
+        )
         self.mu_spacing = ipw.BoundedFloatText(
             min=0.05,
             step=0.05,
             value=1.0,
-            description="μ-spacing (Å):",
             disabled=False,
-            style={"description_width": "initial"},
+            layout = ipw.Layout(width="10%"),
+            continuous_update=True,
         )
         ipw.link(
             (self.mu_spacing, "value"),
@@ -384,6 +414,16 @@ class MuonConfigurationSettingPanel(
             button_style="warning",
         )
         self.mu_spacing_reset_button.on_click(self._reset_mu_spacing)
+        
+        self.mu_spacing_box = ipw.VBox([
+            ipw.HBox([
+                self.mu_spacing_help_title,
+                self.mu_spacing,
+                self.mu_spacing_reset_button,
+                self.mu_spacing_help,
+            ]),
+            self.mu_spacing_help.infobox,
+        ])
         
         self.estimate_number_of_supercells = ipw.Button(
             description="Click to stimate number of muon trial sites ➡",
@@ -407,20 +447,18 @@ class MuonConfigurationSettingPanel(
             self.compute_options_box,
         ]
         self.findmuon_settings = [
-            self.override_defaults_help,
-            self.override_defaults,
-            self.charge_help,
-            self.charge_options,
+            ipw.HBox(
+                [
+                ipw.HTML("<h4><b> - Find muon sites settings - </b></h4>"),],
+                layout=ipw.Layout(justify_content="center"),
+            ),
+            self.override_defaults_box,
+            self.charge_box,
             self.supercell_selector,
             self.kpoints_box,
             self.hubbard,
             self.spin_polarized,
-            self.mu_spacing_help,
-            ipw.HBox([
-                self.mu_spacing,
-                self.mu_spacing_reset_button,
-                ],
-            ),
+            self.mu_spacing_box,
             ipw.HBox([
                 self.estimate_number_of_supercells,
                 self.number_of_supercells,
@@ -430,21 +468,67 @@ class MuonConfigurationSettingPanel(
         ]
         # we display the findmuon settings only if the compute_findmuon is selected
         # we link the display of each
-
-        self.polarization_settings = [
-            ipw.HTML(
-                """<div style="line-height: 140%; padding-top: 5px; padding-bottom: 5px">
-                <h5><b>Nuclear contribution to the muon spin relaxation</b></h5>
-                The polarization is computed for the muon site(s) found in the previous 
-                step or, if not search for muon sites is requested, the structure choosen by the user. 
-                Please note that, in this second case, the simulation will not involve and DFT simulation (only the UNDI package will be used). <br>
-                We compute the polarization for different values of external magnetic field (0, 2, 4, 6, 8 mT) and different orientation of the sample. <br>
-                The third lattice vector of the structure should be aligned with the z cartesian direction.
-                """
-                )
-            ] # TODO: add polarization settings
+        self.polarization_field_choice = ExternalMagneticFieldUndiWidget()
+        self.polarization_field_choice.children[-1].observe(self._update_fields_list, "value")
         
-        self.children = general_settings + self.findmuon_settings + self.polarization_settings
+        self.additional_grid_checkbox = ipw.Checkbox(
+            description="Additional grid",
+            indent=False,
+            value=False,
+            tooltip="Compute the polarization for an additional grid.",
+            layout=ipw.Layout(width="10%"),
+        )            
+        self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="")
+        ipw.dlink(
+            (self.additional_grid_checkbox, "value"),
+            (self.polarization_field_choice_additional, "layout"),
+            lambda x: {"display": "block"} if x else {"display": "none"},
+        )
+        self.polarization_field_choice_additional.children[-1].observe(self._update_fields_list, "value")
+        
+        
+        self.polarization_settings_title = ipw.HTML(
+            "<h4 style='text-align: center;'><b> - Polarization from &mu; - Nuclear interactions - </b></h4>"
+        )
+        self.polarization_settings_help = SettingsInfoBoxWidget(
+            info="""&#8613; Relaxation function of the muon<br>The polarization is computed for the muon site(s) found in the previous 
+                    step or, if not search for muon sites is requested, the structure choosen by the user. 
+                    Please note that, in this second case, the simulation will not involve and DFT simulation (only the UNDI package will be used). <br>
+                    We compute the polarization for different values of external magnetic field, and different orientation of the sample. <br>
+                    The third lattice vector of the structure should be aligned with the z cartesian direction.
+                    
+                    <br>
+                    You can define your own magnetic field interval by specifying the minimum, the maximum and the setp values for the magnetic fields.
+                    It is also possible to add a second grid, in case you want to compute the polarization for a different set of magnetic fields.
+                """,
+        )
+        self.polarization_settings_box = ipw.HBox([
+            self.polarization_settings_title,
+            self.polarization_settings_help,
+        ],
+            layout=ipw.Layout(justify_content="center"),
+        )
+        self.polarization_settings = ipw.VBox(
+            [
+                self.polarization_settings_box,
+                self.polarization_settings_help.infobox,
+                self.polarization_field_choice,
+                ipw.HBox([
+                    self.additional_grid_checkbox,
+                    self.polarization_field_choice_additional,
+                ],
+                layout=ipw.Layout(width="100%"),
+                         ),
+            ] # TODO: add more polarization settings,
+        )
+        ipw.dlink(
+            (self._model, "compute_polarization_undi"),
+            (self.polarization_settings, "layout"),
+            lambda x: {"display": "block"} if x else {"display": "none"},
+        )
+        self.polarization_settings.layout.display = "none" if not self._model.compute_polarization_undi else "block"
+        
+        self.children = general_settings + self.findmuon_settings + [self.polarization_settings]
 
         self.rendered = True
     
@@ -452,6 +536,7 @@ class MuonConfigurationSettingPanel(
         self.refresh(specific="structure")
         self._model.on_input_structure_change()
         self._model.compute_suggested_supercell()
+        self._model.check_polarization_allowed()
         if hasattr(self, "why_no_pol_text"):
             self.why_no_pol_text.layout.display = "none" if self._model.polarization_allowed else "block"
     
@@ -487,5 +572,8 @@ class MuonConfigurationSettingPanel(
     def _reset_kpoints_distance(self, _=None):
         self._model.reset_kpoints_distance()
         
+    def _update_fields_list(self, _):
+        self._model.polarization_fields = self.polarization_field_choice.fields_list
+        self._model.polarization_fields_additional = self.polarization_field_choice_additional.fields_list
     
     

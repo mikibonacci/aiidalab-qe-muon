@@ -60,6 +60,12 @@ class ImplantMuonWorkChain(WorkChain):
             required=False,
             help=" Preferred metadata and scheduler options for undi",
         )
+        spec.input(
+            "undi_fields",
+            valid_type= orm.List,
+            required=False,
+            help="The list of magnetic fields to compute the polarization.",
+        )
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
@@ -143,6 +149,7 @@ class ImplantMuonWorkChain(WorkChain):
         pp_code=None,
         undi_code=None,
         undi_metadata=None,
+        undi_fields=None,
         protocol=None,
         enforce_defaults: bool = True,
         compute_findmuon: bool = True,
@@ -218,6 +225,9 @@ class ImplantMuonWorkChain(WorkChain):
             builder.undi_code = undi_code
             if undi_metadata:
                 builder.undi_metadata = undi_metadata
+                
+        if undi_fields:
+            builder.undi_fields = orm.List(undi_fields)
 
         return builder
 
@@ -288,7 +298,8 @@ class ImplantMuonWorkChain(WorkChain):
         workgraph = MultiSites(
             structure_group=self.ctx.structure_group,
             code = getattr(self.inputs, "undi_code", None),
-            metadata=metadata,
+            B_mods = self.inputs.get("undi_fields", None),
+            metadata = metadata,
             )
         inputs = {
             "wg": workgraph.to_dict(),

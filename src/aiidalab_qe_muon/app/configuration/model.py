@@ -69,6 +69,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     )
     
     polarization_allowed = tl.Bool(True)
+    polarization_fields = tl.List(tl.Int())
+    polarization_fields_additional = tl.List(tl.Int())
 
     def get_model_state(self):
         return {
@@ -213,7 +215,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         # This is needed to check that we can run a undi calculation:
         # if no isotopes are found, the calculation will fail, so don't allow to run it.
         if self.input_structure:
-            info, isotopes, isotope_list = check_enough_isotopes(self.input_structure.get_ase())
+            info, isotope_list = check_enough_isotopes(self.input_structure.get_ase())
             if len(isotope_list) == 0:
                 self.polarization_allowed = False
             else:

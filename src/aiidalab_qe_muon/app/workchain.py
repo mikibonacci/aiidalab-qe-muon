@@ -116,6 +116,11 @@ def get_builder(codes, structure, parameters):
     undi_metadata = create_resource_config(codes.get("undi_code"))
     #undi_metadata["options"]["prepend_text"] =  \
     #    f'export OMP_NUM_THREADS={undi_metadata["options"]["resources"]["num_cores_per_mpiproc"]}'
+    
+    if compute_polarization_undi:
+        undi_fields = parameters["muonic"].pop("polarization_fields", []) + parameters["muonic"].pop("polarization_fields_additional", [])
+    else:
+        undi_fields = []
 
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_muons_code=pw_code,
@@ -128,6 +133,7 @@ def get_builder(codes, structure, parameters):
         enforce_defaults= enforce_defaults,
         compute_findmuon=compute_findmuon,
         compute_polarization_undi=compute_polarization_undi,
+        undi_fields=undi_fields if len(undi_fields) > 0 else None,
         overrides=overrides,
         trigger=trigger,
         relax_unitcell=False,  # but not true in the construction; in the end you relax in the first step of the QeAppWorkchain.
