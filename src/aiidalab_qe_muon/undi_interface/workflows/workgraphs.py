@@ -167,6 +167,7 @@ def UndiAndKuboToyabe(
 def MultiSites(
     structure_group,
     code=None, # if None, default python3@localhost will be used.
+    B_mods: t.List[t.Union[float, int]] = [0, 2e-3, 4e-3, 6e-3, 8e-3],
     metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}}, # just a default.
     ):
     

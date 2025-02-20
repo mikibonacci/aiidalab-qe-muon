@@ -7,7 +7,7 @@ import base64
 import json
 
 
-from aiidalab_qe_muon.utils.export_findmuon import export_findmuon_data
+from aiida_muon.utils.export_findmuon import export_findmuon_data
 from aiidalab_qe_muon.utils.data import (
     dictionary_of_names_for_html, 
     no_Bfield_sentence,
