@@ -14,7 +14,7 @@ from aiidalab_qe.common.mixins import HasInputStructure
 from aiidalab_qe.common.panel import ConfigurationSettingsModel
 from ase.build import make_supercell
 
-from aiida_muon.utils.sites_supercells import niche_add_impurities, gensup, compute_suggest_supercell_size
+from aiida_muon.utils.sites_supercells import niche_add_impurities, gensup, compute_suggest_supercell_size, generate_supercell_with_impurities
 
 from undi.undi_analysis import check_enough_isotopes
 
@@ -252,3 +252,33 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             
             self.compute_mesh_grid()
             #self.reset()
+    
+    def _generate_supercell_with_impurities(self):
+        if self.input_structure:
+
+            self.supercell_with_impurities = generate_supercell_with_impurities(
+                structure=self.input_structure.get_pymatgen_structure(), 
+                mu_spacing=self.mu_spacing, 
+                mu_list=self.mu_lst if hasattr(self, "mu_lst") else None,
+            )
+
+      
+    def _get_structure_view_container(self):
+        """Get the structure view container for the given structure.
+        
+        """
+        import ipywidgets as ipw
+        from aiidalab_widgets_base.viewers import StructureDataViewer
+
+        self._generate_supercell_with_impurities()
+            
+        structure_view_container = ipw.VBox(
+                children=[
+                    StructureDataViewer(orm.StructureData(pymatgen=self.supercell_with_impurities)),
+                ],
+                layout=ipw.Layout(
+                    flex="1",
+                ),
+            )
+        
+        return structure_view_container

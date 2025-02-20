@@ -8,11 +8,11 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
     
     """
         
-    def __init__(self, title: str = "External magnetic fields (mT)", **kwargs):
+    def __init__(self, title: str = "External magnetic fields (mT):", **kwargs):
         super().__init__(**kwargs)
 
         self.B_range = ipw.IntRangeSlider(
-            value=[0, 10],
+            value=[0, 8],
             min=0,
             max=150,
             step=1,

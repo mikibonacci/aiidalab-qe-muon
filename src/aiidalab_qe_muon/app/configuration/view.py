@@ -395,12 +395,12 @@ class MuonConfigurationSettingPanel(
                 """,
         )
         self.mu_spacing = ipw.BoundedFloatText(
-            min=0.05,
-            step=0.05,
+            min=0.4,
+            step=0.1,
             value=1.0,
             disabled=False,
             layout = ipw.Layout(width="10%"),
-            continuous_update=True,
+            #continuous_update=True,
         )
         ipw.link(
             (self.mu_spacing, "value"),
@@ -434,10 +434,21 @@ class MuonConfigurationSettingPanel(
         )
         self.estimate_number_of_supercells.on_click(self._estimate_supercells)
         self.number_of_supercells = ipw.HTML(value="")
-        ipw.link(
+        ipw.dlink(
             (self._model, "number_of_supercells"),
             (self.number_of_supercells, "value"),
         )
+        
+        self.mu_spacing_structure = SettingsInfoBoxWidget(
+            info=""" """,
+            description="Visualize candidate muon sites"
+        )
+        ipw.dlink(
+            (self._model, "number_of_supercells"),
+            (self.mu_spacing_structure, "layout"),
+            lambda x: {"display": "none"} if x in ["", "0"] else {"display": "block"},
+        )
+        self.mu_spacing_structure.about_toggle.observe(self._on_mu_spacing_structure_toggle, "value")
         
         self._model.compute_mesh_grid()
             
@@ -462,8 +473,10 @@ class MuonConfigurationSettingPanel(
             ipw.HBox([
                 self.estimate_number_of_supercells,
                 self.number_of_supercells,
+                self.mu_spacing_structure,
                 ],
             ),
+            self.mu_spacing_structure.infobox,
             # self.moments, # TODO: add moments widget
         ]
         # we display the findmuon settings only if the compute_findmuon is selected
@@ -476,7 +489,7 @@ class MuonConfigurationSettingPanel(
             indent=False,
             value=False,
             tooltip="Compute the polarization for an additional grid.",
-            layout=ipw.Layout(width="10%"),
+            layout=ipw.Layout(width="15%"),
         )            
         self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="")
         ipw.dlink(
@@ -519,7 +532,9 @@ class MuonConfigurationSettingPanel(
                 ],
                 layout=ipw.Layout(width="100%"),
                          ),
-            ] # TODO: add more polarization settings,
+            ],
+            layout=ipw.Layout(width="100%")
+            # TODO: add more polarization settings,
         )
         ipw.dlink(
             (self._model, "compute_polarization_undi"),
@@ -529,6 +544,8 @@ class MuonConfigurationSettingPanel(
         self.polarization_settings.layout.display = "none" if not self._model.compute_polarization_undi else "block"
         
         self.children = general_settings + self.findmuon_settings + [self.polarization_settings]
+        
+        self.layout = ipw.Layout(width="100%")
 
         self.rendered = True
     
@@ -539,6 +556,15 @@ class MuonConfigurationSettingPanel(
         self._model.check_polarization_allowed()
         if hasattr(self, "why_no_pol_text"):
             self.why_no_pol_text.layout.display = "none" if self._model.polarization_allowed else "block"
+            
+    def _on_mu_spacing_structure_toggle(self, _):
+        if self.mu_spacing_structure.about_toggle.value:
+            structurewidget = self._model._get_structure_view_container()
+            self.mu_spacing_structure.infobox.children = [structurewidget]
+            self.mu_spacing_structure.infobox.layout.display = "block"
+        else:
+            self.mu_spacing_structure.infobox.layout.display = "none"
+            self.mu_spacing_structure.infobox.children = []
     
     def _on_compute_findmuon_change(self, _):
         with self.hold_trait_notifications():
@@ -562,6 +588,7 @@ class MuonConfigurationSettingPanel(
         
     def _on_mu_spacing_change(self, _):
         self._model.reset_number_of_supercells()
+        self.mu_spacing_structure.about_toggle.value = False
     
     def _reset_mu_spacing(self, _=None):
         self._model.mu_spacing_reset()
