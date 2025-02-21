@@ -157,6 +157,7 @@ class FindMuonWidget(ipw.VBox):
         self.distortions_plot_container = ipw.VBox([self.distortions_plot])
         self._update_distortions_plot()
         
+        # do we really need to show this? it is already in the table, does not add info...
         self.barplot = go.FigureWidget()
         self.barplot_container = ipw.VBox([self.barplot])
         self._update_barplot()
@@ -171,9 +172,14 @@ class FindMuonWidget(ipw.VBox):
                 self.compare_muons_button,
                 self.about_unit_cell_toggle,
             ],),
-            self.distortions_plot_container,
             self.unit_cell_explanation_infobox,
-            self.barplot_container,
+            ipw.HBox(
+                [
+                    self.distortions_plot_container,
+                    self.barplot_container
+                ],
+                layout=ipw.Layout(width="100%"),
+                ),
         ]
         
         self.rendered = True
@@ -284,34 +290,34 @@ class FindMuonWidget(ipw.VBox):
             
             color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
             self.barplot.update_layout(
-            # title='Summary',
-            barmode="group",
-            xaxis=dict(
-                title="Muon label",
-                tickmode="linear",
-                dtick=1,
-                #titlefont=dict(color="mediumslateblue"),
-                #tickfont=dict(color="mediumslateblue"),
-            ),
-            yaxis=dict(
-                title='ΔE<sub>total</sub> (meV)',
-                titlefont=dict(color=color_tot_E),
-                tickfont=dict(color=color_tot_E),
-                side="right",
-                showticklabels=True,
-                showgrid=False,
-            ),
-            legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
-            # width=400, # Width of the plot
-            # height=500, # Height of the plot
-            font=dict(  # Font size and color of the labels
-                size=12,
-                color="#333333",
-            ),
-            plot_bgcolor="gainsboro",  # Background color of the plot
-            # paper_bgcolor='white', # Background color of the paper
-            # bargap=0.000001, # Gap between bars
-            # bargroupgap=0.4, # Gap between bar groups
+                # title='Summary',
+                barmode="group",
+                xaxis=dict(
+                    title="Muon label",
+                    tickmode="linear",
+                    dtick=1,
+                    #titlefont=dict(color="mediumslateblue"),
+                    #tickfont=dict(color="mediumslateblue"),
+                ),
+                yaxis=dict(
+                    title='ΔE<sub>total</sub> (meV)',
+                    titlefont=dict(color=color_tot_E),
+                    tickfont=dict(color=color_tot_E),
+                    side="right",
+                    showticklabels=True,
+                    showgrid=False,
+                ),
+                legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
+                # width=400, # Width of the plot
+                # height=500, # Height of the plot
+                font=dict(  # Font size and color of the labels
+                    size=12,
+                    color="#333333",
+                ),
+                plot_bgcolor="gainsboro",  # Background color of the plot
+                # paper_bgcolor='white', # Background color of the paper
+                # bargap=0.000001, # Gap between bars
+                # bargroupgap=0.4, # Gap between bar groups
             )
             if '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
                 color_B = data_to_plot["color_code"][data_to_plot["entry"].index('|B<sub>total</sub>| (T)')]
@@ -339,20 +345,10 @@ class FindMuonWidget(ipw.VBox):
         
         data_to_plot = self._model.get_distorsion_data()
         if not self.rendered:
-            for element,data in data_to_plot.items():
-                self.distortions_plot.add_trace(
-                    go.Scatter(
-                        x=data["atm_distance_init"],
-                        y=data["distortion"],
-                        mode="markers",
-                        name=element,
-                        marker=dict(
-                            size=10,
-                            #color=color_code[element],
-                            opacity=0.8,
-                        ),
-                    )
-                )
+            self._model.populate_distortion_figure(
+                distortion_data=data_to_plot,
+                figure=self.distortions_plot,
+            )
         else:
             for i, (element,data) in enumerate(data_to_plot.items()):
                 self.distortions_plot.data[i].x = data["atm_distance_init"]

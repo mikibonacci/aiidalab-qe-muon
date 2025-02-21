@@ -482,30 +482,32 @@ class MuonConfigurationSettingPanel(
         # we display the findmuon settings only if the compute_findmuon is selected
         # we link the display of each
         self.polarization_field_choice = ExternalMagneticFieldUndiWidget()
-        self.polarization_field_choice.children[-1].observe(self._update_fields_list, "value")
+        
+        self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="Second grid of fields (mT)")
+        self.polarization_field_choice.observe(self._update_fields_list_grid_2, "field_list")
+        self.polarization_field_choice_additional.observe(self._update_fields_list_grid_2, "field_list")
         
         self.additional_grid_checkbox = ipw.Checkbox(
             description="Additional grid",
             indent=False,
             value=False,
             tooltip="Compute the polarization for an additional grid.",
-            layout=ipw.Layout(width="15%"),
-        )            
-        self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="")
+        )
         ipw.dlink(
             (self.additional_grid_checkbox, "value"),
             (self.polarization_field_choice_additional, "layout"),
             lambda x: {"display": "block"} if x else {"display": "none"},
         )
-        self.polarization_field_choice_additional.children[-1].observe(self._update_fields_list, "value")
-        
+        self.additional_grid_checkbox.observe(self._update_fields_list_grid_2, "value")
         
         self.polarization_settings_title = ipw.HTML(
             "<h4 style='text-align: center;'><b> - Polarization from &mu; - Nuclear interactions - </b></h4>"
         )
         self.polarization_settings_help = SettingsInfoBoxWidget(
             info="""&#8613; Relaxation function of the muon<br>The polarization is computed for the muon site(s) found in the previous 
-                    step or, if not search for muon sites is requested, the structure choosen by the user. 
+                    step or in the muon sites already present in the structure (as last H atom). A calculation of the Kubo-Toyabe relaxation function is 
+                    also performed.
+                    <br>
                     Please note that, in this second case, the simulation will not involve and DFT simulation (only the UNDI package will be used). <br>
                     We compute the polarization for different values of external magnetic field, and different orientation of the sample. <br>
                     The third lattice vector of the structure should be aligned with the z cartesian direction.
@@ -521,17 +523,22 @@ class MuonConfigurationSettingPanel(
         ],
             layout=ipw.Layout(justify_content="center"),
         )
+        
+        self.polarization_field_list = ipw.HTML(value="")
+        ipw.dlink(
+            (self._model, "undi_fields"),
+            (self.polarization_field_list, "value"),
+            lambda x: f"<ul><li>Number of calculation per site: {len(x)} </li><li>Field list (mT):   ["+",  ".join([f"{field:.0f}" for field in x])+"]</li></ul>",
+        )
+        
         self.polarization_settings = ipw.VBox(
             [
                 self.polarization_settings_box,
                 self.polarization_settings_help.infobox,
                 self.polarization_field_choice,
-                ipw.HBox([
-                    self.additional_grid_checkbox,
-                    self.polarization_field_choice_additional,
-                ],
-                layout=ipw.Layout(width="100%"),
-                         ),
+                self.additional_grid_checkbox,
+                self.polarization_field_choice_additional,
+                self.polarization_field_list,
             ],
             layout=ipw.Layout(width="100%")
             # TODO: add more polarization settings,
@@ -598,9 +605,10 @@ class MuonConfigurationSettingPanel(
         
     def _reset_kpoints_distance(self, _=None):
         self._model.reset_kpoints_distance()
-        
-    def _update_fields_list(self, _):
-        self._model.polarization_fields = self.polarization_field_choice.fields_list
-        self._model.polarization_fields_additional = self.polarization_field_choice_additional.fields_list
     
-    
+    def _update_fields_list_grid_2(self, _):
+        if not self.additional_grid_checkbox.value:
+            # should be already linked, but apparently does not work.
+            self._model.undi_fields = self.polarization_field_choice.field_list
+        else: # should be already linked, but apparently does not work.
+            self._model.undi_fields = list(set(self.polarization_field_choice.field_list + self.polarization_field_choice_additional.field_list))

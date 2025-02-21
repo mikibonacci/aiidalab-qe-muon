@@ -7,6 +7,8 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
     """The widget to choose magnetic field in the undi run.
     
     """
+    
+    field_list = tl.List(tl.Int(),default=[])
         
     def __init__(self, title: str = "External magnetic fields (mT):", **kwargs):
         super().__init__(**kwargs)
@@ -49,23 +51,24 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
                 (self.number_of_calcs, 'value'), 
                 lambda v: f""" Calculations per site: {self.number_of_calculations}"""
             )
-        
-        
+            ipw.dlink(
+                (field, 'value'), 
+                (self, 'field_list'), 
+                lambda v: [i for i in range(self.B_range.value[0], self.B_range.value[1] + 1, self.B_step_grid.value)]
+            )
         
         self.children = [
             ipw.HTML(title),
             self.B_range,
             self.B_step_grid,
-            self.number_of_calcs
+            #self.number_of_calcs
         ]
         
     @property
     def number_of_calculations(self):
         return int( (self.B_range.value[1] - self.B_range.value[0]) / self.B_step_grid.value + 1 )
+
     
-    @property
-    def fields_list(self):
-        return [i for i in range(self.B_range.value[0], self.B_range.value[1] + 1, self.B_step_grid.value)]
     
 class SettingsInfoBoxWidget(ipw.VBox):
     """TODO: Check that his is not overlapping with the in-app guides

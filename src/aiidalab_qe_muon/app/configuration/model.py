@@ -69,8 +69,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     )
     
     polarization_allowed = tl.Bool(True)
-    polarization_fields = tl.List(tl.Int())
-    polarization_fields_additional = tl.List(tl.Int())
+    undi_fields = tl.List(tl.Int(), default_value=[])
 
     def get_model_state(self):
         return {

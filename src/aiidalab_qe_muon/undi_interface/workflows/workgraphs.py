@@ -7,7 +7,7 @@ from aiida_workgraph import task
 @task.graph_builder(outputs=[{"name": "results", "from": "context.tmp_out"}])
 def multiple_undi_analysis(
     structure,
-    B_mods: t.List[t.Union[float, int]] = [0.0],
+    B_mods: t.List[t.Union[float, int]] = [0.0], # Units are Tesla.
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
     convergence_check: bool = False,
@@ -79,7 +79,7 @@ def multiple_undi_analysis(
 )
 def UndiAndKuboToyabe(
     structure,
-    B_mods: t.List[t.Union[float, int]] = [0.0],
+    B_mods: t.List[t.Union[float, int]] = [0.0], # Units are Tesla.
     atom_as_muon: str = 'H',
     max_hdims: t.List[t.Union[float, int]] = [1e1],
     convergence_check: bool = False,
@@ -167,7 +167,8 @@ def UndiAndKuboToyabe(
 def MultiSites(
     structure_group,
     code=None, # if None, default python3@localhost will be used.
-    B_mods: t.List[t.Union[float, int]] = [0, 2e-3, 4e-3, 6e-3, 8e-3],
+    B_mods: t.List[t.Union[float, int]] = [0, 2e-3, 4e-3, 6e-3, 8e-3], # Units are Tesla.
+    max_hdims: t.List[t.Union[float, int]] = [10**2, 10**4, 10**6, 10**9],
     metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}}, # just a default.
     ):
     
@@ -177,8 +178,8 @@ def MultiSites(
         res = wg.add_task(
             UndiAndKuboToyabe,
             structure=structure,
-            B_mods=[0, 2e-3, 4e-3, 6e-3, 8e-3],  # for now, hardcoded. Units are Tesla.
-            max_hdims=[10**2, 10**4, 10**6, 10**9],  # for now, hardcoded. NB: in undi run, we use max_hdims[-2:-1], not the last one.
+            B_mods=B_mods,
+            max_hdims=max_hdims,
             convergence_check=i==0,  # maybe the convergence can be done for only one site, as done here now.
             algorithm='fast',
             name=f"polarization_structure_{idx}",

@@ -246,6 +246,27 @@ class FindMuonModel(Model):
             """
         )
         display(javas)
+    
+    @staticmethod 
+    def populate_distortion_figure(
+        distortion_data, 
+        distortions_plot,
+        muon_label = "A"
+    ):
+        for element,data in data_to_plot.items():
+            distortions_plot.add_trace(
+                go.Scatter(
+                    x=data["atm_distance_init"],
+                    y=data["distortion"],
+                    mode="markers",
+                    name=element,
+                    marker=dict(
+                        size=10,
+                        #color=color_code[element],
+                        opacity=0.8,
+                    ),
+                )
+            )
         
     def download_data(self, _=None):
         """Function to download the data."""

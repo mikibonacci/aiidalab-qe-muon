@@ -118,7 +118,9 @@ def get_builder(codes, structure, parameters):
     #    f'export OMP_NUM_THREADS={undi_metadata["options"]["resources"]["num_cores_per_mpiproc"]}'
     
     if compute_polarization_undi:
-        undi_fields = parameters["muonic"].pop("polarization_fields", []) + parameters["muonic"].pop("polarization_fields_additional", [])
+        undi_fields = list(set(parameters["muonic"].pop("undi_fields", [])))
+        # conversion to tesla: 
+        undi_fields = [field * 1e-3 for field in undi_fields]
     else:
         undi_fields = []
 

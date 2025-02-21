@@ -226,7 +226,7 @@ class ImplantMuonWorkChain(WorkChain):
             if undi_metadata:
                 builder.undi_metadata = undi_metadata
                 
-        if undi_fields:
+        if undi_fields and compute_polarization_undi:
             builder.undi_fields = orm.List(undi_fields)
 
         return builder
