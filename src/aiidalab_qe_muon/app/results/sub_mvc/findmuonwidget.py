@@ -147,7 +147,7 @@ class FindMuonWidget(ipw.VBox):
                 
         download_button = ipw.Button(
             description="Download data", 
-            tooltip="Download the all the resting sites data",
+            tooltip="Download the all the resting sites data (not the polarization results)",
             icon="download", 
             button_style="primary"
         )
