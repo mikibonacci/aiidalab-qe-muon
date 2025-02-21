@@ -17,7 +17,7 @@ classifiers = [
 keywords = ["aiidalab", "plugin","muon"]
 requires-python = ">=3.8"
 dependencies = [
-    "aiida-muon @ git+https://github.com/positivemuon/aiida-muon.git@v1.0.3",
+    "aiida-muon @ git+https://github.com/mikibonacci/aiida-muon.git@new-release/cleanup",
     "pymatgen>=2023.9.25",
     "aiida-workgraph  @ git+https://github.com/aiidateam/aiida-workgraph.git",
     "aiida-pythonjob @ git+https://github.com/aiidateam/aiida-pythonjob.git",
