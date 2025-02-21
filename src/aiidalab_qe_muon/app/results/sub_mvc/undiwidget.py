@@ -257,7 +257,7 @@ class UndiPlotWidget(ipw.VBox):
                 barmode="overlay",
                 yaxis=dict(title=ylabel),
                 xaxis=dict(title="time (μs)"),
-                margin=dict(l=5, r=5, t=35, b=10),
+                margin=dict(l=5, r=5, t=45, b=10),
                 # width=500, # Width of the plot
                 # height=500, # Height of the plot
                 font=dict(  # Font size and color of the labels

@@ -151,6 +151,32 @@ class FindMuonModel(Model):
         
         return structures
     
+    def _prepare_distortions_for_download(self) -> str:
+        """Prepare the distortions for download.
+        
+        This method is called by the controller to get the data for download.
+        """
+        # prepare the distortions for download as json
+        import pandas as pd
+        
+        distortions_df = {}
+        for index, label in zip(self.findmuon_data["table_all"]["muon_index"],self.findmuon_data["table_all"]["label"]):
+            distortion = {}
+            distortion["atm_distance_init"] = []
+            distortion["distortion"] = []
+            distortion["element"] = []
+            
+            for element,data in self.distortions[index].items():
+                for i in range(len(data["atm_distance_init"])):
+                    distortion["atm_distance_init"].append(data["atm_distance_init"][i])
+                    distortion["distortion"].append(data["distortion"][i])
+                    distortion["element"].append(element)
+                    
+            df = pd.DataFrame.from_dict(distortion).sort_values(by="atm_distance_init")
+            distortions_df[label] = df
+        
+        return distortions_df
+    
     def _prepare_data_for_download(self) -> str:
         """Prepare the data for download.
         
@@ -163,6 +189,8 @@ class FindMuonModel(Model):
         files_dict["structures"] = self._prepare_structures_for_download()
         formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_id_pk"]).get_formula()
         files_dict["filename"] = f"exported_mu_res_{formula}_WorkflowID_{self.muon.findmuon.all_index_uuid.creator.caller.caller.caller.pk}.zip"
+        
+        files_dict["distortions"] = self._prepare_distortions_for_download()
         
         self.generate_table_legend(download_mode=True)
         files_dict["readme"] = self.readme_text
@@ -181,8 +209,11 @@ class FindMuonModel(Model):
             
             os.mkdir(path)
             
+            # Tables
             files_dict["table"].drop(columns="muon_index").to_csv(path / "Summary_table.csv", index=True)
             files_dict["table_all"].drop(columns="muon_index").to_csv(path / "Summary_table_before_clustering.csv", index=True)
+            
+            # Structures
             for label, structure in files_dict["structures"].items():
                 if label == "unit_cell":
                     structure.write(path / f"Allsites.cif", format="cif")
@@ -190,7 +221,12 @@ class FindMuonModel(Model):
                     structure.write(path / f"Allsites_before_clustering.cif", format="cif")
                 else:
                     structure.write(path / f"Supercell_{label}.cif", format="cif")
-                
+            
+            # Distortions
+            for label, df in files_dict["distortions"].items():
+                df.to_csv(path / f"Distortion_supercell_{label}.csv", index=False)
+            
+            # README
             with open(path / "README.txt", "w") as f:
                 f.write(files_dict["readme"])
             
