@@ -155,12 +155,17 @@ class FindMuonWidget(ipw.VBox):
         
         self.distortions_plot = go.FigureWidget()
         self.distortions_plot_container = ipw.VBox([self.distortions_plot])
+        ipw.dlink(
+            (self.compare_muons_button, "value"),
+            (self.distortions_plot_container, "layout"),
+            lambda x: {"display": "none"} if x else {"display": "block"},
+        )
         self._update_distortions_plot()
         
         # do we really need to show this? it is already in the table, does not add info...
-        self.barplot = go.FigureWidget()
-        self.barplot_container = ipw.VBox([self.barplot])
-        self._update_barplot()
+        # self.barplot = go.FigureWidget()
+        # self.barplot_container = ipw.VBox([self.barplot])
+        # self._update_barplot()
         
         self.children = [
             self.title,
@@ -176,7 +181,7 @@ class FindMuonWidget(ipw.VBox):
             ipw.HBox(
                 [
                     self.distortions_plot_container,
-                    self.barplot_container
+                    #self.barplot_container
                 ],
                 layout=ipw.Layout(width="100%"),
                 ),
@@ -202,14 +207,16 @@ class FindMuonWidget(ipw.VBox):
     def _on_selected_muons_change(self):
         self._update_structure_view()
         self._update_picked_atoms()
-        self._update_barplot()
-        self._update_distortions_plot()
+        #self._update_barplot()
+        if not self.compare_muons_button.value: self._update_distortions_plot()
         #self._update_table()
         
     def _on_selected_rows_change(self, change):
         
         if not self.compare_muons_button.value:
             self.table.selected_rows = self.table.selected_rows[-1:]
+            if len(self.table.selected_rows) == 0:
+                self.table.selected_rows = [0]
             
         self._model.selected_muons = [
             int(self._model.findmuon_data["table"].iloc[index].muon_index) # because are stored as strings!
@@ -251,95 +258,6 @@ class FindMuonWidget(ipw.VBox):
             self.structure_view_container.children[0].displayed_selection = selected_muons
         else:
             self.structure_view_container.children[0].displayed_selection = []
-            
-    def _update_barplot(self, _=None):
-        
-        data_to_plot = self._model.get_data_plot() # to have more compact code below
-        
-        if not '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
-            # hide the figure and return
-            self.barplot_container.layout.display = "none"
-            return
-            
-        # if not B field is there, we can also avoid to render it.
-        if not self.rendered:
-            for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
-                
-                if entry == 'ΔE<sub>total</sub> (meV)':
-                    self.barplot.add_trace(
-                        go.Scatter(
-                            x=data_to_plot["x"],
-                            y=data_y,
-                            name=entry,
-                            yaxis='y',
-                            #mode="markers+lines",
-                            marker=dict(color=color, opacity=0.8),
-                        )
-                    )
-                else:
-                    self.barplot.add_trace(
-                        go.Bar(
-                            x=data_to_plot["x"],
-                            y=data_y,
-                            name=entry,
-                            yaxis='y2',
-                            #mode="markers+lines",
-                            marker=dict(color=color, opacity=0.65),
-                        )
-                    )
-            
-            color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
-            self.barplot.update_layout(
-                # title='Summary',
-                barmode="group",
-                xaxis=dict(
-                    title="Muon label",
-                    tickmode="linear",
-                    dtick=1,
-                    #titlefont=dict(color="mediumslateblue"),
-                    #tickfont=dict(color="mediumslateblue"),
-                ),
-                yaxis=dict(
-                    title='ΔE<sub>total</sub> (meV)',
-                    titlefont=dict(color=color_tot_E),
-                    tickfont=dict(color=color_tot_E),
-                    side="right",
-                    showticklabels=True,
-                    showgrid=False,
-                ),
-                legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
-                # width=400, # Width of the plot
-                # height=500, # Height of the plot
-                font=dict(  # Font size and color of the labels
-                    size=12,
-                    color="#333333",
-                ),
-                plot_bgcolor="gainsboro",  # Background color of the plot
-                # paper_bgcolor='white', # Background color of the paper
-                # bargap=0.000001, # Gap between bars
-                # bargroupgap=0.4, # Gap between bar groups
-            )
-            if '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
-                color_B = data_to_plot["color_code"][data_to_plot["entry"].index('|B<sub>total</sub>| (T)')]
-            else:
-                color_B = "blue"
-            self.barplot.update_layout(
-            yaxis2=dict(
-                title='|B<sub>total</sub>| (T)',
-                titlefont=dict(color=color_B),
-                tickfont=dict(color=color_B),
-                overlaying="y",
-                side="left",
-                showticklabels=True,
-                showgrid=False,
-                ),
-            )
-                    
-        elif self.rendered:
-            data_to_plot = self._model.get_data_plot()
-            for i, (entry, color, data_y) in enumerate(zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"])):
-                self.barplot.data[i].x = data_to_plot["x"]
-                self.barplot.data[i].y = data_y
                 
     def _update_distortions_plot(self, _=None):
         
@@ -347,12 +265,17 @@ class FindMuonWidget(ipw.VBox):
         if not self.rendered:
             self._model.populate_distortion_figure(
                 distortion_data=data_to_plot,
-                figure=self.distortions_plot,
+                distortions_figure=self.distortions_plot,
+                callback=go.Scatter,
+                muon_label=self._model.selected_labels[0],
             )
         else:
             for i, (element,data) in enumerate(data_to_plot.items()):
                 self.distortions_plot.data[i].x = data["atm_distance_init"]
                 self.distortions_plot.data[i].y = data["distortion"]
+                self.distortions_plot.update_layout(
+                    title=f"Distortion induced by muon {self._model.selected_labels[0]}"
+                )
            
     def _update_table(self, _=None):
         self._model._generate_table_data()
@@ -360,5 +283,97 @@ class FindMuonWidget(ipw.VBox):
     def download_data(self, _=None):
         """Function to download the data."""
         self._model.download_data()
+    
+    
+    # NOTE: This is commented because I don't think we need it... no additional information to the panel. 
+    # It works in conjunction with the barplot container 
+    # def _update_barplot(self, _=None):
+        
+    #     data_to_plot = self._model.get_data_plot() # to have more compact code below
+        
+    #     if not '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
+    #         # hide the figure and return
+    #         self.barplot_container.layout.display = "none"
+    #         return
+            
+    #     # if not B field is there, we can also avoid to render it.
+    #     if not self.rendered:
+    #         for entry, color, data_y in zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"]):
+                
+    #             if entry == 'ΔE<sub>total</sub> (meV)':
+    #                 self.barplot.add_trace(
+    #                     go.Scatter(
+    #                         x=data_to_plot["x"],
+    #                         y=data_y,
+    #                         name=entry,
+    #                         yaxis='y',
+    #                         #mode="markers+lines",
+    #                         marker=dict(color=color, opacity=0.8),
+    #                     )
+    #                 )
+    #             else:
+    #                 self.barplot.add_trace(
+    #                     go.Bar(
+    #                         x=data_to_plot["x"],
+    #                         y=data_y,
+    #                         name=entry,
+    #                         yaxis='y2',
+    #                         #mode="markers+lines",
+    #                         marker=dict(color=color, opacity=0.65),
+    #                     )
+    #                 )
+            
+    #         color_tot_E = data_to_plot["color_code"][data_to_plot["entry"].index('ΔE<sub>total</sub> (meV)')]
+    #         self.barplot.update_layout(
+    #             # title='Summary',
+    #             barmode="group",
+    #             xaxis=dict(
+    #                 title="Muon label",
+    #                 tickmode="linear",
+    #                 dtick=1,
+    #                 #titlefont=dict(color="mediumslateblue"),
+    #                 #tickfont=dict(color="mediumslateblue"),
+    #             ),
+    #             yaxis=dict(
+    #                 title='ΔE<sub>total</sub> (meV)',
+    #                 titlefont=dict(color=color_tot_E),
+    #                 tickfont=dict(color=color_tot_E),
+    #                 side="right",
+    #                 showticklabels=True,
+    #                 showgrid=False,
+    #             ),
+    #             legend=dict(x=0.01, y=1, xanchor="left", yanchor="top"),
+    #             # width=400, # Width of the plot
+    #             # height=500, # Height of the plot
+    #             font=dict(  # Font size and color of the labels
+    #                 size=12,
+    #                 color="#333333",
+    #             ),
+    #             plot_bgcolor="gainsboro",  # Background color of the plot
+    #             # paper_bgcolor='white', # Background color of the paper
+    #             # bargap=0.000001, # Gap between bars
+    #             # bargroupgap=0.4, # Gap between bar groups
+    #         )
+    #         if '|B<sub>total</sub>| (T)' in data_to_plot["entry"]:
+    #             color_B = data_to_plot["color_code"][data_to_plot["entry"].index('|B<sub>total</sub>| (T)')]
+    #         else:
+    #             color_B = "blue"
+    #         self.barplot.update_layout(
+    #         yaxis2=dict(
+    #             title='|B<sub>total</sub>| (T)',
+    #             titlefont=dict(color=color_B),
+    #             tickfont=dict(color=color_B),
+    #             overlaying="y",
+    #             side="left",
+    #             showticklabels=True,
+    #             showgrid=False,
+    #             ),
+    #         )
+                    
+    #     elif self.rendered:
+    #         data_to_plot = self._model.get_data_plot()
+    #         for i, (entry, color, data_y) in enumerate(zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"])):
+    #             self.barplot.data[i].x = data_to_plot["x"]
+    #             self.barplot.data[i].y = data_y
         
         

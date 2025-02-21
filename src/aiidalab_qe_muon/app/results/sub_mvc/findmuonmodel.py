@@ -100,39 +100,7 @@ class FindMuonModel(Model):
         # to have nice names in the html, instead of the column names.
         return dictionary_of_names_for_html[entry]
     
-    def get_data_plot(self) -> dict:
-        """Get the data for the plot.
-        
-        This method is called by the controller to get the data for the plot.
-        I put it in the model as it can also be used to reorganize the data for other
-        purposes than the view.
-        """
-        
-        self.data_plot = {
-            "x":self.selected_labels,
-            "y":[],
-            "entry":[],
-            "color_code":[],
-        }
-        
-        entries = ["delta_E", "B_T_norm", "Bdip_norm", "B_hf_norm"]
-        
-        self.data_plot["y"] = [
-            self.findmuon_data["table"].loc[self.selected_muons, entry].tolist() for entry in entries
-            if entry in self.findmuon_data["table"].columns.tolist()
-        ]
-        
-        self.data_plot["entry"] = [
-            self.convert_label_to_html(entry) for entry in entries
-            if entry in self.findmuon_data["table"].columns.tolist()
-        ]
-        
-        self.data_plot["color_code"] = [
-            color_code[entry] for entry in entries
-            if entry in self.findmuon_data["table"].columns.tolist()
-        ]
-                
-        return self.data_plot
+    
     
     def _generate_table_data(self,) -> str:
         """Generate a table from the selected data.
@@ -250,24 +218,56 @@ class FindMuonModel(Model):
     @staticmethod 
     def populate_distortion_figure(
         distortion_data, 
-        distortions_plot,
+        distortions_figure,
+        callback, # go.Scatter, but I don't want to import plotly here.
         muon_label = "A"
     ):
-        for element,data in data_to_plot.items():
-            distortions_plot.add_trace(
-                go.Scatter(
+        distortions_figure.add_hline(y=0, line_dash="dash")
+        for element,data in distortion_data.items():
+            distortions_figure.add_trace(
+                callback(
                     x=data["atm_distance_init"],
                     y=data["distortion"],
                     mode="markers",
                     name=element,
                     marker=dict(
-                        size=10,
-                        #color=color_code[element],
-                        opacity=0.8,
+                        size=12,
+                        opacity=1,
                     ),
                 )
             )
-        
+            
+            distortions_figure.update_layout(
+                title=f"Distortion induced by muon {muon_label}",
+                title_font_size=18,
+                title_x=0.5,
+                margin=dict(l=5, r=5, t=45, b=10),
+                xaxis=dict(
+                        title="Initial distance from the muon (Å)",
+                        tickmode="linear",
+                        dtick=0.5,
+                        color="black",
+                    ),
+                yaxis=dict(
+                        title='Distortion (Å)',
+                        dtick=0.25,
+                        side="left",
+                        showticklabels=True,
+                        showgrid=True,
+                        color="black",
+                    ),
+                font=dict(  # Font size and color of the labels
+                        size=15,
+                        color="black",
+                    ),
+                legend=dict(
+                        font=dict(
+                            size=15,
+                            color="black",
+                        ),
+                ),
+            )
+
     def download_data(self, _=None):
         """Function to download the data."""
         files_dict = self._prepare_data_for_download()
@@ -294,4 +294,39 @@ class FindMuonModel(Model):
             self.readme_text = table_legend_text 
         else:
             self.table_legend_text = table_legend_text
-           
+    
+     # NOTE: This is commented because I don't think we need it... no additional information to the panel. 
+    # It works in conjunction with the _update_barplot of the widget. 
+    # def get_data_plot(self) -> dict:
+    #     """Get the data for the plot.
+        
+    #     This method is called by the controller to get the data for the plot.
+    #     I put it in the model as it can also be used to reorganize the data for other
+    #     purposes than the view.
+    #     """
+        
+    #     self.data_plot = {
+    #         "x":self.selected_labels,
+    #         "y":[],
+    #         "entry":[],
+    #         "color_code":[],
+    #     }
+        
+    #     entries = ["delta_E", "B_T_norm", "Bdip_norm", "B_hf_norm"]
+        
+    #     self.data_plot["y"] = [
+    #         self.findmuon_data["table"].loc[self.selected_muons, entry].tolist() for entry in entries
+    #         if entry in self.findmuon_data["table"].columns.tolist()
+    #     ]
+        
+    #     self.data_plot["entry"] = [
+    #         self.convert_label_to_html(entry) for entry in entries
+    #         if entry in self.findmuon_data["table"].columns.tolist()
+    #     ]
+        
+    #     self.data_plot["color_code"] = [
+    #         color_code[entry] for entry in entries
+    #         if entry in self.findmuon_data["table"].columns.tolist()
+    #     ]
+                
+    #     return self.data_plot
