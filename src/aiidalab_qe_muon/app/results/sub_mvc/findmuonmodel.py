@@ -139,14 +139,16 @@ class FindMuonModel(Model):
         
         This method is called by the controller to get the data for download.
         """
-        # prepare the structures for download as ase atoms objects
+        # prepare (all) the structures for download as ase atoms objects
         structures = {}
-        for index, label in zip(self.findmuon_data["table"]["muon_index"],self.findmuon_data["table"]["label"]):
-            node_id = self.findmuon_data["table"].loc[self.findmuon_data["table"]["muon_index"] == index, "structure_id_pk"].values[0]
+        for index, label in zip(self.findmuon_data["table_all"]["muon_index"],self.findmuon_data["table_all"]["label"]):
+            node_id = self.findmuon_data["table_all"].loc[self.findmuon_data["table_all"]["muon_index"] == index, "structure_id_pk"].values[0]
             structure = orm.load_node(node_id).get_ase()
             structures[label] = structure
         
         structures["unit_cell"] = self.findmuon_data["unit_cell"].get_ase()
+        structures["unit_cell_all"] = self.findmuon_data["unit_cell_all"].get_ase()
+        
         return structures
     
     def _prepare_data_for_download(self) -> str:
@@ -157,6 +159,7 @@ class FindMuonModel(Model):
         # prepare the data for download as csv file
         files_dict = {}
         files_dict["table"] = self.findmuon_data['table']
+        files_dict["table_all"] = self.findmuon_data['table_all']
         files_dict["structures"] = self._prepare_structures_for_download()
         formula = orm.load_node(self.findmuon_data["table"].loc[self.muon_index_list[0],"structure_id_pk"]).get_formula()
         files_dict["filename"] = f"exported_mu_res_{formula}_WorkflowID_{self.muon.findmuon.all_index_uuid.creator.caller.caller.caller.pk}.zip"
@@ -179,9 +182,12 @@ class FindMuonModel(Model):
             os.mkdir(path)
             
             files_dict["table"].drop(columns="muon_index").to_csv(path / "Summary_table.csv", index=True)
+            files_dict["table_all"].drop(columns="muon_index").to_csv(path / "Summary_table_before_clustering.csv", index=True)
             for label, structure in files_dict["structures"].items():
                 if label == "unit_cell":
                     structure.write(path / f"Allsites.cif", format="cif")
+                elif label == "unit_cell_all":
+                    structure.write(path / f"Allsites_before_clustering.cif", format="cif")
                 else:
                     structure.write(path / f"Supercell_{label}.cif", format="cif")
                 
