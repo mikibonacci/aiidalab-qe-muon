@@ -153,6 +153,10 @@ class FindMuonWidget(ipw.VBox):
         )
         download_button.on_click(self.download_data)
         
+        self.distortions_plot = go.FigureWidget()
+        self.distortions_plot_container = ipw.VBox([self.distortions_plot])
+        self._update_distortions_plot()
+        
         self.barplot = go.FigureWidget()
         self.barplot_container = ipw.VBox([self.barplot])
         self._update_barplot()
@@ -167,6 +171,7 @@ class FindMuonWidget(ipw.VBox):
                 self.compare_muons_button,
                 self.about_unit_cell_toggle,
             ],),
+            self.distortions_plot_container,
             self.unit_cell_explanation_infobox,
             self.barplot_container,
         ]
@@ -192,6 +197,7 @@ class FindMuonWidget(ipw.VBox):
         self._update_structure_view()
         self._update_picked_atoms()
         self._update_barplot()
+        self._update_distortions_plot()
         #self._update_table()
         
     def _on_selected_rows_change(self, change):
@@ -328,6 +334,29 @@ class FindMuonWidget(ipw.VBox):
             for i, (entry, color, data_y) in enumerate(zip(data_to_plot["entry"], data_to_plot["color_code"], data_to_plot["y"])):
                 self.barplot.data[i].x = data_to_plot["x"]
                 self.barplot.data[i].y = data_y
+                
+    def _update_distortions_plot(self, _=None):
+        
+        data_to_plot = self._model.get_distorsion_data()
+        if not self.rendered:
+            for element,data in data_to_plot.items():
+                self.distortions_plot.add_trace(
+                    go.Scatter(
+                        x=data["atm_distance_init"],
+                        y=data["distortion"],
+                        mode="markers",
+                        name=element,
+                        marker=dict(
+                            size=10,
+                            #color=color_code[element],
+                            opacity=0.8,
+                        ),
+                    )
+                )
+        else:
+            for i, (element,data) in enumerate(data_to_plot.items()):
+                self.distortions_plot.data[i].x = data["atm_distance_init"]
+                self.distortions_plot.data[i].y = data["distortion"]
            
     def _update_table(self, _=None):
         self._model._generate_table_data()

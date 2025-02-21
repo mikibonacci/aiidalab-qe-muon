@@ -258,6 +258,11 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
 
             self.supercell_with_impurities = generate_supercell_with_impurities(
                 structure=self.input_structure.get_pymatgen_structure(), 
+                # sc_matrix = [
+                #     [self.supercell_x, 0, 0],
+                #     [0, self.supercell_y, 0],
+                #     [0, 0, self.supercell_z],
+                # ],
                 mu_spacing=self.mu_spacing, 
                 mu_list=self.mu_lst if hasattr(self, "mu_lst") else None,
             )

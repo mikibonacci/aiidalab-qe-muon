@@ -70,6 +70,8 @@ class FindMuonModel(Model):
         #needed to sync with undimodel stuff.
         self.full_muon_indexes = self.muon_index_list
         self.full_muon_labels = self.findmuon_data["table"]["label"].tolist()
+        
+        self.distortions = self.findmuon_data["distortions"]
 
         
         self.sc_matrix = self.muon.findmuon.all_index_uuid.creator.caller.inputs.sc_matrix.get_list()
@@ -147,6 +149,13 @@ class FindMuonModel(Model):
             data.append(self.findmuon_data["table"].drop(excluded_columns, axis=1).loc[index].to_list())
             #data[-1].pop(-3)
         self.table_data = data
+        
+    def get_distorsion_data(self):
+        """Get the distorsion data for the selected site.
+        
+        This method is called by the controller to get the data for the distorsion plot.
+        """        
+        return self.distortions[str(self.selected_muons[-1])]
     
     @staticmethod
     def _prepare_single_structure_for_download(structure) -> str:
