@@ -60,6 +60,12 @@ class ImplantMuonWorkChain(WorkChain):
             required=False,
             help=" Preferred metadata and scheduler options for undi",
         )
+        spec.input(
+            "undi_fields",
+            valid_type= orm.List,
+            required=False,
+            help="The list of magnetic fields to compute the polarization.",
+        )
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
@@ -139,11 +145,13 @@ class ImplantMuonWorkChain(WorkChain):
         cls,
         pw_muons_code,
         structure,
-        pseudo_family: str = "SSSP/1.2/PBE/efficiency",
+        pseudo_family: str = "SSSP/1.3/PBE/efficiency",
         pp_code=None,
         undi_code=None,
         undi_metadata=None,
+        undi_fields=None,
         protocol=None,
+        enforce_defaults: bool = True,
         compute_findmuon: bool = True,
         compute_polarization_undi: bool = True,
         overrides: dict = {},
@@ -183,6 +191,7 @@ class ImplantMuonWorkChain(WorkChain):
             pp_code=pp_code,
             structure=structure,
             protocol=protocol,
+            enforce_defaults = enforce_defaults,
             overrides=overrides,
             relax_musconv=relax_musconv,  # relaxation of unit cell already done if needed.
             magmom=magmom,
@@ -216,6 +225,9 @@ class ImplantMuonWorkChain(WorkChain):
             builder.undi_code = undi_code
             if undi_metadata:
                 builder.undi_metadata = undi_metadata
+                
+        if undi_fields and compute_polarization_undi:
+            builder.undi_fields = orm.List(undi_fields)
 
         return builder
 
@@ -286,7 +298,8 @@ class ImplantMuonWorkChain(WorkChain):
         workgraph = MultiSites(
             structure_group=self.ctx.structure_group,
             code = getattr(self.inputs, "undi_code", None),
-            metadata=metadata,
+            B_mods = self.inputs.get("undi_fields", None),
+            metadata = metadata,
             )
         inputs = {
             "wg": workgraph.to_dict(),
