@@ -71,9 +71,6 @@ def get_builder(codes, structure, parameters):
     disable_hubbard = not parameters["muonic"].pop("hubbard", True) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
     enforce_defaults = not parameters["muonic"].pop("override_defaults", False)
-    #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
-    # dummy logic.
-    pseudo_family = overrides["base"]["pseudo_family"]
     
     if not disable_hubbard and not isinstance(structure, HubbardStructureData):
         structure = HubbardStructureData.from_structure(structure)
@@ -92,7 +89,11 @@ def get_builder(codes, structure, parameters):
     overrides["base"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] = "local-TF"
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] ="local-TF"
     overrides["base"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
-    overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] =500
+    overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
+    
+    #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
+    # dummy logic.
+    pseudo_family = overrides["base"]["pseudo_family"]
         
     pp_metadata = {
         "options": {

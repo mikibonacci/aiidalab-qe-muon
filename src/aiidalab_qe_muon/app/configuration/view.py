@@ -530,6 +530,7 @@ class MuonConfigurationSettingPanel(
             (self.polarization_field_list, "value"),
             lambda x: f"<ul><li>Number of calculation per site: {len(x)} </li><li>Field list (mT):   ["+",  ".join([f"{field:.0f}" for field in x])+"]</li></ul>",
         )
+        self._update_fields_list_grid_2()
         
         self.polarization_settings = ipw.VBox(
             [
@@ -606,7 +607,7 @@ class MuonConfigurationSettingPanel(
     def _reset_kpoints_distance(self, _=None):
         self._model.reset_kpoints_distance()
     
-    def _update_fields_list_grid_2(self, _):
+    def _update_fields_list_grid_2(self, _=None):
         if not self.additional_grid_checkbox.value:
             # should be already linked, but apparently does not work.
             self._model.undi_fields = self.polarization_field_choice.field_list
