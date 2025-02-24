@@ -486,6 +486,7 @@ class MuonConfigurationSettingPanel(
         self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="Second grid of fields (mT)")
         self.polarization_field_choice.observe(self._update_fields_list_grid_2, "field_list")
         self.polarization_field_choice_additional.observe(self._update_fields_list_grid_2, "field_list")
+        self._model.undi_fields = self.polarization_field_choice.field_list
         
         self.additional_grid_checkbox = ipw.Checkbox(
             description="Additional grid",
@@ -530,7 +531,6 @@ class MuonConfigurationSettingPanel(
             (self.polarization_field_list, "value"),
             lambda x: f"<ul><li>Number of calculation per site: {len(x)} </li><li>Field list (mT):   ["+",  ".join([f"{field:.0f}" for field in x])+"]</li></ul>",
         )
-        self._update_fields_list_grid_2()
         
         self.polarization_settings = ipw.VBox(
             [
