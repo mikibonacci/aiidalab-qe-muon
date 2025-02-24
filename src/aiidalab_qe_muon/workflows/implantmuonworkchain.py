@@ -145,7 +145,7 @@ class ImplantMuonWorkChain(WorkChain):
         cls,
         pw_muons_code,
         structure,
-        pseudo_family: str = "SSSP/1.2/PBE/efficiency",
+        pseudo_family: str = "SSSP/1.3/PBE/efficiency",
         pp_code=None,
         undi_code=None,
         undi_metadata=None,

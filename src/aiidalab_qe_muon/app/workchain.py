@@ -73,8 +73,8 @@ def get_builder(codes, structure, parameters):
     enforce_defaults = not parameters["muonic"].pop("override_defaults", False)
     #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
     # dummy logic.
-    #pseudo_family = pseudo_family if pseudo_family != "" else "SSSP/1.3/PBE/efficiency"
-
+    pseudo_family = overrides["base"]["pseudo_family"]
+    
     if not disable_hubbard and not isinstance(structure, HubbardStructureData):
         structure = HubbardStructureData.from_structure(structure)
 
@@ -93,7 +93,7 @@ def get_builder(codes, structure, parameters):
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] ="local-TF"
     overrides["base"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] =500
-    
+        
     pp_metadata = {
         "options": {
             "max_wallclock_seconds": 60 * 60,
@@ -123,13 +123,13 @@ def get_builder(codes, structure, parameters):
         undi_fields = [field * 1e-3 for field in undi_fields]
     else:
         undi_fields = []
-
+        
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_muons_code=pw_code,
         pp_code=pp_code,
         undi_code=undi_code,
         undi_metadata=undi_metadata,
-        #pseudo_family=pseudo_family,
+        pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
         enforce_defaults= enforce_defaults,
