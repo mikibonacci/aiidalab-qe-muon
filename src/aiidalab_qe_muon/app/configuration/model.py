@@ -88,7 +88,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     def _set_default(self, trait):
         self.set_trait(trait, self._get_default(trait))
         
-    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner']):
+    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner','undi_fields']):
         with self.hold_trait_notifications():
             for trait in self.traits():
                 if trait not in exclude:
