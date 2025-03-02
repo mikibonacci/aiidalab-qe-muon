@@ -10,6 +10,7 @@ from aiidalab_qe_muon.app.results.view import MuonResultsPanel
 from aiidalab_qe_muon.app.results.model import MuonResultsModel
 from aiidalab_qe_muon.app.workchain import workchain_and_builder
 from aiidalab_qe_muon.app.structure_importer.structure import ImportMagnetism
+from pathlib import Path
 
 
 class MuonPluginOutline(PluginOutline):
@@ -32,4 +33,5 @@ property = {
     },
     "workchain": workchain_and_builder,
     "importer": ImportMagnetism,
+    "guides": Path(__file__).resolve().parent / "guides",
 }

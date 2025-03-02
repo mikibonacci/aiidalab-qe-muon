@@ -20,7 +20,7 @@ from undi.undi_analysis import check_enough_isotopes
 
 class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructure):
     
-    title = "Muon Settings"
+    title = "Muon settings"
     
     dependencies = [
         "input_structure",
@@ -88,7 +88,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     def _set_default(self, trait):
         self.set_trait(trait, self._get_default(trait))
         
-    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner','undi_fields']):
+    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner','undi_fields','blockers']):
         with self.hold_trait_notifications():
             for trait in self.traits():
                 if trait not in exclude:

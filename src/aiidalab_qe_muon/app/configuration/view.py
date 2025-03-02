@@ -21,6 +21,8 @@ from aiidalab_qe_muon.app.utils_results import spinner_html
 import ipywidgets as ipw
 
 from aiidalab_qe.common.panel import ConfigurationSettingsPanel
+from aiidalab_qe.common.infobox import InAppGuide
+
 from aiidalab_qe_muon.app.configuration.model import MuonConfigurationSettingsModel
 
 from aiidalab_qe_muon.app.configuration.helper_widgets import ExternalMagneticFieldUndiWidget, SettingsInfoBoxWidget
@@ -33,7 +35,7 @@ HubbardStructureData = DataFactory("quantumespresso.hubbard_structure")
 class MuonConfigurationSettingPanel(
     ConfigurationSettingsPanel[MuonConfigurationSettingsModel],
 ):
-    title = "Muon Settings"
+    title = "Muon settings"
     identifier = "muonic"
     
     def __init__(self, model: MuonConfigurationSettingsModel, **kwargs):
@@ -364,7 +366,7 @@ class MuonConfigurationSettingPanel(
         )
         
         self.hubbard = ipw.Checkbox(
-            description="Disable Hubbard correction (if any): ",
+            description="Disable Hubbard correction (if any)",
             indent=False,
             value=False,
         )
@@ -374,7 +376,7 @@ class MuonConfigurationSettingPanel(
         )
         
         self.spin_polarized = ipw.Checkbox(
-            description="Enable spin polarised DFT (if magnetic sample): ",
+            description="Enable spin polarised DFT (if magnetic sample)",
             indent=False,
             value=True,
             layout=ipw.Layout(justify_content="flex-start"),
@@ -426,7 +428,7 @@ class MuonConfigurationSettingPanel(
         ])
         
         self.estimate_number_of_supercells = ipw.Button(
-            description="Click to stimate number of muon trial sites ➡",
+            description="Click to estimate number of muon trial sites ➡",
             disabled=False,
             layout=ipw.Layout(width="350px"),
             button_style="info",
@@ -551,7 +553,8 @@ class MuonConfigurationSettingPanel(
         )
         self.polarization_settings.layout.display = "none" if not self._model.compute_polarization_undi else "block"
         
-        self.children = general_settings + self.findmuon_settings + [self.polarization_settings]
+        self.children = [InAppGuide(identifier="muon-settings")] + \
+            general_settings + self.findmuon_settings + [self.polarization_settings]
         
         self.layout = ipw.Layout(width="100%")
 
