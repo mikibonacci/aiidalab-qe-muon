@@ -43,7 +43,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")
     
-    override_defaults = tl.Bool(False) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
+    use_defaults = tl.Bool(True) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
     
     # TODO: implement these two in MVC
     specific_pseudofamily = tl.Unicode("")

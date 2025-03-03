@@ -70,7 +70,7 @@ def get_builder(codes, structure, parameters):
 
     disable_hubbard = not parameters["muonic"].pop("hubbard", True) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
-    enforce_defaults = not parameters["muonic"].pop("override_defaults", False)
+    enforce_defaults = parameters["muonic"].pop("use_defaults", True)
     
     if not disable_hubbard and not isinstance(structure, HubbardStructureData):
         structure = HubbardStructureData.from_structure(structure)
@@ -133,7 +133,7 @@ def get_builder(codes, structure, parameters):
         pseudo_family=pseudo_family,
         structure=structure,
         protocol=protocol,
-        enforce_defaults= enforce_defaults,
+        enforce_defaults = enforce_defaults,
         compute_findmuon=compute_findmuon,
         compute_polarization_undi=compute_polarization_undi,
         undi_fields=undi_fields if len(undi_fields) > 0 else None,

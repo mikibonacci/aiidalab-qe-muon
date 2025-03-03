@@ -136,37 +136,38 @@ class MuonConfigurationSettingPanel(
             ],
         )
         
-        self.override_defaults_help_title = ipw.HTML("<h5><b> - Override default DFT+&mu; parameters</b></h5>")
-        self.override_defaults_help = SettingsInfoBoxWidget(
-            info="""&#8613; Override defaults - <b>only for experts</b><br>Due to the large computational cost of muon calculations (infinite dilute defect), the suggested parameters are based on a rule of thumb/experience
-                of the experts (the develop of this plugin and the aiida-muon plugin): 
+        self.use_defaults_help_title = ipw.HTML("<h5><b> - Use default DFT+&mu; parameters</b></h5>")
+        self.use_defaults_help = SettingsInfoBoxWidget(
+            info="""&#8613; Use defaults - <b>override should be only for experts</b><br>Due to the large computational cost of muon calculations 
+                (infinite dilute defect), the default parameters used in DFT+&mu; simulations are different with the one that are set in the "Advanced settings" tab, and 
+                based on rule of thumbs/experience of experts (the developers of the aiida-muon plugin): 
                 <br>
                 <ul>
-                    <li>the k-points distance is set to 0.3 Å<sup>-1</sup>;</li>
-                    <li>the convergence threshold for SCF step is set to 10<sup>-6</sup>;</li>
+                    <li>the k-points distance is set to 0.3 Å<sup>-1</sup>; <b>note</b>: this can be overridden even if defaults are used, by using the settings below in this tab;</li>
+                    <li>the convergence threshold for SCF step is set to 10<sup>-6</sup> Ry (<b>note</b>: this is not per atom, but a threshold on the total energy of the system);</li>
                     <li>the smearing is "gaussian" with a width of 0.01 Ry;</li>
                 </ul>
                 <br>
-                It is possible to override this defaults and use the convergence settings and k-points distance defined in the "Advanced settings" tab.
+                Untick the above checkbox to override this defaults and use the convergence settings and k-points distance defined in the "Advanced settings" tab. 
                 """,
         )
-        self.override_defaults = ipw.Checkbox(
-            description="Override default settings",
+        self.use_defaults = ipw.Checkbox(
+            description="Use default  DFT+&mu; settings",
             indent=False,
-            value=False,
-            tooltip="Override the default settings for the workflow.",
+            value=True,
+            tooltip="Use the default settings for the workflow.",
         )
         ipw.dlink(
-            (self.override_defaults, "value"),
-            (self._model, "override_defaults"),
+            (self.use_defaults, "value"),
+            (self._model, "use_defaults"),
         )
-        self.override_defaults_box = ipw.VBox([
+        self.use_defaults_box = ipw.VBox([
             ipw.HBox([
-                self.override_defaults_help_title,
-                self.override_defaults_help,
-                self.override_defaults,
+                self.use_defaults_help_title,
+                self.use_defaults_help,
+                self.use_defaults,
                 ]),
-                self.override_defaults_help.infobox,
+                self.use_defaults_help.infobox,
         ])
         
         # Charge state view and control (the control is the link, and observe() if any)
@@ -319,8 +320,9 @@ class MuonConfigurationSettingPanel(
             (self._model, "kpoints_distance"),
         )
         ipw.dlink(
-            (self.override_defaults, "value"),
+            (self.use_defaults, "value"),
             (self.kpoints_distance, "disabled"),
+            lambda x: not x,
         )
         self.kpoints_distance.observe(self._on_kpoints_distance_change, "value")
         
@@ -330,8 +332,9 @@ class MuonConfigurationSettingPanel(
             button_style="warning",
         )
         ipw.dlink(
-            (self.override_defaults, "value"),
+            (self.use_defaults, "value"),
             (self.reset_kpoints_distance, "disabled"),
+            lambda x: not x,
         )
         self.reset_kpoints_distance.on_click(self._reset_kpoints_distance)
                 
@@ -341,7 +344,7 @@ class MuonConfigurationSettingPanel(
             (self.mesh_grid, "value"),
         )
         ipw.dlink(
-            (self.override_defaults, "value"),
+            (self.use_defaults, "value"),
             (self.mesh_grid, "value"),
             lambda x: "" if x else self._model.mesh_grid,
         )
@@ -360,9 +363,9 @@ class MuonConfigurationSettingPanel(
             ],
         )
         ipw.dlink(
-            (self.override_defaults, "value"),
+            (self.use_defaults, "value"),
             (self.kpoints_box, "layout"),
-            lambda x: {"display": "none"} if x else {"display": "block"},
+            lambda x: {"display": "none"} if not x else {"display": "block"},
         )
         
         self.hubbard = ipw.Checkbox(
@@ -465,7 +468,7 @@ class MuonConfigurationSettingPanel(
                 ipw.HTML("<h4><b> - Find muon sites settings - </b></h4>"),],
                 layout=ipw.Layout(justify_content="center"),
             ),
-            self.override_defaults_box,
+            self.use_defaults_box,
             self.charge_box,
             self.supercell_selector,
             self.kpoints_box,
