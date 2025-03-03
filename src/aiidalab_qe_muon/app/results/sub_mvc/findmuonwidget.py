@@ -156,7 +156,40 @@ class FindMuonWidget(ipw.VBox):
         download_button.on_click(self.download_data)
         
         self.distortions_plot = go.FigureWidget()
-        self.distortions_plot_container = ipw.VBox([self.distortions_plot])
+        
+        self.distortions_plot_x_axis = ipw.ToggleButtons(
+            options=[("Initial distance to muon", "atm_distance_init"), ("Final distance to muon", "atm_distance_final")],
+            value="atm_distance_final",
+            description="X axis",
+            button_style="",
+            tooltips=["Initial distance to muon", "Final distance to muon"],
+        )
+        ipw.dlink(
+            (self.distortions_plot_x_axis, "value"),
+            (self._model, "distortions_x"),
+        )
+        self.distortions_plot_x_axis.observe(self._update_distortions_plot, names="value")
+        
+        self.distortions_plot_y_axis = ipw.ToggleButtons(
+            options=[("|Δ(r<sub>&mu;, f</sub>, r<sub>&mu;, i</sub>)|", "distortion"), 
+                     ("Δ(|r<sub>&mu;, f</sub>|,|r<sub>&mu;, i</sub>|)", "delta_distance")],
+            value="distortion",
+            description="Y axis",
+            button_style="",
+            tooltips=["Distortion", "Energy"],
+        )
+        ipw.dlink(
+            (self.distortions_plot_y_axis, "value"),
+            (self._model, "distortions_y"),
+        )
+        self.distortions_plot_y_axis.observe(self._update_distortions_plot, names="value")
+        
+        self.distortions_plot_container = ipw.HBox(
+            [
+                self.distortions_plot,
+                ipw.VBox([self.distortions_plot_x_axis, self.distortions_plot_y_axis]),
+                ],
+            )
         ipw.dlink(
             (self.compare_muons_button, "value"),
             (self.distortions_plot_container, "layout"),
@@ -271,14 +304,19 @@ class FindMuonWidget(ipw.VBox):
                 distortions_figure=self.distortions_plot,
                 callback=go.Scatter,
                 muon_label=self._model.selected_labels[0],
+                x_quantity=self._model.distortions_x,
+                y_quantity=self._model.distortions_y,
             )
         else:
-            for i, (element,data) in enumerate(data_to_plot.items()):
-                self.distortions_plot.data[i].x = data["atm_distance_init"]
-                self.distortions_plot.data[i].y = data["distortion"]
-                self.distortions_plot.update_layout(
-                    title=f"Distortion induced by muon {self._model.selected_labels[0]}"
-                )
+            self._model.populate_distortion_figure(
+                distortion_data=data_to_plot,
+                distortions_figure=self.distortions_plot,
+                callback=go.Scatter,
+                muon_label=self._model.selected_labels[0],
+                x_quantity=self._model.distortions_x,
+                y_quantity=self._model.distortions_y,
+                just_update=True,
+            )
            
     def _update_table(self, _=None):
         self._model._generate_table_data()

@@ -57,6 +57,9 @@ class FindMuonModel(Model):
         trait=tl.Unicode(),
     )
     
+    distortions_y = tl.Unicode("delta_distance") # delta_distance (difference of the norms of the distances from the muon, final and init.), distortion (norm of vector difference)
+    distortions_x = tl.Unicode("atm_distance_final") # atm_distance_init, atm_distance_final
+    
     @observe("selected_muons")
     def _on_selected_muons(self, _=None):
         self.selected_labels = self.findmuon_data["table"].loc[self.selected_muons, "label"].tolist()
@@ -164,12 +167,16 @@ class FindMuonModel(Model):
         for index, label in zip(self.findmuon_data["table_all"]["muon_index"],self.findmuon_data["table_all"]["label"]):
             distortion = {}
             distortion["atm_distance_init"] = []
+            distortion["atm_distance_final"] = []
             distortion["distortion"] = []
+            distortion["delta_distances"] = []
             distortion["element"] = []
             
             for element,data in self.distortions[index].items():
                 for i in range(len(data["atm_distance_init"])):
                     distortion["atm_distance_init"].append(data["atm_distance_init"][i])
+                    distortion["atm_distance_final"].append(data["atm_distance_final"][i])
+                    distortion["delta_distances"].append(data["delta_distance"][i])
                     distortion["distortion"].append(data["distortion"][i])
                     distortion["element"].append(element)
                     
@@ -265,22 +272,42 @@ class FindMuonModel(Model):
         distortion_data, 
         distortions_figure,
         callback, # go.Scatter, but I don't want to import plotly here.
-        muon_label = "A"
+        muon_label = "A",
+        x_quantity = "atm_distance_final",
+        y_quantity = "distortion",
+        just_update = False,
     ):
         distortions_figure.add_hline(y=0, line_dash="dash")
-        for element,data in distortion_data.items():
-            distortions_figure.add_trace(
-                callback(
-                    x=data["atm_distance_init"],
-                    y=data["distortion"],
-                    mode="markers",
-                    name=element,
-                    marker=dict(
-                        size=12,
-                        opacity=1,
-                    ),
+        for i, (element,data) in enumerate(distortion_data.items()):
+            if not just_update:
+                distortions_figure.add_trace(
+                    callback(
+                        x=data[x_quantity],
+                        y=data[y_quantity],
+                        mode="markers",
+                        name=element,
+                        marker=dict(
+                            size=12,
+                            opacity=1,
+                        ),
+                    )
                 )
-            )
+            else:
+                distortions_figure.data[i].x = data[x_quantity]
+                distortions_figure.data[i].y = data[y_quantity]
+                # distortions_figure.update_layout(
+                #     title=f"Distortion induced by muon {self._model.selected_labels[0]}"
+                # )
+            
+            if y_quantity == "distortion":
+                ylabel = "|Δ(r<sub>&mu;, f</sub>, r<sub>&mu;, i</sub>)|(Å)"
+            else:
+                ylabel = "Δ(|r<sub>&mu;, f</sub>|,|r<sub>&mu;, i</sub>|) (Å)"
+            
+            if x_quantity == "atm_distance_final":
+                xlabel = "Final distance from the muon (Å)"
+            else:   
+                xlabel = "Initial distance from the muon (Å)"           
             
             distortions_figure.update_layout(
                 title=f"Distortion induced by muon {muon_label}",
@@ -288,13 +315,13 @@ class FindMuonModel(Model):
                 title_x=0.5,
                 margin=dict(l=5, r=5, t=45, b=10),
                 xaxis=dict(
-                        title="Initial distance from the muon (Å)",
+                        title=xlabel,
                         tickmode="linear",
                         dtick=0.5,
                         color="black",
                     ),
                 yaxis=dict(
-                        title='Distortion (Å)',
+                        title=ylabel,
                         dtick=0.25,
                         side="left",
                         showticklabels=True,
