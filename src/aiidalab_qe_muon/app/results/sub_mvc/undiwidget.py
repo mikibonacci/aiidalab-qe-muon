@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 from aiida import orm
 
 from aiidalab_qe.common.widgets import LoadingWidget
+from aiidalab_qe.common.infobox import InAppGuide
+
 from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel
 
 class UndiPlotWidget(ipw.VBox):
@@ -125,6 +127,7 @@ class UndiPlotWidget(ipw.VBox):
         
 
             self.children = [
+                InAppGuide(identifier="muon-undi-results"),
                 description,
                 ipw.HBox(
                     [

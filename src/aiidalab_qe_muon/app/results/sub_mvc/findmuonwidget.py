@@ -6,6 +6,8 @@ from aiidalab_qe_muon.app.results.sub_mvc.findmuonmodel import FindMuonModel
 from aiidalab_qe.common.widgets import TableWidget
 from aiidalab_qe.common.widgets import LoadingWidget
 from aiidalab_qe.common.infobox import InfoBox
+from aiidalab_qe.common.infobox import InAppGuide
+
 
 from aiidalab_widgets_base.viewers import StructureDataViewer
 
@@ -168,6 +170,7 @@ class FindMuonWidget(ipw.VBox):
         # self._update_barplot()
         
         self.children = [
+            InAppGuide(identifier="muon-stopping-sites-results"),
             self.title,
             self.table,
             ipw.HBox([self.advanced_table, self.about_toggle, download_button,],),
