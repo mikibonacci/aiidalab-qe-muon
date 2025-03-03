@@ -148,6 +148,7 @@ class FindMuonModel(Model):
         
         structures["unit_cell"] = self.findmuon_data["unit_cell"].get_ase()
         structures["unit_cell_all"] = self.findmuon_data["unit_cell_all"].get_ase()
+        structures["supercell_all"] = self.findmuon_data["supercell_all"].get_ase()
         
         return structures
     
@@ -216,9 +217,11 @@ class FindMuonModel(Model):
             # Structures
             for label, structure in files_dict["structures"].items():
                 if label == "unit_cell":
-                    structure.write(path / f"Allsites.cif", format="cif")
+                    structure.write(path / f"Allsites_unitcell.cif", format="cif")
                 elif label == "unit_cell_all":
-                    structure.write(path / f"Allsites_before_clustering.cif", format="cif")
+                    structure.write(path / f"Allsites_before_clustering_unitcell.cif", format="cif")
+                elif label == "supercell_all":
+                    structure.write(path / f"Allsites_before_clustering_supercell.cif", format="cif")
                 else:
                     structure.write(path / f"Supercell_{label}.cif", format="cif")
             
