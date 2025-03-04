@@ -15,7 +15,8 @@ from aiidalab_qe_muon.utils.data import (
     dictionary_of_names_for_html, 
     no_Bfield_sentence,
     color_code,
-    unit_cell_explanation_text
+    unit_cell_explanation_text,
+    distortions_plot_explanation_text,
 )
 
 
@@ -157,12 +158,13 @@ class FindMuonWidget(ipw.VBox):
         
         self.distortions_plot = go.FigureWidget()
         
-        self.distortions_plot_x_axis = ipw.ToggleButtons(
-            options=[("Initial distance to muon", "atm_distance_init"), ("Final distance to muon", "atm_distance_final")],
-            value="atm_distance_final",
-            description="X axis",
-            button_style="",
-            tooltips=["Initial distance to muon", "Final distance to muon"],
+        self.distortions_plot_x_axis = ipw.Dropdown(
+            options=[("Initial", "atm_distance_init"), ("Final", "atm_distance_final")],
+            value="atm_distance_init",
+            description="Atom-μ distance (X axis):",
+            layout=ipw.Layout(width="400px",),
+            style={'description_width': '150px'},
+            tooltip="Select the distance to display",
         )
         ipw.dlink(
             (self.distortions_plot_x_axis, "value"),
@@ -170,13 +172,14 @@ class FindMuonWidget(ipw.VBox):
         )
         self.distortions_plot_x_axis.observe(self._update_distortions_plot, names="value")
         
-        self.distortions_plot_y_axis = ipw.ToggleButtons(
-            options=[("|Δ(r<sub>&mu;, f</sub>, r<sub>&mu;, i</sub>)|", "distortion"), 
-                     ("Δ(|r<sub>&mu;, f</sub>|,|r<sub>&mu;, i</sub>|)", "delta_distance")],
-            value="distortion",
-            description="Y axis",
-            button_style="",
-            tooltips=["Distortion", "Energy"],
+        self.distortions_plot_y_axis = ipw.Dropdown(
+            options=[("Radial displacement change", "delta_distance"), 
+                 ("Distortion magnitude", "distortion")],
+            value="delta_distance",
+            description="Distortion (Y axis):",
+            layout=ipw.Layout(width="400px",),
+            style={'description_width': '150px'},
+            tooltip="Select the type of distortion to display",
         )
         ipw.dlink(
             (self.distortions_plot_y_axis, "value"),
@@ -184,11 +187,31 @@ class FindMuonWidget(ipw.VBox):
         )
         self.distortions_plot_y_axis.observe(self._update_distortions_plot, names="value")
         
-        self.distortions_plot_container = ipw.HBox(
+        self.distortions_plot_explanation = ipw.HTML(distortions_plot_explanation_text)
+        self.distortions_plot_explanation_infobox = InfoBox(
+            children=[self.distortions_plot_explanation],
+        )
+        self.distortions_plot_explanation_infobox.layout.display = "none"
+        
+        self.about_distortions_toggle = ipw.ToggleButton(
+            layout=ipw.Layout(width="auto"),
+            button_style="",
+            icon="info",
+            value=False,
+            description="About distortion plots",
+            disabled=False,
+        )
+        self.about_distortions_toggle.observe(self.display_distortion_explanation, names="value")
+        
+        self.distortions_plot_container = ipw.VBox(
             [
                 self.distortions_plot,
-                ipw.VBox([self.distortions_plot_x_axis, self.distortions_plot_y_axis]),
+                self.about_distortions_toggle,
+                self.distortions_plot_explanation_infobox,
+                self.distortions_plot_x_axis,
+                self.distortions_plot_y_axis,
                 ],
+            layuot=ipw.Layout(width="100%"),
             )
         ipw.dlink(
             (self.compare_muons_button, "value"),
@@ -214,13 +237,7 @@ class FindMuonWidget(ipw.VBox):
                 self.about_unit_cell_toggle,
             ],),
             self.unit_cell_explanation_infobox,
-            ipw.HBox(
-                [
-                    self.distortions_plot_container,
-                    #self.barplot_container
-                ],
-                layout=ipw.Layout(width="100%"),
-                ),
+            self.distortions_plot_container,
         ]
         
         self.rendered = True
@@ -239,6 +256,9 @@ class FindMuonWidget(ipw.VBox):
         
     def display_unit_cell_explanation(self, change):
         self.unit_cell_explanation_infobox.layout.display = "block" if change["new"] else "none"
+        
+    def display_distortion_explanation(self, change):
+        self.distortions_plot_explanation_infobox.layout.display = "block" if change["new"] else "none"
     
     def _on_selected_muons_change(self):
         self._update_structure_view()

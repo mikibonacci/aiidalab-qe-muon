@@ -278,6 +278,7 @@ class FindMuonModel(Model):
         just_update = False,
     ):
         distortions_figure.add_hline(y=0, line_dash="dash")
+        symbols = []
         for i, (element,data) in enumerate(distortion_data.items()):
             if not just_update:
                 distortions_figure.add_trace(
@@ -292,53 +293,58 @@ class FindMuonModel(Model):
                         ),
                     )
                 )
+                
             else:
                 distortions_figure.data[i].x = data[x_quantity]
                 distortions_figure.data[i].y = data[y_quantity]
-                # distortions_figure.update_layout(
-                #     title=f"Distortion induced by muon {self._model.selected_labels[0]}"
-                # )
+                
+                
             
-            if y_quantity == "distortion":
-                ylabel = "|Δ(r<sub>&mu;, f</sub>, r<sub>&mu;, i</sub>)|(Å)"
-            else:
-                ylabel = "Δ(|r<sub>&mu;, f</sub>|,|r<sub>&mu;, i</sub>|) (Å)"
-            
-            if x_quantity == "atm_distance_final":
-                xlabel = "Final distance from the muon (Å)"
-            else:   
-                xlabel = "Initial distance from the muon (Å)"           
-            
-            distortions_figure.update_layout(
-                title=f"Distortion induced by muon {muon_label}",
-                title_font_size=18,
-                title_x=0.5,
-                margin=dict(l=5, r=5, t=45, b=10),
-                xaxis=dict(
-                        title=xlabel,
-                        tickmode="linear",
-                        dtick=0.5,
-                        color="black",
-                    ),
-                yaxis=dict(
-                        title=ylabel,
-                        dtick=0.25,
-                        side="left",
-                        showticklabels=True,
-                        showgrid=True,
-                        color="black",
-                    ),
-                font=dict(  # Font size and color of the labels
+        if y_quantity == "distortion":
+            ylabel = "|r<sub>&mu;, f</sub> - r<sub>&mu;, i</sub>| (Å)"
+        else:
+            ylabel = "|r<sub>&mu;, f</sub>|-|r<sub>&mu;, i</sub>| (Å)"
+        
+        if x_quantity == "atm_distance_final":
+            xlabel = "Final distance from the muon (Å)"
+        else:   
+            xlabel = "Initial distance from the muon (Å)"           
+        
+        distortions_figure.update_layout(
+            title=dict(
+                text=f"Distortion induced by muon {muon_label}",
+                font=dict(size=18),
+                x=0.5,  # Center horizontally
+                y=0.95,  # Fix vertical position
+                xanchor="center",
+                yanchor="top",
+            ),
+            margin=dict(l=5, r=5, t=45, b=5),
+            xaxis=dict(
+                    title=xlabel,
+                    tickmode="linear",
+                    dtick=0.5,
+                    color="black",
+                ),
+            yaxis=dict(
+                    title=ylabel,
+                    dtick=0.25,
+                    side="left",
+                    showticklabels=True,
+                    showgrid=True,
+                    color="black",
+                ),
+            font=dict(  # Font size and color of the labels
+                    size=15,
+                    color="black",
+                ),
+            legend=dict(
+                    font=dict(
                         size=15,
                         color="black",
                     ),
-                legend=dict(
-                        font=dict(
-                            size=15,
-                            color="black",
-                        ),
-                ),
-            )
+            ),
+        )
 
     def download_data(self, _=None):
         """Function to download the data."""
