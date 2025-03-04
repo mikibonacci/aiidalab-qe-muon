@@ -3,7 +3,7 @@ from aiida_workgraph import task
 @task.pythonjob(outputs=["results"])
 def undi_run(
     structure, # should be StructureData, and then in the pythonjob we deserialize into ASE. for provenance.
-    B_mod = 0.0,
+    B_mod = 0.0, # Units are Tesla.
     atom_as_muon = 'H',
     max_hdim = 10e6,
     convergence_check = False,

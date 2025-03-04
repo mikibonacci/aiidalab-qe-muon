@@ -194,25 +194,23 @@ class PolarizationModel(Model):
                     main_node.base.links.get_outgoing().get_node_by_label(search).called
                 )
 
-                self.muons[muon_index].results = [
+                results = [
                     node.outputs.result.get_list() for node in descendants
                 ]
                 
-                self.fields = [
+                fields = [
                     node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
                 ]  # mT
-                self.muons[muon_index].fields = self.fields
-                self.selected_fields = [
+                selected_fields = [
                     node.inputs.function_inputs.B_mod.value * 1000 for node in descendants
                 ]  # mT
-                
-                self.max_hdims = [
+                max_hdims = [
                     int(node.inputs.function_inputs.max_hdim.value) for node in descendants
                 ]
                 
                 self.isotopes = [
                     [res["cluster_isotopes"], res["spins"], res["probability"]]
-                    for res in self.muons[muon_index].results[0]
+                    for res in results[0]
                 ]
 
                 self.selected_isotopes = list(range(len(self.isotopes)))
@@ -223,6 +221,21 @@ class PolarizationModel(Model):
                         .get_node_by_label("KuboToyabe_run")
                         .outputs.result.get_dict()
                     )
+                
+                # re-ordering all the results according to the fields or the max_hdim.
+                if self.mode == "plot":
+                    sorted_order = np.argsort(fields)
+                    self.fields = [fields[i] for i in sorted_order]
+                    self.selected_fields = [selected_fields[i] for i in sorted_order]
+                    self.max_hdims = max_hdims
+                else:
+                    sorted_order = np.argsort(max_hdims)
+                    self.max_hdims = [max_hdims[i] for i in sorted_order]
+                    self.fields = fields
+                    self.selected_fields = selected_fields
+                
+                self.muons[muon_index].results = [results[i] for i in sorted_order]
+                self.muons[muon_index].fields = self.fields
         else:
             # shelljob case - Will never be the case in the app.
             self.fields = [

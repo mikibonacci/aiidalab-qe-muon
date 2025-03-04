@@ -13,13 +13,14 @@ from aiida_quantumespresso.calculations.functions.create_kpoints_from_distance i
 from aiidalab_qe.common.mixins import HasInputStructure
 from aiidalab_qe.common.panel import ConfigurationSettingsModel
 from ase.build import make_supercell
-from aiida_muon.workflows.find_muon import gensup, niche_add_impurities
+
+from aiida_muon.utils.sites_supercells import niche_add_impurities, gensup, compute_suggest_supercell_size, generate_supercell_with_impurities
 
 from undi.undi_analysis import check_enough_isotopes
 
 class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructure):
     
-    title = "Muon Settings"
+    title = "Muon settings"
     
     dependencies = [
         "input_structure",
@@ -41,6 +42,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")
+    
+    use_defaults = tl.Bool(True) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
     
     # TODO: implement these two in MVC
     specific_pseudofamily = tl.Unicode("")
@@ -66,6 +69,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     )
     
     polarization_allowed = tl.Bool(True)
+    undi_fields = tl.List(tl.Int(), default_value=[])
 
     def get_model_state(self):
         return {
@@ -84,7 +88,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     def _set_default(self, trait):
         self.set_trait(trait, self._get_default(trait))
         
-    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner']):
+    def reset(self, exclude=['input_structure', 'supercell', 'warning_banner','undi_fields','blockers']):
         with self.hold_trait_notifications():
             for trait in self.traits():
                 if trait not in exclude:
@@ -107,8 +111,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if self.input_structure:
             with self.hold_trait_notifications():
                 self.supercell_hint_reset()
-                s = self.input_structure.get_ase()
-                suggested_3D = 9 // np.array(s.cell.cellpar()[:3]) + 1
+                suggested_3D = compute_suggest_supercell_size(self.input_structure.get_ase())
 
                 self.suggested_supercell_x = 1
                 self.suggested_supercell_y = 1
@@ -158,23 +161,13 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if self.input_structure is None:
             return
         else:
-            mu_lst = niche_add_impurities(
-                self.input_structure,
-                orm.Str("H"),
-                orm.Float(self.mu_spacing),
-                orm.Float(1.0),
-                metadata={"store_provenance": False},
+            self.mu_lst = niche_add_impurities(
+                self.input_structure.get_pymatgen_structure(),
+                niche_atom = "H",
+                niche_spacing = orm.Float(self.mu_spacing),
+                niche_distance = 1, # distance from hosting atoms,
             )
-
-            sc_matrix = [
-                [self.supercell[0], 0, 0],
-                [0, self.supercell[1], 0],
-                [0, 0, self.supercell[2]],
-            ]
-            supercell_list = gensup(
-                self.input_structure.get_pymatgen(), mu_lst, sc_matrix
-            )  # ordinary function
-            self.number_of_supercells = str(len(supercell_list))
+            self.number_of_supercells = str(len(self.mu_lst))
             
     def compute_mesh_grid(self, _=None):
         if self.input_structure:
@@ -221,7 +214,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         # This is needed to check that we can run a undi calculation:
         # if no isotopes are found, the calculation will fail, so don't allow to run it.
         if self.input_structure:
-            info, isotopes, isotope_list = check_enough_isotopes(self.input_structure.get_ase())
+            info, isotope_list = check_enough_isotopes(self.input_structure.get_ase())
             if len(isotope_list) == 0:
                 self.polarization_allowed = False
             else:
@@ -258,3 +251,38 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
             
             self.compute_mesh_grid()
             #self.reset()
+    
+    def _generate_supercell_with_impurities(self):
+        if self.input_structure:
+
+            self.supercell_with_impurities = generate_supercell_with_impurities(
+                structure=self.input_structure.get_pymatgen_structure(), 
+                # sc_matrix = [
+                #     [self.supercell_x, 0, 0],
+                #     [0, self.supercell_y, 0],
+                #     [0, 0, self.supercell_z],
+                # ],
+                mu_spacing=self.mu_spacing, 
+                mu_list=self.mu_lst if hasattr(self, "mu_lst") else None,
+            )
+
+      
+    def _get_structure_view_container(self):
+        """Get the structure view container for the given structure.
+        
+        """
+        import ipywidgets as ipw
+        from aiidalab_widgets_base.viewers import StructureDataViewer
+
+        self._generate_supercell_with_impurities()
+            
+        structure_view_container = ipw.VBox(
+                children=[
+                    StructureDataViewer(orm.StructureData(pymatgen=self.supercell_with_impurities)),
+                ],
+                layout=ipw.Layout(
+                    flex="1",
+                ),
+            )
+        
+        return structure_view_container

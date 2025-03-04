@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 from aiida import orm
 
 from aiidalab_qe.common.widgets import LoadingWidget
+from aiidalab_qe.common.infobox import InAppGuide
+
 from aiidalab_qe_muon.app.results.sub_mvc.undimodel import PolarizationModel
 
 class UndiPlotWidget(ipw.VBox):
@@ -125,6 +127,7 @@ class UndiPlotWidget(ipw.VBox):
         
 
             self.children = [
+                InAppGuide(identifier="muon-undi-results"),
                 description,
                 ipw.HBox(
                     [
@@ -136,7 +139,6 @@ class UndiPlotWidget(ipw.VBox):
                 self.plot_box,
                 self.info_on_the_approximations, # I will render it in the MultipleUndiMVC
                 self.fig,
-                self.selected_indexes_widget,
             ]
             if self.convergence_undi_widget:
                 self.convergence_undi_widget.render()
@@ -150,7 +152,7 @@ class UndiPlotWidget(ipw.VBox):
                 <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
                 <ul>
                     <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, larger than the
-                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>9</sup>); </li>
+                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>6</sup>); </li>
                 </ul>
                 """
             )
@@ -194,11 +196,13 @@ class UndiPlotWidget(ipw.VBox):
         field_direction = self._model.field_direction
         if self._model.mode == "plot":
             quantity_to_iterate = self._model.selected_fields
+            self.fig.update_layout(title=f"Polarization data for the selected muon sites: {', '.join(self._model.selected_labels)}")
         else:
             quantity_to_iterate = self._model.max_hdims
         selected_indexes = self._model.selected_indexes
         selected_labels = self._model.selected_labels
         ylabel=None
+        
 
         if len(self._model.selected_indexes) != len(self._model.selected_labels):
             raise ValueError(self._model.selected_indexes, self._model.selected_labels)
@@ -252,38 +256,26 @@ class UndiPlotWidget(ipw.VBox):
                 self.fig.update_layout(yaxis=dict(title=ylabel))
                 
         if not self.rendered:
-            title = None
             self.fig.update_layout(
                 barmode="overlay",
                 yaxis=dict(title=ylabel),
                 xaxis=dict(title="time (μs)"),
-                title={
-                    "text": title,
-                    "x": 0.5,  # Center the title
-                    "xanchor": "center",
-                    "yanchor": "top",
-                },
-                margin=dict(
-                    t=5 if not title else 35, r=20
-                ),  # Reduce the top margin
+                margin=dict(l=5, r=5, t=45, b=10),
                 # width=500, # Width of the plot
                 # height=500, # Height of the plot
                 font=dict(  # Font size and color of the labels
-                    size=12,
-                    color="#333333",
+                    size=15,
+                    color="black",
                 ),
-                plot_bgcolor="gainsboro",  # Background color of the plot
-                # paper_bgcolor='white', # Background color of the paper
                 legend=dict(
-                    x=0.02,  # x position of the legend
-                    y=0.02,  # y position of the legend
-                    traceorder="normal",
-                    bgcolor="rgba(255, 255, 255, 0.5)",  # Background color with transparency
-                    # bordercolor='Black',
-                    # borderwidth=1
+                    x=0.85,  # x position of the legend
+                    y=0.98,  # y position of the legend
+                    font=dict(
+                            size=15,
+                            color="black",
+                        ),
                 ),
             )
-                
         self._on_add_KT_change()
         
     # view

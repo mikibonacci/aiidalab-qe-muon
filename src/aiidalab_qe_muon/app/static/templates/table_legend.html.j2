@@ -1,15 +1,7 @@
 {% if not download_mode %}
 <div>
     <p> 
-        {% if download_mode %}
-        The downloaded files are organized in the following way:
-        <ul>
-            <li>Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV;</li>
-            <li>Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is cif.</li>
-            <li>Allsites.cif: the unit cell of the system with all the muon sites together.</li>
-        </ul><br>
-        {% endif %}
-        The table collect the results of the muon resting sites search. The different columns shows:<br>
+        The summary tables collect the results of the muon resting sites search. The different columns shows:<br>
         <ul>
             <li>{{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.</li>
             <li>{{ data["label"] if not download_mode else "label" }}: a label for the given supercell.</li>
@@ -38,9 +30,13 @@
 </div>
 {% else %}
 The downloaded files are organized in the following way:
-- Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV.
-- Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is CIF.
-- Allsites.cif: the unit cell of the system with all the muon sites together. 
+- Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV;
+- Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is cif.
+- Allsites.cif: the unit cell of the system with all the muon sites together.
+- Distortion_supercell_#.csv: summary of the muon-induced distortion of the atoms with respect to their original distance from the muon. Format is CSV.
+- Summary_table_before_clustering.csv: the table with the results of the muon resting sites search before clustering. Format is CSV.
+- Allsites_before_clustering_unitcell.cif: the undistorted unit cell of the system with all the muon sites together before clustering.
+- Allsites_before_clustering_supercell.cif: the undistorted supercell of the system with all the muon sites together before clustering.
 
 The table collects the results of the muon resting sites search. The different columns show:
 - {{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.
@@ -53,5 +49,11 @@ The table collects the results of the muon resting sites search. The different c
 - {{ data["B_hf"] if not download_mode else "B_hf" }}: the norm of the total magnetic field.
 - {{ data["B_T_norm"] if not download_mode else "B_T_norm" }}: the norm of the dipolar magnetic field.
 - {{ data["Bdip_norm"] if not download_mode else "Bdip_norm" }}: the norm of the hyperfine magnetic field.
-{% endif %}- {{ data["muon_index_global_unitcell"] if not download_mode else "muon_index_global_unitcell" }}: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode".
+{% endif %}
+- {{ data["muon_index_global_unitcell"] if not download_mode else "muon_index_global_unitcell" }}: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode".
+
+In the "Summary_table_before_clustering.csv" table there will be also the information about the clustering: the last column, called "cluster group", will provide the label
+of the group to which the muon site belongs. The label of the group corresponds to the label of the representative site of the group.
+
+The clustering algorithm used consists on grouping the muon sites that are closer than a given threshold both in distance (10^-3 Angstrom) and in energy (0.05 eV).
 {% endif %}
