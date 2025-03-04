@@ -25,7 +25,7 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
     identifier = "munonic"
     workchain_labels = ["muon"]
     
-    def render(self):
+    def _render(self):
         if self.rendered:
             return
 
