@@ -302,7 +302,7 @@ class ImplantMuonWorkChain(WorkChain):
             metadata = metadata,
             )
         inputs = {
-            "wg": workgraph.to_dict(),
+            "workgraph_data": workgraph.to_dict(),
             "metadata": {"call_link_label": "MultiSiteUndiPolarizationAndKT"},
             
         }

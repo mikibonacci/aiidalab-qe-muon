@@ -1,5 +1,5 @@
 import typing as t
-from aiida_workgraph import task, WorkGraph
+from aiida_workgraph import task, WorkGraph, TaskPool
 #from aiidalab_qe_muon.undi_interface.calculations.pythonjobs import undi_run, compute_KT
 
 from aiida_workgraph import task
@@ -46,7 +46,7 @@ def multiple_undi_analysis(
     for B_mod in B_mods:
         for max_hdim in max_hdims:
             tmp = wg.add_task(
-                "PythonJob",
+                TaskPool.workgraph.pythonjob,
                 function=undi_run,
                 structure=structure,
                 B_mod=B_mod,
@@ -112,7 +112,7 @@ def UndiAndKuboToyabe(
         }
 
     KT_task = wg.add_task(
-        "PythonJob",
+        TaskPool.workgraph.pythonjob,
         function=compute_KT,
         structure=structure,
         name="KuboToyabe_run",
