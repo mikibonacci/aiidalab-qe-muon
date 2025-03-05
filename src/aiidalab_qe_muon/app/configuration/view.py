@@ -346,7 +346,7 @@ class MuonConfigurationSettingPanel(
         ipw.dlink(
             (self.use_defaults, "value"),
             (self.mesh_grid, "value"),
-            lambda x: "" if x else self._model.mesh_grid,
+            lambda x: "" if not x else self._model.mesh_grid,
         )
         
         self.kpoints_box = ipw.VBox(

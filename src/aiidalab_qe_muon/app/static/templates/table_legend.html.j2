@@ -33,27 +33,44 @@ The downloaded files are organized in the following way:
 - Summary_table.csv: the table with the results of the muon resting sites search. Format is CSV;
 - Supercell_#.cif: supercells hosting the muon site (each label # corresponding to the one in the table). Format is cif.
 - Allsites.cif: the unit cell of the system with all the muon sites together.
-- Distortion_supercell_#.csv: summary of the muon-induced distortion of the atoms with respect to their original distance from the muon. Format is CSV.
+- Distortion_supercell_#.csv: summary of the muon-induced distortion of the atoms with respect to their initial and final distance from the muon. Format is CSV.
 - Summary_table_before_clustering.csv: the table with the results of the muon resting sites search before clustering. Format is CSV.
 - Allsites_before_clustering_unitcell.cif: the undistorted unit cell of the system with all the muon sites together before clustering.
 - Allsites_before_clustering_supercell.cif: the undistorted supercell of the system with all the muon sites together before clustering.
 
+
+## About the summary tables:
+
 The table collects the results of the muon resting sites search. The different columns show:
-- {{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.
-- {{ data["label"] if not download_mode else "label" }}: a label for the given supercell.
-- {{ data["delta_E"] if not download_mode else "delta_E" }}: the total energy difference with respect to the lowest energy.
-- {{ data["tot_energy"] if not download_mode else "tot_energy" }}: the total energy of the calculation.
-- {{ data["muon_position_cc"] if not download_mode else "muon_position_cc" }}: the position of the muon in the supercell (crystal coordinates).
-{% if B_fields %}- {{ data["B_T"] if not download_mode else "B_T" }}: the total magnetic field at the muon site.
-- {{ data["Bdip"] if not download_mode else "Bdip" }}: the dipolar magnetic field at the muon site.
-- {{ data["B_hf"] if not download_mode else "B_hf" }}: the norm of the total magnetic field.
-- {{ data["B_T_norm"] if not download_mode else "B_T_norm" }}: the norm of the dipolar magnetic field.
-- {{ data["Bdip_norm"] if not download_mode else "Bdip_norm" }}: the norm of the hyperfine magnetic field.
+- "structure_id_pk": the AiiDA id (or pk) of the structure in the database.
+- "label": a label for the given supercell.
+- "delta_E": the total energy difference with respect to the lowest energy.
+- "tot_energy": the total energy of the calculation.
+- "muon_position_cc": the position of the muon in the supercell (crystal coordinates).
+{% if B_fields %}
+- "B_T": the total magnetic field at the muon site.
+- "Bdip": the dipolar magnetic field at the muon site.
+- "B_hf": the norm of the total magnetic field.
+- "B_T_norm": the norm of the dipolar magnetic field.
+- "Bdip_norm": the norm of the hyperfine magnetic field.
 {% endif %}
-- {{ data["muon_index_global_unitcell"] if not download_mode else "muon_index_global_unitcell" }}: the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode".
+- "muon_index_global_unitcell": the index of the muon site, with respect to all the atoms in the cell, in the "Compare muon sites mode".
 
 In the "Summary_table_before_clustering.csv" table there will be also the information about the clustering: the last column, called "cluster group", will provide the label
 of the group to which the muon site belongs. The label of the group corresponds to the label of the representative site of the group.
 
+
+## About the clustering:
+
 The clustering algorithm used consists on grouping the muon sites that are closer than a given threshold both in distance (10^-3 Angstrom) and in energy (0.05 eV).
+
+## About the distortion_supercell_#.csv files:
+
+The position of the muon considered is only the final relaxed one. We consider no physical meaning for the initial muon position: it just belongs to a grid of point used as initial guess. 
+The columns of the file are:
+- "atm_distance_init": the distance of the muon from the atoms of the unrelaxed supercell.
+- "atm_distance_final": the distance of the muon from the atoms of the relaxed supercell.
+- "distortion": true vectorial distortion magnitude, i.e. the magnitude of the vector computed as the difference between the final and initial distance vectors.
+- "delta_distances": radial displacement change, i.e. the difference between the magnitudes of the final and initial distances from the muon site.
+- "element": the element of the atom.
 {% endif %}

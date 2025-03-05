@@ -48,5 +48,5 @@ On the Y axis:
 </ul>
 
 Please note that |r<sub>&mu;, f</sub> - r<sub>&mu;, i</sub>| is always positive: to check if the atom is 
-attracted or repelled by the muon, check the sign of |r<sub>&mu;, f</sub>| - |r<sub>&mu;, i</sub>|.
+attracted or repelled by the muon, check the sign of the corresponding |r<sub>&mu;, f</sub>| - |r<sub>&mu;, i</sub>|.
 """

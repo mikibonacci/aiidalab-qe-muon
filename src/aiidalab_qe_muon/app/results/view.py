@@ -26,8 +26,8 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
     workchain_labels = ["muon"]
     
     def _render(self):
-        if self.rendered:
-            return
+        # if self.rendered:
+        #     return
 
         muon_node = self._model._get_child_outputs()
 
