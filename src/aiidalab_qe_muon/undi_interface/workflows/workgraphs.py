@@ -65,6 +65,7 @@ def multiple_undi_analysis(
                     "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
                 },
                 code = code,
+                register_pickle_by_value=True,
             )
             tmp.set_context({f"tmp_out.iter_{t}": "result"})
             t+=1
@@ -125,6 +126,7 @@ def UndiAndKuboToyabe(
         serializers={
             "ase.atoms.Atoms": "aiida_pythonjob.data.serializer.atoms_to_structure_data"
         },
+        register_pickle_by_value=True,
     )
     KT_task.set_context({f"res.KT_task": "result"})
     
