@@ -1,23 +1,22 @@
 <div id="guide-header">
   You've activated the muon in-app guide. In this guide, you will learn how to
-  use the app to find the muon resting sites of Lithium Fluoride (LiF). <br>
+  use the app to find the muon resting sites and the muon spin relaxation function of Lithium Fluoride (LiF). <br>
+  <div class="alert alert-warning">
+    <b>Pre-requisite:</b> This guide assumes that you already followed the general &rarr; basic guide, or that you are already familiar with the app.
+  </div>
   Click on <b>Step 1: Select structure</b> and follow the instructions to proceed.
 </div>
 
 <div id="structure-step">
   In the structure selection step, we select the LiF structure by querying it 
   from the OPTIMADE database. <br>
-  Once selected, we can view the structure in the viewer below. We can also edit
-  the structure using the available structure editors. When done, we can choose
-  to modify the structure label and/or provide a description. These will be
-  attached to the input structure node in your AiiDA database.
   <div class="alert alert-success">
     <h4>Tasks</h4>
   <ul>
     <li><b>Open</b> the OPTIMADE structure selector: click on the OPTIMADE tab and then click on load the "Load OPTIMADE widget" button</li>
     <li><b>Select</b> the provider: look for "Materials Cloud" in the first dropdown, and then select the "MC3D" database in the second one</li>
     <li><b>Query</b> for LiF: select Li and F elements in the interactive periodic table, and click the "Search" blue button</li>
-    <li><b>Select</b> the LiF structure: click on the first result ("FLi (id=22852)")</li>
+    <li><b>Select</b> the LiF structure: click on the first result ("FLi (id=22852)"), or, if already selected, continue to the next step</li>
     <li>Click the <b>Confirm</b> button to proceed</li>
   </ul>
     <div class="alert alert-warning">
@@ -32,13 +31,29 @@
 </div>
 
 <div id="configuration-step">
-  In the configuration step, we define the parameters needed to perform our search for muon stopping sites.
+  In the configuration step, we define the parameters needed to perform our simulation.
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Select <b>Structure as is</b>, i.e. no relaxation (it will be done with the muon inside)</li>
-      <li>Open <b>step 2.1</b> for further instructions</li>
+      <li>Select <b>Structure as is</b>, i.e. no relaxation (it will be already performed during the search for muon sites)</li>
+      <li>Open <b>Step 2.1</b> for further instructions</li>
     </ol>
+  </div>
+</div>
+
+<div id="basic-settings">
+  Here we define the basic settings of the simulations.
+  <div class="alert alert-success">
+    <h4>Tasks</h4>
+      <ol>
+        <li>Select <b>Insulator</b> Electronic type</li>
+        <li>Select <b>Fast</b> protocol</li>
+        <li>See further instructions in the <b>Muon settings</b> panel</li>
+      </ol>
+  </div>
+  <div class="alert alert-warning">
+    <b>Note:</b> For the purpose of completing this guide in short time, we will use the <b>Fast</b> protocol for default parameters.
+    However, you if dispose of enough computational resources, you can also select Moderate or Precise.
   </div>
 </div>
 
@@ -49,7 +64,7 @@
     <h4>Tasks</h4>
     <ol>
       <li>Check <b>Muon Spectroscopy (MUON)</b></li>
-      <li>Open <b>step 2.2</b> for further instructions</li>
+      <li>Open <b>Step 2.2</b> for further instructions</li>
     </ol>
   </div>
 </div>
@@ -75,21 +90,21 @@
   In the Muon settings panel, we can customize the muon parameters. 
   We leave some of the parameters as default ones. We will use value of the parameters
   in such a way to quickly perform simulation, not to obtain accurate results. For example, 
-  we are not going to use a supercell, and we are using a coarser K-points grid with respect to the
+  we are not going to use a large enough supercell, and we are using a much coarser K-points grid with respect to the
   default one.
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ul>
     <li><h5>Muon <b>sites search</b> settings:</h5></li>
       <ul>
-        <li>Set the <b>K-points distance</b> to be 0.9 Å<sup>-1</sup>, so we have a Mesh grid [3, 3, 3]</li>
-        <li>Set the <b>Spacing for trial grid for initial muon sites</b> to 0.7 Å<sup>-1</sup></li>
-        <li>Click the <b>estimate number of muon trial sites</b> to verify that we have 3 candidate sites</li>
-        <li>Click the <b>Visualize candidate muon sites</b> to see them in the unit cell</li>
+        <li>Set the <b>Muon charge state</b> to be <b>Muonium (neutral)</b></li>
+        <li>Set the <b>K-points distance</b> to be 3 Å<sup>-1</sup>, so we have a k-points mesh grid of [1, 1, 1] (we compute only the &Gamma; point)</li>
+        <li>Click the <b>estimate number of muon trial sites</b> to verify that we have only 1 candidate site</li>
+        <li>Click the <b>Visualize candidate muon sites</b> to see it in the unit cell</li>
       </ul>
     <li><h5>Muon spin <b>polarization</b> settings:</h5></li>
       <ul>
-        <li>Change the <b>B<sub>step</sub></b> to be 4, so that the below field list will be [0, 4, 8]</li>
+        <li>Change the <b>B<sub>step</sub></b> to be 8, so that the below field list will be [0, 8]</li>
       </ul>
     <li>Click the <b>Confirm</b> button to proceed</li>
     </ul>
@@ -120,7 +135,9 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Select 1 node and 1 CPU for each of the codes below</li>
+      <li>Select 1 node and 1 CPU for the <b>pw.x</b>, <b>pp.x</b> and <b>pythonjob</b> codes below</li>
+      <li>If possible, select more than 1 <b>cpus-per-task</b> for the pythonjob code: click on the <b>More</b> button
+      to see more resources settings and find the corresponding one</li>
       <li><b>(Optional)</b> customize the workflow label</li>
       <li><b>(Optional)</b> add a workflow description</li>
       <li>Click the <b>Submit</b> button to proceed</li>
@@ -131,11 +148,11 @@
   </div>
 </div>
 
-<div id="results-panel">
-  Here in the results panel, each tab will open results pertaining to a specific
+<div id="results-step">
+  In the results panel, each tab will open results pertaining to a specific
   calculation submitted by the workflow.
   <div class="alert alert-success">
-    See further instructions below in the <b>Muon results</b> tab.
+    See further instructions below in the <b>Muon</b> results tab.
   </div>
 </div>
 
@@ -150,40 +167,30 @@
         <b>Load results</b> button to load the available results
       </li>
       <li>
-        Check the table and, for the lowest energy sites, check the distance between the &mu; and the 
-        nearest F atom, by selecting them in the structure viewer (it should be 1.15 Å).
+        Check the table and, for the lowest energy site (there will be only one site, label is A), compute the distance between the &mu; and the 
+        F atom, by selecting the atoms in the structure viewer below the table. The measured distance should be 2.15 Å, 
+        and can be found in the panel on the right with respect to the structure view..
       </li>
       <li>
         Verify that indeed closest F atoms are attracted by the muon center, whereas the Li atoms are repelled;
-        This can be easily seen in the Distortion panel, below the structure viewer.
-      </li>
-      <li>
-        Perform similar analysis for site D: select it from the table. You will notice that the structure will change,
-        being now the one hosting the muon site D.
-      </li>
-      <li>
-        Check the distance between the two lowest energy muons by ticking the "Compare muon sites mode" and 
-        selecting them from the table.
-      </li>
-      <li>
-        Untick the "Compare muon sites mode" to go back to the single site visualization mode.
+        This can be easily seen in the <b>Distortion</b> plot, below the structure viewer.
       </li>
     </ol>
   </div>
 </div>
 
 <div id="muon-undi-results">
-  Here below we can plot the polarization data for all the detected muon sites. 
+  Here below we can plot the polarization data for all the detected muon sites (in this case, one). 
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
       <li>
-        Check the relaxation function for site D (selecting it from the above table, if necessary), and verify that the signal at zero field (ZF) is different from the 
+        Check the relaxation function for site A, and verify that the signal at zero field (ZF) is indeed different from the 
         Kubo-Toyabe one. At which time does the relaxation function start to deviate from the Kubo-Toyabe one?
       </li>
       <li>
         Verify that the polarization function is converged for max<sub>hdim</sub> > 10<sup>2</sup>. This can be seen in the 
-        "Convergence analysis" panel.
+        <b>Convergence analysis</b> panel.
       </li>
     </ol>
   </div>
@@ -193,27 +200,18 @@
   <h4>Post-guide exercises</h4>
   <ol>
     <li>
-      Download the data on muon stopping sites:
+      Use the app to run the same workflow but, this time, increasing the number of external magnetic fields you are computing 
+      for the polarization function. 
+    </li>
+    <li>
+      Eventually try to use, as starting structure, the conventional cell of LiF, and see how the muon sites change.
+    </li>
+    <li>
+      Load the full calculation (sites+polarization in supercell) from the AiiDAlab examples and inspect it:
       <ul>
-        <li>
-          Click the "Download data" button just below the table in inspect the contained files; 
-          try to visualize the cif files with your favorite visualization software (e.g., <a
-              href="https://jp-minerals.org/vesta/en/"
-              target="_blank"
-            >
-              VESTA</a
-            >).
-          </li>
+        <li> Click on the "Download examples" button at the top of this page</li>
+        <li> Import "Example: LiF muons, stopping sites and polarization function" and open it from the "Calculation history" page</li>
       </ul>
-    </li>
-    <li>
-      Download the polarization data for the muon stopping site B and plot it with a software of your choice, 
-      to verify that indeed it is the same you see in this app.
-    </li>
-    <li>
-      Run the same calculation for muon search site but include also a second grid of field for the polarization, adding
-      two additional fields: 50 and 100 mT. You will have to play with the B step carefully (and check the B fields list).
-      You can also make a coarser grid for the 0 - 8 mT range (e.g. imposing a B step of 4 mT).
     </li>
   </ol>
 </div>

@@ -170,7 +170,7 @@ def MultiSites(
     structure_group,
     code=None, # if None, default python3@localhost will be used.
     B_mods: t.List[t.Union[float, int]] = [0, 2e-3, 4e-3, 6e-3, 8e-3], # Units are Tesla.
-    max_hdims: t.List[t.Union[float, int]] = [10**2, 10**4, 10**6, 10**9],
+    max_hdims: t.List[t.Union[float, int]] = [10**2, 10**4, 10**6, 10**8], # we use the [-2:-1] for the undi run (not the convergence check, let's say).
     metadata = {"options": {"custom_scheduler_commands": "export OMP_NUM_THREADS=1"}}, # just a default.
     ):
     

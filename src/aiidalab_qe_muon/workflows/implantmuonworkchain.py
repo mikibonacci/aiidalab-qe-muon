@@ -66,6 +66,14 @@ class ImplantMuonWorkChain(WorkChain):
             required=False,
             help="The list of magnetic fields to compute the polarization.",
         )
+        
+        spec.input(
+            "undi_max_hdims",
+            valid_type= orm.List,
+            required=False,
+            help="The list of max_dims to compute the polarization convergence.",
+        )
+        
         spec.expose_inputs(
             FindMuonWorkChain,
             namespace="findmuon",
@@ -150,6 +158,7 @@ class ImplantMuonWorkChain(WorkChain):
         undi_code=None,
         undi_metadata=None,
         undi_fields=None,
+        undi_max_hdims=None,
         protocol=None,
         enforce_defaults: bool = True,
         compute_findmuon: bool = True,
@@ -228,6 +237,9 @@ class ImplantMuonWorkChain(WorkChain):
                 
         if undi_fields and compute_polarization_undi:
             builder.undi_fields = orm.List(undi_fields)
+        
+        if undi_max_hdims and compute_polarization_undi:
+            builder.undi_max_hdims = orm.List(undi_max_hdims)
 
         return builder
 
@@ -298,7 +310,8 @@ class ImplantMuonWorkChain(WorkChain):
         workgraph = MultiSites(
             structure_group=self.ctx.structure_group,
             code = getattr(self.inputs, "undi_code", None),
-            B_mods = self.inputs.get("undi_fields", None),
+            max_hdims = self.inputs.get("undi_max_hdims", [10**2, 10**4, 10**6, 10**8]),
+            B_mods = self.inputs.get("undi_fields", [0, 2e-3, 4e-3, 6e-3, 8e-3]),
             metadata = metadata,
             )
         inputs = {

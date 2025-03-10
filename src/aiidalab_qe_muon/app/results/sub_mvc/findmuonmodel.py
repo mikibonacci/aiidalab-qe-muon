@@ -279,6 +279,8 @@ class FindMuonModel(Model):
     ):
         distortions_figure.add_hline(y=0, line_dash="dash")
         symbols = []
+        min_yticks = 0.15
+        min_xticks = 0.5
         for i, (element,data) in enumerate(distortion_data.items()):
             if not just_update:
                 distortions_figure.add_trace(
@@ -298,7 +300,8 @@ class FindMuonModel(Model):
                 distortions_figure.data[i].x = data[x_quantity]
                 distortions_figure.data[i].y = data[y_quantity]
                 
-                
+                #min_yticks = min(min_yticks, np.min(data[y_quantity]/2))
+                min_xticks = min(min_xticks, np.min(data[x_quantity]/2))
             
         if y_quantity == "distortion":
             ylabel = "|r<sub>&mu;, f</sub> - r<sub>&mu;, i</sub>| (Å)"
@@ -323,12 +326,14 @@ class FindMuonModel(Model):
             xaxis=dict(
                     title=xlabel,
                     tickmode="linear",
-                    dtick=0.5,
+                    dtick=min_xticks,
                     color="black",
                 ),
+            
+            
             yaxis=dict(
                     title=ylabel,
-                    dtick=0.25,
+                    dtick=min_yticks, #0.25,
                     side="left",
                     showticklabels=True,
                     showgrid=True,

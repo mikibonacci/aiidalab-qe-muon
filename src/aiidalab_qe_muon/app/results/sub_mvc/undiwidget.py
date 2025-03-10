@@ -145,14 +145,15 @@ class UndiPlotWidget(ipw.VBox):
             
         else:
             
+            used_hdim = int(np.log10(self._model.max_hdims[-2]))
             description = ipw.HTML(
-                """
+                f"""
                 This section allows you to examine the convergence with respect to the maximum Hilbert space dimension (max<sub>hdim</sub>),
                 which is used to construct the Hamiltonian for muon-nuclei interactions. For more details, please refer to the 
                 <a href="https://undi.readthedocs.io/en/latest/examples/auto.html#approximations" target="_blank">documentation</a>. <br>
                 <ul>
-                    <li> A reference polarization P<sub>r</sub>(t) is computed using max<sub>hdim</sub>=10<sup>9</sup>, larger than the
-                    value used in the above 'Polarization data' plot (max<sub>hdim</sub>=10<sup>6</sup>); </li>
+                    <li> A reference polarization P<sub>r</sub>(t) is computed using a max<sub>hdim</sub> larger than the
+                    value used in the 'Polarization data' plot (max<sub>hdim</sub>=10<sup>{used_hdim}</sup>); </li>
                 </ul>
                 """
             )
@@ -199,6 +200,7 @@ class UndiPlotWidget(ipw.VBox):
             self.fig.update_layout(title=f"Polarization data for the selected muon sites: {', '.join(self._model.selected_labels)}")
         else:
             quantity_to_iterate = self._model.max_hdims
+            highest_index = self._model.max_hdims.index(max(self._model.max_hdims))
         selected_indexes = self._model.selected_indexes
         selected_labels = self._model.selected_labels
         ylabel=None
@@ -228,18 +230,20 @@ class UndiPlotWidget(ipw.VBox):
                     to_be_plotted = self._model.plotting_quantity
                     Bmod = self._model.muons[str(muon_index)].results[index][0]["B_ext"] * 1000  # mT
                     label = f"max<sub>hdim</sub> = 10<sup>{int(np.log10(self._model.max_hdims[index]))}</sup>"
-
-                    highest_res = self._model.muons[str(muon_index)].results[-1]
-
+                    
+                    ydata_highest = np.array(
+                        self._model.muons[str(muon_index)].data["y"][field_direction][highest_index][f"signal_{direction}"]
+                    )
+                    
                     ydata = np.array(
                         self._model.muons[str(muon_index)].data["y"][field_direction][index][f"signal_{direction}"]
                     )
                     ylabel = "P(t)"
                     if "delta" in to_be_plotted:
-                        ydata = np.array(highest_res[0][f"signal_{direction}_lf"]) - ydata
+                        ydata = ydata_highest - ydata
                         ylabel = "ΔP(t)"
                     if "rel" in to_be_plotted:
-                        ydata /= 100 * np.array(highest_res[0][f"signal_{direction}_lf"])
+                        ydata /= 100 * ydata_highest
                         ylabel = "Δ<sub>%</sub>P(t)"
                     title = None  # "$$\Delta P(t) = P_{max\_hdim=10^9}(t) - P(t)$$"
 
