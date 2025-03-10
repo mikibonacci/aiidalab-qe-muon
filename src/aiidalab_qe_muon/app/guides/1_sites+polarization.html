@@ -1,6 +1,7 @@
 <div id="guide-header">
-  You've activated the muon in-app guide. In this guide, you will learn how to
-  use the app to find the muon resting sites and the muon spin relaxation function of Lithium Fluoride (LiF). <br>
+  You've activated the muon in-app guide. <br>
+  In this guide, you will learn how to
+  use the app to find the <b>muon resting sites</b> and the <b>muon spin relaxation function</b> of Lithium Fluoride (LiF). <br>
   <div class="alert alert-warning">
     <b>Pre-requisite:</b> This guide assumes that you already followed the general &rarr; basic guide, or that you are already familiar with the app.
   </div>
@@ -35,7 +36,7 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Select <b>Structure as is</b>, i.e. no relaxation (it will be already performed during the search for muon sites)</li>
+      <li>Select <b>Structure as is</b>, i.e. no relaxation (it is performed during the search for muon sites)</li>
       <li>Open <b>Step 2.1</b> for further instructions</li>
     </ol>
   </div>
@@ -63,7 +64,7 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Check <b>Muon Spectroscopy (MUON)</b></li>
+      <li>Select the <b>Muon Spectroscopy (MUON)</b> checkbox</li>
       <li>Open <b>Step 2.2</b> for further instructions</li>
     </ol>
   </div>
@@ -81,14 +82,11 @@
     </li>
   </ul>
   Note that the app pre-configures defaults for most parameters.
-  <div class="alert alert-success">
-    See further instructions in the <b>Muon settings</b> panel below.
-  </div>
 </div>
 
 <div id="muon-settings">
   In the Muon settings panel, we can customize the muon parameters. 
-  We leave some of the parameters as default ones. We will use value of the parameters
+  We will use value of the parameters
   in such a way to quickly perform simulation, not to obtain accurate results. For example, 
   we are not going to use a large enough supercell, and we are using a much coarser K-points grid with respect to the
   default one.
@@ -136,7 +134,7 @@
     <h4>Tasks</h4>
     <ol>
       <li>Select 1 node and 1 CPU for the <b>pw.x</b>, <b>pp.x</b> and <b>pythonjob</b> codes below</li>
-      <li>If possible, select more than 1 <b>cpus-per-task</b> for the pythonjob code: click on the <b>More</b> button
+      <li>If possible, select more than 1 <b>cpus-per-task</b> for the <b>pythonjob</b> code: click on the <b>More</b> button
       to see more resources settings and find the corresponding one</li>
       <li><b>(Optional)</b> customize the workflow label</li>
       <li><b>(Optional)</b> add a workflow description</li>
@@ -168,11 +166,11 @@
       </li>
       <li>
         Check the table and, for the lowest energy site (there will be only one site, label is A), compute the distance between the &mu; and the 
-        F atom, by selecting the atoms in the structure viewer below the table. The measured distance should be 2.15 Å, 
-        and can be found in the panel on the right with respect to the structure view..
+        F atom, by selecting the atoms in the structure viewer below the table. The measured distance should be 2.21 Å, 
+        and can be found in the panel on the right with respect to the structure view.
       </li>
       <li>
-        Verify that indeed closest F atoms are attracted by the muon center, whereas the Li atoms are repelled;
+        Verify that indeed closest F atoms are repelled by the muon center (at variance with the case where the muon is charged);
         This can be easily seen in the <b>Distortion</b> plot, below the structure viewer.
       </li>
     </ol>
@@ -209,8 +207,9 @@
     <li>
       Load the full calculation (sites+polarization in supercell) from the AiiDAlab examples and inspect it:
       <ul>
-        <li> Click on the "Download examples" button at the top of this page</li>
-        <li> Import "Example: LiF muons, stopping sites and polarization function" and open it from the "Calculation history" page</li>
+        <li>Click on the <b>Download examples</b> button at the top of this page</li>
+        <li>Import the example labeled <b>Example: LiF muons, stopping sites and polarization function</b></li>      
+        <li>Find it in the <b></b>Calculation history</b> page and open it</li>
       </ul>
     </li>
   </ol>

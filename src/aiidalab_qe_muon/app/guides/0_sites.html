@@ -1,6 +1,7 @@
 <div id="guide-header">
-  You've activated the muon in-app guide. In this guide, you will learn how to
-  use the app to find the muon stopping sites of Lithium Fluoride (LiF). <br>
+  You've activated the muon in-app guide. <br>
+  In this guide, you will learn how to
+  use the app to find the <b>muon resting sites</b> of Lithium Fluoride (LiF). <br>
   <div class="alert alert-warning">
     <b>Pre-requisite:</b> This guide assumes that you already followed the general &rarr; basic guide, or that you are already familiar with the app.
   </div>
@@ -15,7 +16,7 @@
   <ul>
     <li><b>Open</b> the OPTIMADE structure selector: click on the OPTIMADE tab and then click on load the "Load OPTIMADE widget" button</li>
     <li><b>Select</b> the provider: look for "Materials Cloud" in the first dropdown, and then select the "MC3D" database in the second one</li>
-    <li><b>Query</b> for LiF: select Li and F elements in the interactive periodic table, and click the "Search" blue button</li>
+    <li><b>Query</b> for LiF: select Li and F elements in the interactive periodic table, and click the "Search" blue button (at the bottom)</li>
     <li><b>Select</b> the LiF structure: click on the first result ("FLi (id=22852)"), or, if already selected, continue to the next step</li>
     <li>In the <b>Edit structure</b> &rarr; <b>Edit cell</b> tab, select <b>Convert to conventional cell</b></li>
     <li>Click the <b>Confirm</b> button to proceed</li>
@@ -36,7 +37,7 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Select <b>Structure as is</b>, i.e. no relaxation (it will be already performed during the search for muon sites)</li>
+      <li>Select <b>Structure as is</b>, i.e. no relaxation (it is performed during the search for muon sites)</li>
       <li>Open <b>Step 2.1</b> for further instructions</li>
     </ol>
   </div>
@@ -64,7 +65,7 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Check <b>Muon Spectroscopy (MUON)</b></li>
+      <li>Select the <b>Muon Spectroscopy (MUON)</b> checkbox</li>
       <li>Open <b>Step 2.2</b> for further instructions</li>
     </ol>
   </div>
@@ -82,14 +83,11 @@
     </li>
   </ul>
   Note that the app pre-configures defaults for most parameters.
-  <div class="alert alert-success">
-    See further instructions in the <b>Muon settings</b> panel below.
-  </div>
 </div>
 
 <div id="muon-settings">
   In the Muon settings panel, we can customize the muon parameters. 
-  We leave some of the parameters as default ones. We will use value of the parameters
+  We will use value of the parameters
   in such a way to quickly perform simulation, not to obtain accurate results. For example, 
   we are not going to use a large enough supercell, and we are using a much coarser K-points grid with respect to the
   default one.
@@ -98,10 +96,10 @@
     <ul>
     <li><h5>Muon <b>sites search</b> settings:</h5></li>
       <ul>
-        <li>Untick the <b>Compute polarization</b> checkbox (this will be object of another guide)</li>
+        <li>De-select the <b>Compute polarization</b> checkbox</li>
         <li>Set the <b>K-points distance</b> to be 2 Å<sup>-1</sup>, so we have a k-points mesh grid of [1, 1, 1] (we compute only the &Gamma; point)</li>
-        <li>Click the <b>estimate number of muon trial sites</b> to verify that we have 3 candidate sites</li>
-        <li>Click the <b>Visualize candidate muon sites</b> to see them in the unit cell</li>
+        <li>Click the <b>estimate number of muon trial sites</b> button to verify that we have 3 candidate sites</li>
+        <li>Click the <b>Visualize candidate muon sites</b> button to see them in the unit cell</li>
       </ul>
     <li>Click the <b>Confirm</b> button to proceed</li>
     </ul>
@@ -162,12 +160,12 @@
         <b>Load results</b> button to load the available results
       </li>
       <li>
-        Check the table and, for the lowest energy site (label is A), compute the distance between the &mu; and the 
-        nearest F atom, by selecting the atoms in the structure viewer below the table. The measured distance should be 1.15 Å, 
-        and can be found in the panel on the right with respect to the structure view.
+        Check the <b>table</b> and, for the lowest energy site (label is A), compute the distance between the &mu; and the 
+        nearest F atom, by <b>selecting the atoms</b> (the &mu; being the white one) in the structure viewer below the table. The measured distance should be 1.15 Å, 
+        and it is displayed in the panel on the right with respect to the structure view.
       </li>
       <li>
-        Verify that indeed closest F atoms are attracted by the muon center, whereas the Li atoms are repelled;
+        Verify that indeed the closest F atoms are attracted by the muon center, whereas the Li atoms are repelled;
         This can be easily seen in the <b>Distortion</b> plot, below the structure viewer.
       </li>
       <li>
@@ -192,8 +190,8 @@
       Download the data on muon stopping sites:
       <ul>
         <li>
-          Click on the <b>Download data</b> button just below the table in inspect the contained files; 
-          inspect the cif files with your favorite visualization software (e.g., <a
+          Click on the <b>Download data</b> button just below the table and inspect the contained files; 
+          you can open the cif files with your favorite visualization software (e.g., <a
               href="https://jp-minerals.org/vesta/en/"
               target="_blank"
             >
@@ -203,13 +201,10 @@
       </ul>
     </li>
     <li>
-      Download the polarization data for the muon stopping site B and plot it with a software of your choice, 
-      to verify that indeed it is the same you see in this app.
-    </li>
-    <li>
       Use the app to run the muon stopping site search for the same system (LiF), this time for the neutral muon (or muonium). 
-      This means that, in the settings, you need to select the <b>Muon charge state</b> to be <b>Muonium (neutral)</b>. 
+      This means that, in the settings, you need to select the <b>Muon charge state</b> to be <b>Muonium (neutral)</b> 
       <ul>
+        <li>Use the same parameters settings of this example</li>
         <li>Do you see differences in the results, especially in the &mu; - F distances? Why?</li>
       </ul>
     </li>
