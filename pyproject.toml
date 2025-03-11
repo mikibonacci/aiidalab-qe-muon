@@ -48,7 +48,7 @@ tests = [
 ignore = ["E501", "E402", "TRY003", "RUF012", "N806"]
 
 [project.urls]
-Source = "https://github.com/mikibonacci/aiidalab-qe-vibroscopy"
+Source = "https://github.com/mikibonacci/aiidalab-qe-muon"
 
 [project.entry-points.'aiidalab_qe.properties']
 "muonic" = "aiidalab_qe_muon.app:property"
@@ -57,4 +57,4 @@ Source = "https://github.com/mikibonacci/aiidalab-qe-vibroscopy"
 "muon_app.implant_muon" = "aiidalab_qe_muon.workflows.implantmuonworkchain:ImplantMuonWorkChain"
 
 [project.scripts]
-"install_muon_codes" = "aiidalab_qe_muon.scripts.post_install:InstallCodes"
+"aiidalab-qe-muon" = "aiidalab_qe_muon.__main__:cli"
