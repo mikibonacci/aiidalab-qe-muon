@@ -18,7 +18,7 @@ def cli():
 
 
 @cli.command(help="Setup python3@localhost in the current AiiDA database.")
-def setup_python():
+def setup_python3():
     load_profile()
     try:
         load_code("python3@localhost")
