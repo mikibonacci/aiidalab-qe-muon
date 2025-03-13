@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "aiidalab-qe-muon"
 description="AiiDAlab QE plugin for muon spectoscopies."
-version = "1.0.0"
+version = "1.0.1"
 authors = [
     {name = "Miki Bonacci", email = "miki.bonacci@psi.ch"},
 ]
