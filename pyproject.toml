@@ -19,8 +19,8 @@ requires-python = ">=3.8"
 dependencies = [
     "aiida-muon @ git+https://github.com/mikibonacci/aiida-muon.git@new-release/cleanup",
     "pymatgen>=2023.9.25",
-    "aiida-workgraph>=0.5.0a2",
-    "aiida-pythonjob @ git+https://github.com/aiidateam/aiida-pythonjob.git",
+    "aiida-workgraph==0.5.0a2",
+    "aiida-pythonjob @ git+https://github.com/aiidateam/aiida-pythonjob.git@v0.1.8",
     "undi @ git+https://github.com/mikibonacci/undi.git@update",
     "pybind11"
 ]
