@@ -4,7 +4,7 @@ from aiida_workgraph import task, WorkGraph, TaskPool
 
 from aiida_workgraph import task
 
-@task.graph_builder(outputs=[{"name": "results", "from": "context.tmp_out"}])
+@task.graph_builder(outputs=[{"name": "results", "from": "ctx.tmp_out"}])
 def multiple_undi_analysis(
     structure,
     B_mods: t.List[t.Union[float, int]] = [0.0], # Units are Tesla.
@@ -67,7 +67,7 @@ def multiple_undi_analysis(
                 code = code,
                 register_pickle_by_value=True,
             )
-            tmp.set_context({f"tmp_out.iter_{t}": "result"})
+            wg.update_ctx({f"tmp_out.iter_{t}": tmp.outputs.result})
             t+=1
 
     return wg
@@ -75,7 +75,7 @@ def multiple_undi_analysis(
 
 @task.graph_builder(
     outputs=[
-        {"name": "results", "from": "context.res"},
+        {"name": "results", "from": "ctx.res"},
         ]
 )
 def UndiAndKuboToyabe(
@@ -128,7 +128,7 @@ def UndiAndKuboToyabe(
         },
         register_pickle_by_value=True,
     )
-    KT_task.set_context({f"res.KT_task": "result"})
+    wg.update_ctx({f"res.KT_task": KT_task.outputs.result})
     
     # Convergence check
     # in the future, we can add a logic to first converge, and then run UNDI for the B_mods list
@@ -146,7 +146,7 @@ def UndiAndKuboToyabe(
             code = code,
             metadata=metadata,
         )
-        undi_conv_task.set_context({f"res.undi_conv_task": "results"})
+        wg.update_ctx({f"res.undi_conv_task": undi_conv_task.outputs.results})
 
     undi_task = wg.add_task(
         multiple_undi_analysis,
@@ -161,11 +161,11 @@ def UndiAndKuboToyabe(
         code = code,
         metadata=metadata,
     )
-    undi_task.set_context({f"res.undi_task": "results"})
+    wg.update_ctx({f"res.undi_task": undi_task.outputs.results})
 
     return wg
 
-@task.graph_builder(outputs=[{"name": "results", "from": "context.res"}])
+@task.graph_builder(outputs=[{"name": "results", "from": "ctx.res"}])
 def MultiSites(
     structure_group,
     code=None, # if None, default python3@localhost will be used.
@@ -188,6 +188,6 @@ def MultiSites(
             code=code,
             metadata=metadata,
         )
-        res.set_context({f"res.site_{idx}": "results"})
+        wg.update_ctx({f"res.site_{idx}": res.outputs.results})
     
     return wg

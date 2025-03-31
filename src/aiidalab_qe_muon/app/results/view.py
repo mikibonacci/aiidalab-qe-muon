@@ -48,6 +48,7 @@ class MuonResultsPanel(ResultsPanel[MuonResultsModel]):
             undi_widget = UndiWidget(
                 model=undi_model,
                 node=muon_node,
+                single_muon = not needs_findmuon_rendering,
             )
             
             conv_undi_model = UndiModel(mode="analysis")

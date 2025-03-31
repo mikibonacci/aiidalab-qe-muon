@@ -338,7 +338,8 @@ class ImplantMuonWorkChain(WorkChain):
             else:
                 self.out(
                         "polarization",
-                        polarization.outputs.execution_count,
+                        #polarization.outputs.execution_count,
+                        polarization.called[0].outputs.results.KT_task,
                     )
                 self.report(f"Undi calculation was successful.")
                 

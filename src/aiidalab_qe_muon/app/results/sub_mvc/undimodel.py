@@ -57,10 +57,12 @@ class PolarizationModel(Model):
     
     full_muon_indexes = tl.List(
         trait=tl.Int(),
+        default_value=[0],
     )
     
     full_muon_labels = tl.List(
         trait=tl.Unicode(),
+        default_value=["A"],
     )
     
     details_on_the_approximations = (
@@ -87,9 +89,9 @@ class PolarizationModel(Model):
         "The polarization spectra are computed considering a weighted average of the isotopes combinations, with respect to their relative probability (abundance)."
     )
     
-    selected_labels = tl.List(tl.Unicode())
+    selected_labels = tl.List(trait=tl.Unicode(), default_value=["A"])
     
-    def __init__(self, node=None, undi_nodes=None, KT_node=None, mode="plot"):
+    def __init__(self, node=None, undi_nodes=None, KT_node=None, mode="plot", single_muon=False):
         
         self.mode = mode
         
@@ -103,7 +105,7 @@ class PolarizationModel(Model):
         if KT_node:
             self.load_KT(KT_node)
             
-        if mode == "analysis":
+        if mode == "analysis" or single_muon:
             self.selected_labels = ["A"]
             
             
@@ -166,7 +168,11 @@ class PolarizationModel(Model):
         i.e. in case we submitted pythonjobs via the aiida-workgraph plugin.
         """
         if not hasattr(self, "nodes"):
-            self.nodes = self.muon.polarization.base.links.get_incoming().get_node_by_label('execution_count').called
+            try:
+                self.nodes = self.muon.polarization.base.links.get_incoming().get_node_by_label('execution_count').called
+            except Exception as e:
+                self.nodes = self.muon.polarization.creator.caller.caller.called
+                
         # workgraph case - always the case in standard situations (qe app usage)
         if "workgraph" in self.nodes[0].process_type:
             # this loops can be improved, for sure there is a smarter way to do this.
