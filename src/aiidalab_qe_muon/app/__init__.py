@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 class MuonPluginOutline(PluginOutline):
-    title = "Muon Spectroscopy (MUON)"
+    title = "Muon spectroscopy (muons)"
 
 
 property = {
