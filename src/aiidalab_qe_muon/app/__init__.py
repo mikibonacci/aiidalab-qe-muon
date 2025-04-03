@@ -33,5 +33,8 @@ property = {
     },
     "workchain": workchain_and_builder,
     "importer": ImportMagnetism,
-    "guides": Path(__file__).resolve().parent / "guides",
+    "guides": {
+        'title': "Muon spectroscopy",
+        'path': Path(__file__).resolve().parent / "guides"
+    },
 }

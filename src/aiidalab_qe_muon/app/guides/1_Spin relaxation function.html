@@ -1,23 +1,31 @@
 <div id="guide-header">
   You've activated the muon in-app guide. <br>
   In this guide, you will learn how to
-  use the app to find the <b>muon resting sites</b> and the <b>muon spin relaxation function</b> of Lithium Fluoride (LiF). <br>
+  use the app to find the <b>muon spin relaxation function</b> of 
+  lithium fluoride (LiF). <br>
   <div class="alert alert-warning">
-    <b>Pre-requisite:</b> This guide assumes that you already followed the general &rarr; basic guide, or that you are already familiar with the app.
+    <b>Pre-requisite:</b> This guide assumes that you already followed the 
+    <b>Relaxation and electronic structure</b> &rarr; <b>Basic tutorial</b> guide, 
+    or that you are already familiar with the app.
   </div>
   Click on <b>Step 1: Select structure</b> and follow the instructions to proceed.
 </div>
 
 <div id="structure-step">
   In the structure selection step, we select the LiF structure by querying it 
-  from the OPTIMADE database. <br>
+  from one of the <a href="https://optimade.org" target="_blank">OPTIMADE</a>-compliant online database</li>. <br>
   <div class="alert alert-success">
     <h4>Tasks</h4>
   <ul>
     <li><b>Open</b> the OPTIMADE structure selector: click on the OPTIMADE tab and then click on load the "Load OPTIMADE widget" button</li>
     <li><b>Select</b> the provider: look for "Materials Cloud" in the first dropdown, and then select the "MC3D" database in the second one</li>
-    <li><b>Query</b> for LiF: select Li and F elements in the interactive periodic table, and click the "Search" blue button</li>
-    <li><b>Select</b> the LiF structure: click on the first result ("FLi (id=22852)"), or, if already selected, continue to the next step</li>
+    <li><b>Query</b> for LiF: : select Li and F elements in the interactive periodic table, and click the "Search" blue button (at the bottom). 
+      Note: you might need to wait a few seconds while the widgets performs some basic queries to the OPTIMADE server, 
+      until the periodic table gets activated from light blue to darker blue.
+    </li>
+    <li><b>Select</b> the LiF structure: it should be the first result ("FLi (id=22852)"), otherwise search for it.
+      If already selected, just continue to the next step
+    </li>
     <li>Click the <b>Confirm</b> button to proceed</li>
   </ul>
     <div class="alert alert-warning">
@@ -36,7 +44,11 @@
   <div class="alert alert-success">
     <h4>Tasks</h4>
     <ol>
-      <li>Select <b>Structure as is</b>, i.e. no relaxation (it is performed during the search for muon sites)</li>
+      <li>Select <b>Structure as is</b>, i.e. no relaxation (this means that we 
+        do not perform an **initial** relaxation of the unit-cell structure, 
+        before starting the muon spectroscopy workflows. In an case, the 
+        plugin will perform relaxation of each supercell during the search for muon sites).
+      </li>
       <li>Open <b>Step 2.1</b> for further instructions</li>
     </ol>
   </div>
@@ -54,7 +66,7 @@
   </div>
   <div class="alert alert-warning">
     <b>Note:</b> For the purpose of completing this guide in short time, we will use the <b>Fast</b> protocol for default parameters.
-    However, you if dispose of enough computational resources, you can also select Moderate or Precise.
+    However, you if dispose of enough computational resources, you can also select Balanced or Stringent.
   </div>
 </div>
 
@@ -71,24 +83,26 @@
 </div>
 
 <div id="calculation-settings">
-  Here we can customize the calculation parameters. The settings are divided
-  into several tabs:
+  Here we can customize the calculation parameters.
+  The settings are divided into several tabs.
+  Two tabs are always present:
   <ul>
     <li><b>Basic settings</b>: top-level calculation settings</li>
     <li><b>Advanced settings</b>: fine-tune the calculations</li>
-    <li>
-      <b>Plugin settings</b>: parameters for plugin calculations including
-      muon settings
-    </li>
   </ul>
+  Additionally, each plugin activated in the previous step 2.1 can add additional tabs.
+
   Note that the app pre-configures defaults for most parameters.
+  <div class="alert alert-success">
+    See further instructions in the <b>Basic settings</b> panel below.
+  </div>
 </div>
 
 <div id="muon-settings">
   In the Muon settings panel, we can customize the muon parameters. 
   We will use value of the parameters
   in such a way to quickly perform simulation, not to obtain accurate results. For example, 
-  we are not going to use a large enough supercell, and we are using a much coarser K-points grid with respect to the
+  we are not going to use a large enough supercell, and we are using a much coarser k-points grid with respect to the
   default one.
   <div class="alert alert-success">
     <h4>Tasks</h4>
@@ -96,7 +110,7 @@
     <li><h5>Muon <b>sites search</b> settings:</h5></li>
       <ul>
         <li>Set the <b>Muon charge state</b> to be <b>Muonium (neutral)</b></li>
-        <li>Set the <b>K-points distance</b> to be 3 Å<sup>-1</sup>, so we have a k-points mesh grid of [1, 1, 1] (we compute only the &Gamma; point)</li>
+        <li>Set the <b>k-points distance</b> to be 3 Å<sup>-1</sup>, so we have a k-points mesh grid of [1, 1, 1] (we compute only the &Gamma; point)</li>
         <li>Click the <b>estimate number of muon trial sites</b> to verify that we have only 1 candidate site</li>
         <li>Click the <b>Visualize candidate muon sites</b> to see it in the unit cell</li>
       </ul>
@@ -129,6 +143,19 @@
     label (pre-filled according to the settings of steps 1 & 2), as well as
     provide a detailed description of the workflow. Once we are ready, we can
     submit the workflow.
+
+    You first need to select which code (code executable + computer where this 
+    will run) to use for each step of the workflow. The Quantum ESPRESSO app 
+    should always install a local Quantum ESPRESSO executable that is sufficient 
+    for this tutorial, but you can setup additional codes installed on remote 
+    supercomputers. For more information on how to set up codes, please refer to the 
+    corresponding
+    <a
+      href="https://aiidalab-qe.readthedocs.io/howto/setup_computer_code.html#"
+      target="_blank"
+    >
+      documentation</a
+    >.
   </p>
   <div class="alert alert-success">
     <h4>Tasks</h4>
@@ -147,6 +174,10 @@
 </div>
 
 <div id="results-step">
+  Below you can monitor the status of the calculation, that might take 
+  several minutes to conclude even if we are using the fast protocol.
+
+  Click on the <b>Results</b> panel.
   In the results panel, each tab will open results pertaining to a specific
   calculation submitted by the workflow.
   <div class="alert alert-success">
@@ -166,12 +197,13 @@
       </li>
       <li>
         Check the table and, for the lowest energy site (there will be only one site, label is A), compute the distance between the &mu; and the 
-        F atom, by selecting the atoms in the structure viewer below the table. The measured distance should be 2.21 Å, 
+        F atom, by selecting the atoms in the structure viewer below the table 
+        (just click on atoms to select/deselect them). The measured distance should be 2.21 Å, 
         and can be found in the panel on the right with respect to the structure view.
       </li>
       <li>
         Verify that indeed closest F atoms are repelled by the muon center (at variance with the case where the muon is charged);
-        This can be easily seen in the <b>Distortion</b> plot, below the structure viewer.
+        this can be easily seen in the <b>Distortion</b> plot, below the structure viewer.
       </li>
     </ol>
   </div>
@@ -183,8 +215,10 @@
     <h4>Tasks</h4>
     <ol>
       <li>
-        Check the relaxation function for site A, and verify that the signal at zero field (ZF) is indeed different from the 
-        Kubo-Toyabe one. At which time does the relaxation function start to deviate from the Kubo-Toyabe one?
+        Check the relaxation function for site A, and verify that the signal 
+        at zero field (ZF) is indeed different from the Kubo-Toyabe one 
+        (you will need to tick the box "Add Kubo-Toyabe in the plot" to show it). 
+        At which time does the relaxation function start to deviate from the Kubo-Toyabe one?
       </li>
       <li>
         Verify that the polarization function is converged for max<sub>hdim</sub> > 10<sup>2</sup>. This can be seen in the 
@@ -202,14 +236,16 @@
       for the polarization function. 
     </li>
     <li>
-      Eventually try to use, as starting structure, the conventional cell of LiF, and see how the muon sites change.
+      Try to use, as starting structure, the conventional cell of LiF, and see how the muon sites change.
     </li>
     <li>
-      Load the full calculation (sites+polarization in supercell) from the AiiDAlab examples and inspect it:
+      Load the full calculation (sites+polarization in supercell) from the AiiDAlab examples, 
+      as discussed below, and inspect it:
       <ul>
         <li>Click on the <b>Download examples</b> button at the top of this page</li>
         <li>Import the example labeled <b>Example: LiF muons, stopping sites and polarization function</b></li>      
         <li>Find it in the <b></b>Calculation history</b> page and open it</li>
+        (you can use the filter to search for the label "sites+polarization").
       </ul>
     </li>
   </ol>

@@ -465,8 +465,7 @@ class MuonConfigurationSettingPanel(
         self.findmuon_settings = [
             ipw.HBox(
                 [
-                ipw.HTML("<h4><b> - Find muon sites settings - </b></h4>"),],
-                layout=ipw.Layout(justify_content="center"),
+                ipw.HTML("<h4><b>Find muon sites settings </b></h4>"),],
             ),
             self.use_defaults_box,
             self.charge_box,
@@ -488,7 +487,10 @@ class MuonConfigurationSettingPanel(
         # we link the display of each
         self.polarization_field_choice = ExternalMagneticFieldUndiWidget()
         
-        self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(title="Second grid of fields (mT)")
+        self.polarization_field_choice_additional = ExternalMagneticFieldUndiWidget(
+            title="Grid of fields for the additional grid (mT)",
+            B_min=0, B_max=5, B_step_grid=1,
+            )
         self.polarization_field_choice.observe(self._update_fields_list_grid_2, "field_list")
         self.polarization_field_choice_additional.observe(self._update_fields_list_grid_2, "field_list")
         self._model.undi_fields = self.polarization_field_choice.field_list
@@ -507,7 +509,7 @@ class MuonConfigurationSettingPanel(
         self.additional_grid_checkbox.observe(self._update_fields_list_grid_2, "value")
         
         self.polarization_settings_title = ipw.HTML(
-            "<h4 style='text-align: center;'><b> - Polarization from &mu; - Nuclear interactions - </b></h4>"
+            "<h4 style='text-align: center;'><b>Polarization from &mu; - Nuclear interactions </b></h4>"
         )
         self.polarization_settings_help = SettingsInfoBoxWidget(
             info="""&#8613; Relaxation function of the muon<br>The polarization is computed for the muon site(s) found in the previous 
@@ -519,22 +521,22 @@ class MuonConfigurationSettingPanel(
                     The third lattice vector of the structure should be aligned with the z cartesian direction.
                     
                     <br>
-                    You can define your own magnetic field interval by specifying the minimum, the maximum and the setp values for the magnetic fields.
-                    It is also possible to add a second grid, in case you want to compute the polarization for a different set of magnetic fields.
+                    You can define your own magnetic field interval by specifying the minimum, the maximum and the step values for the magnetic fields.
+                    It is also possible to add a second grid, in case you want to compute the polarization for a different set of magnetic fields, or on 
+                    a denser grid for a smaller range.
                 """,
         )
         self.polarization_settings_box = ipw.HBox([
             self.polarization_settings_title,
             self.polarization_settings_help,
         ],
-            layout=ipw.Layout(justify_content="center"),
         )
         
         self.polarization_field_list = ipw.HTML(value="")
         ipw.dlink(
             (self._model, "undi_fields"),
             (self.polarization_field_list, "value"),
-            lambda x: f"<ul><li>Number of calculation per site: {len(x)} </li><li>Field list (mT):   ["+",  ".join([f"{field:.0f}" for field in x])+"]</li></ul>",
+            lambda x: f"<ul><li>Number of calculations per site: {len(x)} </li><li>Field list (mT):   ["+",  ".join([f"{field:.0f}" for field in x])+"]</li></ul>",
         )
         
         self.polarization_settings = ipw.VBox(
@@ -616,6 +618,9 @@ class MuonConfigurationSettingPanel(
     def _update_fields_list_grid_2(self, _=None):
         if not self.additional_grid_checkbox.value:
             # should be already linked, but apparently does not work.
-            self._model.undi_fields = self.polarization_field_choice.field_list
+            field_list = self.polarization_field_choice.field_list
         else: # should be already linked, but apparently does not work.
-            self._model.undi_fields = list(set(self.polarization_field_choice.field_list + self.polarization_field_choice_additional.field_list))
+            field_list = list(set(self.polarization_field_choice.field_list + self.polarization_field_choice_additional.field_list))
+        
+        field_list.sort()
+        self._model.undi_fields = field_list
