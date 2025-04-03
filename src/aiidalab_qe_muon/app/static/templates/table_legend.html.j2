@@ -1,7 +1,7 @@
 {% if not download_mode %}
 <div>
     <p> 
-        The summary tables collect the results of the muon resting sites search. The different columns shows:<br>
+        The summary tables collect the results of the muon resting sites search. The different columns show:<br>
         <ul>
             <li>{{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the ID (also called PK) of the structure in the AiiDA database.</li>
             <li>{{ data["label"] if not download_mode else "label" }}: a label for the given site.</li>
@@ -70,7 +70,7 @@ The position of the muon considered is only the final relaxed one. We consider n
 The columns of the file are:
 - "atm_distance_init": the distance of the muon from the atoms of the unrelaxed supercell.
 - "atm_distance_final": the distance of the muon from the atoms of the relaxed supercell.
-- "distortion": true vectorial distortion magnitude, i.e. the magnitude of the vector computed as the difference between the final and initial distance vectors.
+- "distortion": i.e. the magnitude of the vector computed as the difference between the final and initial distance vectors.
 - "delta_distances": radial displacement change, i.e. the difference between the magnitudes of the final and initial distances from the muon site.
 - "element": the element of the atom.
 {% endif %}

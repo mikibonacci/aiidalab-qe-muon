@@ -10,11 +10,11 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
     
     field_list = tl.List(tl.Int(),default=[])
         
-    def __init__(self, title: str = "External magnetic fields (mT):", **kwargs):
+    def __init__(self, title: str = "External magnetic fields (mT):", B_min=0, B_max=10, B_step_grid=2, **kwargs):
         super().__init__(**kwargs)
 
         self.B_range = ipw.IntRangeSlider(
-            value=[0, 8],
+            value=[B_min, B_max],
             min=0,
             max=150,
             step=1,
@@ -27,7 +27,7 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
         )
         
         self.B_step_grid = ipw.BoundedIntText(
-            value=2,
+            value=B_step_grid,
             min=0,
             max=150,
             step=1,
