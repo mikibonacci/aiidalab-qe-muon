@@ -3,9 +3,9 @@
     <p> 
         The summary tables collect the results of the muon resting sites search. The different columns shows:<br>
         <ul>
-            <li>{{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the AiiDA id (or pk) of the structure in the database.</li>
-            <li>{{ data["label"] if not download_mode else "label" }}: a label for the given supercell.</li>
-            <li>{{ data["delta_E"] if not download_mode else "delta_E" }}: the total energy difference with respect to the lowest energy.</li>
+            <li>{{ data["structure_id_pk"] if not download_mode else "structure_id_pk" }}: the ID (also called PK) of the structure in the AiiDA database.</li>
+            <li>{{ data["label"] if not download_mode else "label" }}: a label for the given site.</li>
+            <li>{{ data["delta_E"] if not download_mode else "delta_E" }}: the total energy difference with respect to the lowest energy site A.</li>
             {% if advanced_table %}
             <li>{{ data["tot_energy"] if not download_mode else "tot_energy" }}: the total energy of the calculation - only shown in the advanced mode.</li>
             {% endif %}

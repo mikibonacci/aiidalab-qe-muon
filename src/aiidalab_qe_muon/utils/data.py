@@ -1,5 +1,5 @@
 dictionary_of_names_for_html = {
-    "structure_id_pk": "Structure id (pk)",
+    "structure_id_pk": "Structure ID (PK)",
     "label": "Label",
     "delta_E": "ΔE<sub>total</sub> (meV)",
     "tot_energy":"E<sub>total</sub> (meV)",
