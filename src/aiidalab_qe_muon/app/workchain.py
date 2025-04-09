@@ -68,13 +68,10 @@ def get_builder(codes, structure, parameters):
     kpoints_distance = parameters["muonic"].pop("kpoints_distance", 0.301)
     charge_supercell = parameters["muonic"].pop("charge_state", True)
 
-    disable_hubbard = not parameters["muonic"].pop("hubbard", True) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
+    disable_hubbard = parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
     enforce_defaults = parameters["muonic"].pop("use_defaults", True)
     
-    if not disable_hubbard and not isinstance(structure, HubbardStructureData):
-        structure = HubbardStructureData.from_structure(structure)
-
     trigger = "findmuon"
 
     scf_overrides = deepcopy(parameters["advanced"])
@@ -161,9 +158,6 @@ def get_builder(codes, structure, parameters):
 
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
-
-    if not disable_hubbard and isinstance(structure, HubbardStructureData):
-        builder.structure = HubbardStructureData.from_structure(structure)
     
     return builder
 
