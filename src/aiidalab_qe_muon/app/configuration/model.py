@@ -38,7 +38,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     charge_state = tl.Bool(True)
     mu_spacing = tl.Float(1.0)
     
-    hubbard = tl.Bool(True)
+    hubbard = tl.Bool(False)
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")

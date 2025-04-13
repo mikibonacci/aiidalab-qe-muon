@@ -49,6 +49,9 @@ class ImportMagnetism(StructureUploadWidget):
     ):
         super().__init__()
         self.title = title
+        self.message = ipw.HTML("Please note: the magnetic momenta of the uploaded mcif will \
+                            be used only for muon simulations (no need to set additional magnetization in the advanced settings). \
+                            It is possible to overwrite the values in the advanced settings (you need to edit the tags in the Edit structure panel).")
         self.file_upload_subwidget1 = ipw.Checkbox(
             description="Use conventional (select before the upload)",
             indent=False,
@@ -66,7 +69,7 @@ class ImportMagnetism(StructureUploadWidget):
         self._status_message = StatusHTML(clear_after=5)
         self.file_upload.observe(self._on_file_upload, names="value")
         
-        self.children = tuple([self.file_upload_subwidget1]) + self.children
+        self.children = tuple([self.file_upload_subwidget1, self.message]) + self.children
         
     def _validate_and_fix_pymatgen_cell(self, structure):
     

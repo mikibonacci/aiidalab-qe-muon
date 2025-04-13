@@ -12,7 +12,18 @@ ImplantMuonWorkChain = WorkflowFactory("muon_app.implant_muon")
 except:
     old_structuredata=True"""
 
-
+def get_magmom_from_starting_magnetization(structure, starting_magnetization: dict) -> list:
+    """
+    Get the starting magmom list from the starting_magnetization key in the
+    parameters dictionary.
+    """
+    magmom = []
+    for site in structure.sites:
+        if site.kind_name in starting_magnetization:
+            magmom.append([starting_magnetization[site.kind_name],0.0, 0.0])
+        else:
+            magmom.append([0.0, 0.0, 0.0])
+    return magmom
 
 def create_resource_config(code_details):
     """
@@ -68,20 +79,31 @@ def get_builder(codes, structure, parameters):
     kpoints_distance = parameters["muonic"].pop("kpoints_distance", 0.301)
     charge_supercell = parameters["muonic"].pop("charge_state", True)
 
-    disable_hubbard = parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
+    hubbard = not parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
     enforce_defaults = parameters["muonic"].pop("use_defaults", True)
     
     trigger = "findmuon"
 
+    spin_pol_dft = parameters["muonic"].pop("spin_polarized", True)
     scf_overrides = deepcopy(parameters["advanced"])
+    
+    spin_type = SpinType.NONE # we don't use the spin type in the workchain.
+    
+    if "initial_magnetic_moments" in scf_overrides:
+        if isinstance(scf_overrides["initial_magnetic_moments"], dict):
+            if len(scf_overrides["initial_magnetic_moments"])>0:
+                magmom = get_magmom_from_starting_magnetization(structure, scf_overrides.pop("initial_magnetic_moments"))
+                scf_overrides["pw"]["parameters"]["SYSTEM"].pop("starting_magnetization", None)
+                scf_overrides["pw"]["parameters"]["SYSTEM"].pop("nspin", None)
+         
     overrides = {
         # "relax":{
         "base": scf_overrides,
         #    },
         "pwscf": scf_overrides,
     }
-    
+        
     # we always enforce the mixing mode and num_steps
     overrides["base"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] = "local-TF"
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] ="local-TF"
@@ -127,7 +149,7 @@ def get_builder(codes, structure, parameters):
     else:
         undi_fields = []
         undi_max_hdims = []
-        
+    
     builder = ImplantMuonWorkChain.get_builder_from_protocol(
         pw_muons_code=pw_code,
         pp_code=pp_code,
@@ -149,15 +171,16 @@ def get_builder(codes, structure, parameters):
         mu_spacing=mu_spacing,
         kpoints_distance=kpoints_distance,
         charge_supercell=charge_supercell,
-        hubbard=not disable_hubbard,
+        hubbard=hubbard,
         electronic_type=ElectronicType(parameters["workchain"]["electronic_type"]),
-        spin_type=SpinType(parameters["workchain"]["spin_type"]),
-        initial_magnetic_moments=parameters["advanced"]["initial_magnetic_moments"],
-        pp_metadata = pp_metadata if pp_code else None
+        spin_type=spin_type,
+        pp_metadata = pp_metadata if pp_code else None,
+        spin_pol_dft=spin_pol_dft,
     )
 
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
+    
     
     return builder
 

@@ -28,7 +28,7 @@ class ExternalMagneticFieldUndiWidget(ipw.HBox):
         
         self.B_step_grid = ipw.BoundedIntText(
             value=B_step_grid,
-            min=0,
+            min=1,
             max=150,
             step=1,
             description="B<sub>step</sub>:",

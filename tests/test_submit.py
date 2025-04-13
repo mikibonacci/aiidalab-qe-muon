@@ -4,7 +4,6 @@ from aiidalab_qe.common.widgets import (
     PwCodeResourceSetupWidget,
 )
 
-
 # @pytest.mark.skip(reason="Skipping this test for now")
 @pytest.mark.usefixtures("sssp")
 def test_create_builder_default(

@@ -379,7 +379,7 @@ class MuonConfigurationSettingPanel(
         )
         
         self.spin_polarized = ipw.Checkbox(
-            description="Enable spin polarised DFT (if magnetic sample)",
+            description="Enable contact field calculation (if magnetic)",
             indent=False,
             value=True,
             layout=ipw.Layout(justify_content="flex-start"),

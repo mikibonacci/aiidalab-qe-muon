@@ -30,9 +30,6 @@ def FindMuonWorkChain_override_validator(inputs, ctx=None):
 FindMuonWorkChain.spec().inputs.validator = FindMuonWorkChain_override_validator
 
 
-def implant_input_validator(inputs, ctx=None):
-    return None
-
 
 class ImplantMuonWorkChain(WorkChain):
     "WorkChain to compute muon stopping sites in a crystal."
@@ -45,7 +42,7 @@ class ImplantMuonWorkChain(WorkChain):
         super().define(spec)
 
         spec.input(
-            "structure", valid_type=orm.StructureData
+            "structure",
         )  # Maybe not needed as input... just in the protocols. but in this way it is not easy to automate it in the app, after the relaxation. So let's keep it for now.
         spec.input(
             "undi_code", 
@@ -105,6 +102,13 @@ class ImplantMuonWorkChain(WorkChain):
             non_db=True,
             help="Whether to compute the polarization or not.",
         )
+        spec.input(
+            "kind_names",
+            valid_type=orm.List,
+            #non_db=True,
+            required=False,
+            help="The list of kind names to used. Needed to reconstruct kinds if needed.",
+        )
 
         # I think the following is not needed, as we may want to just provide the structure and the fields, max_hdims
         # and then initialise the workgraph with the structure and the fields and max_hdims.
@@ -113,6 +117,7 @@ class ImplantMuonWorkChain(WorkChain):
 
         ###
         spec.outline(
+            cls.pre_kinds_name_check,
             cls.setup,
             if_(cls.need_implant)(
                 cls.prepare_implant,
@@ -146,7 +151,6 @@ class ImplantMuonWorkChain(WorkChain):
             message="The polarization calculation failed.",
         )
         ###
-        spec.inputs.validator = implant_input_validator
 
     @classmethod
     def get_builder_from_protocol(
@@ -172,7 +176,9 @@ class ImplantMuonWorkChain(WorkChain):
         mu_spacing: float = 1.0,
         kpoints_distance: float = 0.301,
         charge_supercell: bool = True,
+        hubbard: bool = True,
         pp_metadata: dict = None,
+        spin_pol_dft: bool = True,
         **kwargs,
     ):
         """Return a builder prepopulated with inputs selected according to the chosen protocol.
@@ -209,6 +215,8 @@ class ImplantMuonWorkChain(WorkChain):
             kpoints_distance=kpoints_distance,
             charge_supercell=charge_supercell,
             pseudo_family=pseudo_family,
+            spin_pol_dft=spin_pol_dft,
+            hubbard=hubbard,
             **kwargs,
         )
         # builder.findmuon = builder_findmuon
@@ -225,7 +233,8 @@ class ImplantMuonWorkChain(WorkChain):
         if pp_metadata:
             builder.findmuon.pp_metadata = pp_metadata
 
-        builder.structure = structure
+        # This is done to have the correct structure in terms of kinds:
+        builder.structure = builder_findmuon.structure
         
         builder.implant_muon = compute_findmuon
         builder.compute_polarization = compute_polarization_undi
@@ -240,8 +249,40 @@ class ImplantMuonWorkChain(WorkChain):
         
         if undi_max_hdims and compute_polarization_undi:
             builder.undi_max_hdims = orm.List(undi_max_hdims)
+            
+        builder.kind_names = orm.List(
+            list(
+                builder.structure.get_kind_names()
+            )
+        )
+        # this is needed to have the correct kind names in the structure.
 
         return builder
+    
+    def pre_kinds_name_check(self):
+        """Check that the kind names are set correctly."""
+        # this is needed to have the correct kind names in the structure.
+        # we need to set the kind names in the structure, as they are not set by default.
+        # but we need to check if they are already set.
+        if not self.inputs.kind_names:
+            raise ValueError("The kind names are not set correctly.")
+        elif len(self.inputs.kind_names.get_list()) != len(
+            self.inputs.structure.get_kind_names()
+        ):
+            self.report(
+                "The kind names are not set correctly. "
+                )
+        else:
+            if self.inputs.kind_names.get_list() != self.inputs.structure.get_kind_names():
+                self.report('Setting the kinds names to match the magmoms.')
+                from aiida_muon.utils.manage_new_structure import reassign_kinds
+                self.ctx.structure = reassign_kinds(
+                    self.inputs.structure,
+                    self.inputs.kind_names,
+                )
+            else:
+                self.ctx.structure = self.inputs.structure
+                
 
     def setup(self):
         # key, class, outputs namespace.
@@ -269,7 +310,7 @@ class ImplantMuonWorkChain(WorkChain):
         )
         inputs.metadata.call_link_label = "findmuon"
 
-        inputs.structure = self.inputs.structure
+        inputs.structure = self.ctx.structure
 
         future = self.submit(self.ctx.workchain_class, **inputs)
         self.report(f"submitting `WorkChain` <PK={future.pk}>")
@@ -300,7 +341,7 @@ class ImplantMuonWorkChain(WorkChain):
         if self.ctx.implant_muon:
             self.ctx.structure_group = self.get_structures_group_from_findmuon(self.ctx.findmuon)
         else:  # we want only polarization, so use the input structure.
-            self.ctx.structure_group = {'0':self.inputs.structure}
+            self.ctx.structure_group = {'0':self.ctx.structure}
 
     def compute_polarization(self):
         # here we will submit the workgraph for the polarization estimation. Via Undi and KT.
