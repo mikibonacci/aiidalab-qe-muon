@@ -58,7 +58,7 @@ def multiple_undi_analysis(
                 metadata=metadata,
                 name=f"iter_{t}",
                 deserializers={
-                    "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms"
+                    "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms",
                 },
                 # override the default `AtomsData`
                 serializers={
@@ -120,7 +120,7 @@ def UndiAndKuboToyabe(
         code = code,
         metadata=metadata,
         deserializers={
-            "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms"
+            "aiida.orm.nodes.data.structure.StructureData": "aiida_pythonjob.data.deserializer.structure_data_to_atoms",
         },
         # override the default `AtomsData`
         serializers={

@@ -12,6 +12,7 @@ from aiidalab_qe_muon.undi_interface.workflows.workgraphs import (
     MultiSites,
 )
 
+from aiida_quantumespresso.data.hubbard_structure import HubbardStructureData
 
 MusconvWorkChain = WorkflowFactory("impuritysupercellconv")
 FindMuonWorkChain = WorkflowFactory("muon.find_muon")
@@ -341,6 +342,10 @@ class ImplantMuonWorkChain(WorkChain):
         if self.ctx.implant_muon:
             self.ctx.structure_group = self.get_structures_group_from_findmuon(self.ctx.findmuon)
         else:  # we want only polarization, so use the input structure.
+            if isinstance(self.ctx.structure, HubbardStructureData):
+                    structure_ase = self.ctx.structure.get_ase()
+                    self.ctx.structure = orm.StructureData(ase=structure_ase)
+                    
             self.ctx.structure_group = {'0':self.ctx.structure}
 
     def compute_polarization(self):
@@ -393,5 +398,10 @@ class ImplantMuonWorkChain(WorkChain):
             if idx in findmuon.outputs.unique_sites.get_dict().keys():
                 relaxwc = orm.load_node(uuid)
                 structure_group[idx] = relaxwc.outputs.output_structure
-                relaxwc.outputs.output_structure.base.extras.set("muon_index", str(idx))
+                
+                if isinstance(structure_group[idx], HubbardStructureData):
+                    structure_ase = structure_group[idx].get_ase()
+                    structure_group[idx] = orm.StructureData(ase=structure_ase)
+                    
+                structure_group[idx].base.extras.set("muon_index", str(idx))
         return structure_group
