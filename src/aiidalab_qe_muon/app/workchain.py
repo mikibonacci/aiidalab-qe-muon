@@ -79,6 +79,8 @@ def get_builder(codes, structure, parameters):
     kpoints_distance = parameters["muonic"].pop("kpoints_distance", 0.301)
     charge_supercell = parameters["muonic"].pop("charge_state", True)
 
+    gamma_pre_relax = parameters["muonic"].pop("compute_gamma_pre_relax", True)
+
     hubbard = not parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
     enforce_defaults = parameters["muonic"].pop("use_defaults", True)
@@ -109,6 +111,7 @@ def get_builder(codes, structure, parameters):
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["mixing_mode"] ="local-TF"
     overrides["base"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
+
     
     #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
     # dummy logic.
@@ -176,7 +179,17 @@ def get_builder(codes, structure, parameters):
         spin_type=spin_type,
         pp_metadata = pp_metadata if pp_code else None,
         spin_pol_dft=spin_pol_dft,
+        gamma_pre_relax=gamma_pre_relax,
     )
+
+    if "parallelization" in codes.get("pw_muons"):
+        parallelization = codes.get("pw_muons")["parallelization"]
+        builder.findmuon.relax.base.pw.parallelization = Dict(
+            dict=parallelization
+        )
+        builder.findmuon.pwscf.pw.parallelization = Dict(
+            dict=parallelization
+        )
 
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
