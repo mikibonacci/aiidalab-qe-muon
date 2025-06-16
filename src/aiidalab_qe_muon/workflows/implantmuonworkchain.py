@@ -180,6 +180,7 @@ class ImplantMuonWorkChain(WorkChain):
         hubbard: bool = True,
         pp_metadata: dict = None,
         spin_pol_dft: bool = True,
+        gamma_pre_relax: bool = False,
         **kwargs,
     ):
         """Return a builder prepopulated with inputs selected according to the chosen protocol.
@@ -218,6 +219,7 @@ class ImplantMuonWorkChain(WorkChain):
             pseudo_family=pseudo_family,
             spin_pol_dft=spin_pol_dft,
             hubbard=hubbard,
+            gamma_pre_relax=gamma_pre_relax,
             **kwargs,
         )
         # builder.findmuon = builder_findmuon

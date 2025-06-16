@@ -169,6 +169,32 @@ class MuonConfigurationSettingPanel(
                 ]),
                 self.use_defaults_help.infobox,
         ])
+
+        self.compute_gamma_pre_relax = ipw.Checkbox(
+            description="""Compute Gamma pre-relaxation """,
+            indent=False,
+            value=self._model.compute_gamma_pre_relax,
+            tooltip="Compute Gamma pre-relaxation step, to improve the starting point for the geometry optimization.",
+            #layout=ipw.Layout(width="500px"),
+        )
+        ipw.link(
+            (self.compute_gamma_pre_relax, "value"),
+            (self._model, "compute_gamma_pre_relax"),
+        )
+        self.compute_gamma_pre_relax_help = SettingsInfoBoxWidget(
+            info="""&#8613; Include Gamma pre-relax step<br>Usually, if the supercell is large, it improves the starting geometry for final full k-mesh grid relaxation.
+            If the mesh is already 1x1x1, this step is automatically skippped. The threshold for the convergence of this pre-relaxation step is set to be 50 times 
+            larger than the one of the final relaxation step (full k-mesh grid).
+                """,
+        )
+        self.compute_gamma_pre_relax_box = ipw.VBox([
+            ipw.HBox([
+                self.compute_gamma_pre_relax,
+                self.compute_gamma_pre_relax_help,
+            ]),
+            self.compute_gamma_pre_relax_help.infobox,
+            ],
+        )
         
         # Charge state view and control (the control is the link, and observe() if any)
         self.charge_help_title = ipw.HTML("<h5><b> - Muon charge state</b></h5>")
@@ -468,6 +494,7 @@ class MuonConfigurationSettingPanel(
                 ipw.HTML("<h4><b>Find muon sites settings </b></h4>"),],
             ),
             self.use_defaults_box,
+            self.compute_gamma_pre_relax_box,
             self.charge_box,
             self.supercell_selector,
             self.kpoints_box,
