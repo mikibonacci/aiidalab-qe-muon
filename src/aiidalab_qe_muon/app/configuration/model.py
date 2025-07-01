@@ -42,6 +42,8 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
     mesh_grid = tl.Unicode("")
+
+    compute_gamma_pre_relax = tl.Bool(True)
     
     use_defaults = tl.Bool(True) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
     
