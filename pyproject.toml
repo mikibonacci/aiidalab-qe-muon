@@ -48,7 +48,7 @@ tests = [
 ignore = ["E501", "E402", "TRY003", "RUF012", "N806"]
 
 [project.urls]
-Source = "https://github.com/mikibonacci/aiidalab-qe-muon"
+Source = "https://github.com/aiidalab/aiidalab-qe-muon"
 
 [project.entry-points.'aiidalab_qe.properties']
 "muonic" = "aiidalab_qe_muon.app:property"
