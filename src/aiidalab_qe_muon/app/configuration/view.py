@@ -43,7 +43,7 @@ class MuonConfigurationSettingPanel(
 
         self._model.observe(
             self._on_input_structure_change,
-            "input_structure",
+            "structure_uuid",
         )
         
     def render(self):
@@ -195,7 +195,116 @@ class MuonConfigurationSettingPanel(
             self.compute_gamma_pre_relax_help.infobox,
             ],
         )
-        
+
+        # TODO: noncollinear feature is not yet fully understood – restore when ready
+        # self.noncollinear = ipw.Checkbox(
+        #     description="Non-collinear magnetic calculation",
+        #     indent=False,
+        #     value=self._model.noncollinear,
+        #     tooltip="Run a non-collinear spin calculation.",
+        # )
+        # ipw.link(
+        #     (self.noncollinear, "value"),
+        #     (self._model, "noncollinear"),
+        # )
+        # ipw.dlink(
+        #     (self._model, "has_magmoms"),
+        #     (self.noncollinear, "disabled"),
+        #     lambda x: not x,
+        # )
+        # self.noncollinear_help = SettingsInfoBoxWidget(
+        #     info="""&#8613; Non-collinear magnetic calculation<br>Enable non-collinear spin treatment.
+        #         """,
+        # )
+        def _format_magmoms(magmoms):
+            if not magmoms:
+                return (
+                    "<span style='color:grey;font-style:italic;'>No magnetic moments found in structure extras.</span>"
+                )
+            sites = self._model.input_structure.sites if self._model.input_structure else []
+            rows = "".join(
+                "<tr><td style='padding:1px 6px;'>{}</td><td style='padding:1px 6px;'>{}</td>"
+                "<td style='padding:1px 6px;'>{:.3f}</td><td style='padding:1px 6px;'>{:.3f}</td><td style='padding:1px 6px;'>{:.3f}</td></tr>".format(
+                    i, sites[i].kind_name if i < len(sites) else "",
+                    m[0], m[1], m[2],
+                )
+                for i, m in enumerate(magmoms)
+            )
+            return (
+                "<b>Magnetic moments from structure (e.g. mcif):</b> "
+                "<span style='color:grey;font-size:0.85em;'>These can be overridden via <i>Initial magnetic moments</i> "
+                "in the <b>Magnetism</b> tab of the Advanced settings panel.</span><br>"
+                "<table style='font-size:0.85em;border-collapse:collapse;'>"
+                "<tr><th style='padding:1px 6px;'>Site</th><th>Kind</th>"
+                "<th>mx (μ<sub>B</sub>)</th><th>my</th><th>mz</th></tr>"
+                + rows
+                + "</table>"
+            )
+
+        self.magmoms_display = ipw.HTML(value=_format_magmoms(self._model.magmoms))
+        ipw.dlink(
+            (self._model, "magmoms"),
+            (self.magmoms_display, "value"),
+            _format_magmoms,
+        )
+
+        # TODO: noncollinear feature is not yet fully understood – restore when ready
+        # self.noncollinear_box = ipw.VBox([
+        #     ipw.HBox([
+        #         self.noncollinear,
+        #         self.noncollinear_help,
+        #     ]),
+        #     self.noncollinear_help.infobox,
+        # ])
+
+        self.pre_clustering = ipw.Checkbox(
+            description="Pre-relaxation clustering",
+            indent=False,
+            value=self._model.pre_clustering,
+            tooltip="Cluster and prune duplicate sites after each pre-relaxation step before proceeding to the next step.",
+        )
+        ipw.link(
+            (self.pre_clustering, "value"),
+            (self._model, "pre_clustering"),
+        )
+        self.pre_clustering_help = SettingsInfoBoxWidget(
+            info="""&#8613; Pre-relaxation clustering<br>When enabled, duplicate muon sites are clustered and removed after each pre-relaxation step
+            (Gamma pre-relaxation) before the next, more expensive step is launched. This can significantly reduce the
+            number of full DFT relaxations needed.
+                """,
+        )
+        self.pre_clustering_box = ipw.VBox([
+            ipw.HBox([
+                self.pre_clustering,
+                self.pre_clustering_help,
+            ]),
+            self.pre_clustering_help.infobox,
+        ])
+
+        self.activate_monitors = ipw.Checkbox(
+            description="Activate monitors",
+            indent=False,
+            value=self._model.activate_monitors,
+            tooltip="Attach aiida-monitor to every PwBaseWorkChain relaxation step (requires aiida-monitor to be installed).",
+        )
+        ipw.link(
+            (self.activate_monitors, "value"),
+            (self._model, "activate_monitors"),
+        )
+        self.activate_monitors_help = SettingsInfoBoxWidget(
+            info="""&#8613; Activate monitors<br>When enabled and <code>aiida-monitor</code> is installed, the
+            <code>aiida_monitor.default_monitor</code> is automatically attached to every relaxation step.
+            Disable this if the entry point is not available in your environment.
+                """,
+        )
+        self.activate_monitors_box = ipw.VBox([
+            ipw.HBox([
+                self.activate_monitors,
+                self.activate_monitors_help,
+            ]),
+            self.activate_monitors_help.infobox,
+        ])
+
         # Charge state view and control (the control is the link, and observe() if any)
         self.charge_help_title = ipw.HTML("<h5><b> - Muon charge state</b></h5>")
         self.charge_help = SettingsInfoBoxWidget(
@@ -409,11 +518,53 @@ class MuonConfigurationSettingPanel(
             indent=False,
             value=True,
             layout=ipw.Layout(justify_content="flex-start"),
+            tooltip="Run a spin-polarized DFT calculation to compute the contact hyperfine field.",
         )
         ipw.dlink(
             (self.spin_polarized, "value"),
             (self._model, "spin_polarized"),
         )
+        ipw.dlink(
+            (self._model, "has_magmoms"),
+            (self.spin_polarized, "disabled"),
+            lambda x: not x,
+        )
+        
+        # Pseudopotential family selection
+        self.pseudo_family_title = ipw.HTML("<h5><b> - Pseudopotential family (optional)</b></h5>")
+        self.pseudo_family_help = SettingsInfoBoxWidget(
+            info="""&#8613; Pseudopotential family<br>Specify a custom pseudopotential family for the muon calculations. 
+                Leave empty to use the defaults from the "Advanced settings" tab. 
+                """,
+        )
+        self.pseudo_family_input = ipw.Text(
+            description="Pseudo family:",
+            placeholder="Enter pseudopotential family name",
+            value=self._model.pseudo_choice,
+            continuous_update=False,
+            layout=ipw.Layout(width="50%"),
+        )
+        ipw.link(
+            (self.pseudo_family_input, "value"),
+            (self._model, "pseudo_choice"),
+        )
+        
+        self.pseudo_family_warning = ipw.HTML(value="")
+        ipw.dlink(
+            (self._model, "warning_banner"),
+            (self.pseudo_family_warning, "value"),
+            lambda x: f"<p style='color: red; font-weight: bold;'>{x[1]}</p>" if len(x) > 1 and x[1] else "",
+        )
+        
+        self.pseudo_family_box = ipw.VBox([
+            ipw.HBox([
+                self.pseudo_family_title,
+                self.pseudo_family_input,
+                self.pseudo_family_help,
+            ]),
+            self.pseudo_family_warning,
+            self.pseudo_family_help.infobox,
+        ])
         
         # Muon spacing view and control, included the estimator for the number of supercells
         self.mu_spacing_help_title = ipw.HTML("<h5><b> - Spacing for trial grid for initial muon sites (Å):</b></h5>")
@@ -495,11 +646,16 @@ class MuonConfigurationSettingPanel(
             ),
             self.use_defaults_box,
             self.compute_gamma_pre_relax_box,
+            self.magmoms_display,
+            # self.noncollinear_box,  # TODO: noncollinear not yet ready
+            self.pre_clustering_box,
+            self.activate_monitors_box,
             self.charge_box,
             self.supercell_selector,
             self.kpoints_box,
             self.hubbard,
             self.spin_polarized,
+            self.pseudo_family_box,
             self.mu_spacing_box,
             ipw.HBox([
                 self.estimate_number_of_supercells,
@@ -591,6 +747,10 @@ class MuonConfigurationSettingPanel(
         self.layout = ipw.Layout(width="100%")
 
         self.rendered = True
+
+        # Handle the case where a structure is already set when the panel is first rendered
+        if self._model.input_structure:
+            self._on_input_structure_change(None)
     
     def _on_input_structure_change(self, _):
         self.refresh(specific="structure")

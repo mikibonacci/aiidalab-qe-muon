@@ -1,4 +1,4 @@
-from aiida.orm import load_code, Dict, Bool, load_group
+from aiida.orm import load_code, Dict, Bool, load_group, Str
 from aiida.plugins import WorkflowFactory, DataFactory
 from aiida_quantumespresso.common.types import ElectronicType, SpinType
 
@@ -80,6 +80,9 @@ def get_builder(codes, structure, parameters):
     charge_supercell = parameters["muonic"].pop("charge_state", True)
 
     gamma_pre_relax = parameters["muonic"].pop("compute_gamma_pre_relax", True)
+    #noncollinear = parameters["muonic"].pop("noncollinear", False)
+    pre_clustering = parameters["muonic"].pop("pre_clustering", False)
+    activate_monitors = parameters["muonic"].pop("activate_monitors", True)
 
     hubbard = not parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
@@ -113,7 +116,7 @@ def get_builder(codes, structure, parameters):
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
 
     
-    #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
+    pseudo_family_muons = parameters["muonic"].pop("pseudo_choice", "")
     # dummy logic.
     pseudo_family = overrides["base"]["pseudo_family"]
         
@@ -180,6 +183,9 @@ def get_builder(codes, structure, parameters):
         pp_metadata = pp_metadata if pp_code else None,
         spin_pol_dft=spin_pol_dft,
         gamma_pre_relax=gamma_pre_relax,
+        #noncollinear=noncollinear,
+        pre_clustering=pre_clustering,
+        activate_monitors=activate_monitors,
     )
 
     if "parallelization" in codes.get("pw_muons"):
@@ -193,6 +199,11 @@ def get_builder(codes, structure, parameters):
 
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
+
+    if pseudo_family_muons:
+        builder.findmuon.pseudo_family = Str(pseudo_family_muons)
+        if compute_supercell:
+            builder.impuritysupercellconv.pseudo_family = Str(pseudo_family_muons)
     
     
     return builder

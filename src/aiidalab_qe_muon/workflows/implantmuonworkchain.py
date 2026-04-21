@@ -104,6 +104,27 @@ class ImplantMuonWorkChain(WorkChain):
             help="Whether to compute the polarization or not.",
         )
         spec.input(
+            "noncollinear",
+            valid_type=bool,
+            default=False,
+            non_db=True,
+            help="Run a non-collinear magnetic calculation. Disables automatic Gamma-only optimisation.",
+        )
+        spec.input(
+            "pre_clustering",
+            valid_type=bool,
+            default=False,
+            non_db=True,
+            help="Cluster and prune duplicate sites after each pre-relaxation step.",
+        )
+        spec.input(
+            "activate_monitors",
+            valid_type=bool,
+            default=True,
+            non_db=True,
+            help="Attach aiida-monitor to every PwBaseWorkChain relaxation step when aiida-monitor is installed.",
+        )
+        spec.input(
             "kind_names",
             valid_type=orm.List,
             #non_db=True,
@@ -181,6 +202,9 @@ class ImplantMuonWorkChain(WorkChain):
         pp_metadata: dict = None,
         spin_pol_dft: bool = True,
         gamma_pre_relax: bool = False,
+        noncollinear: bool = False,
+        pre_clustering: bool = False,
+        activate_monitors: bool = True,
         **kwargs,
     ):
         """Return a builder prepopulated with inputs selected according to the chosen protocol.
@@ -220,12 +244,31 @@ class ImplantMuonWorkChain(WorkChain):
             spin_pol_dft=spin_pol_dft,
             hubbard=hubbard,
             gamma_pre_relax=gamma_pre_relax,
+            noncollinear=noncollinear,
+            pre_clustering=pre_clustering,
+            activate_monitors=activate_monitors,
             **kwargs,
         )
         # builder.findmuon = builder_findmuon
         for k, v in builder_findmuon.items():
-            if k != "structure":
+            if k in ("structure", "pythonjob"):
+                continue
+            if k == "impuritysupercellconv":
+                if sc_matrix:
+                    continue
+                for k2, v2 in v.items():
+                    if k2 == "pythonjob":
+                        continue
+                    try:
+                        setattr(builder.findmuon.impuritysupercellconv, k2, v2)
+                    except Exception as e:
+                        raise ValueError(f"Error {e} while setting findmuon.{k}.{k2} with {v2}.")
+                continue
+            try:
                 setattr(builder.findmuon, k, v)
+            except Exception as e:
+                raise ValueError(f"Error {e} while setting {k} with {v}.")
+
 
         # If I don't pop here, when we set this builder as QeAppWorkChain builder attribute,
         # it will be validated and it will fail because it tries anyway to detect IMPURITY inputs...
