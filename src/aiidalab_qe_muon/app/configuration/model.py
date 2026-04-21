@@ -41,9 +41,15 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     hubbard = tl.Bool(False)
     spin_polarized = tl.Bool(True)
     kpoints_distance = tl.Float(0.3)
+
+    magmoms = tl.List(default_value=[])  # magmoms read from structure extras
+    has_magmoms = tl.Bool(False)  # True when the structure carries magnetic moments
     mesh_grid = tl.Unicode("")
 
     compute_gamma_pre_relax = tl.Bool(True)
+    #noncollinear = tl.Bool(False)
+    pre_clustering = tl.Bool(True)
+    activate_monitors = tl.Bool(True)
     
     use_defaults = tl.Bool(True) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
     
@@ -95,6 +101,15 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
                 if trait not in exclude:
                     self._set_default(trait)
     
+    @tl.observe('has_magmoms')
+    def _on_has_magmoms_change(self, change):
+        """Sync dependent traits when magnetic-moment availability changes."""
+        if not change["new"]:
+            #self.noncollinear = False
+            self.spin_polarized = False
+        else:
+            self.spin_polarized = True
+
     @tl.observe('pseudo_choice')
     def _validate_pseudo_family(self, change):
         """try to load the pseudo family and raise warning/exception"""
@@ -226,10 +241,37 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
         if not self.polarization_allowed:
             self.compute_polarization_undi = False
     
+    @staticmethod
+    def _normalise_magmom(raw, n_sites):
+        """Return a list of [mx, my, mz] per site, or None if unrecognised."""
+        if raw is None:
+            return None
+        try:
+            # orm.List node not yet serialised – extract the python list
+            if hasattr(raw, "get_list"):
+                raw = raw.get_list()
+            if isinstance(raw, (list, tuple)) and len(raw) == n_sites and isinstance(raw[0], (list, tuple)):
+                return [list(map(float, m)) for m in raw]
+        except Exception:
+            pass
+        return None
+
     def on_input_structure_change(self, _=None):
         if not self.input_structure:
             self.reset()
+            self.magmoms = []
+            self.has_magmoms = False
         else:
+            # Read magnetic moments stored as extras on the structure node
+            raw = self.input_structure.base.extras.all.get("magmom", None)
+            magmom = self._normalise_magmom(raw, len(self.input_structure.sites))
+            if magmom:
+                self.magmoms = magmom
+                self.has_magmoms = True
+            else:
+                self.magmoms = []
+                self.has_magmoms = False
+
             self.check_polarization_allowed()
             self.disable_x, self.disable_y, self.disable_z = True, True, True
             pbc = self.input_structure.pbc

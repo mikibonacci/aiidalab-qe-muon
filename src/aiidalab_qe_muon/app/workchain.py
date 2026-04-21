@@ -80,6 +80,9 @@ def get_builder(codes, structure, parameters):
     charge_supercell = parameters["muonic"].pop("charge_state", True)
 
     gamma_pre_relax = parameters["muonic"].pop("compute_gamma_pre_relax", True)
+    #noncollinear = parameters["muonic"].pop("noncollinear", False)
+    pre_clustering = parameters["muonic"].pop("pre_clustering", False)
+    activate_monitors = parameters["muonic"].pop("activate_monitors", True)
 
     hubbard = not parameters["muonic"].pop("hubbard", False) # hubbard = True here means we DISABLE the hubbard correction (the checkbox in setting is for disabling).
 
@@ -180,6 +183,9 @@ def get_builder(codes, structure, parameters):
         pp_metadata = pp_metadata if pp_code else None,
         spin_pol_dft=spin_pol_dft,
         gamma_pre_relax=gamma_pre_relax,
+        #noncollinear=noncollinear,
+        pre_clustering=pre_clustering,
+        activate_monitors=activate_monitors,
     )
 
     if "parallelization" in codes.get("pw_muons"):
