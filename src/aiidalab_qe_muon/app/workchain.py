@@ -1,4 +1,4 @@
-from aiida.orm import load_code, Dict, Bool, load_group
+from aiida.orm import load_code, Dict, Bool, load_group, Str
 from aiida.plugins import WorkflowFactory, DataFactory
 from aiida_quantumespresso.common.types import ElectronicType, SpinType
 
@@ -113,7 +113,7 @@ def get_builder(codes, structure, parameters):
     overrides["pwscf"]["pw"]["parameters"]["ELECTRONS"]["electron_maxstep"] = 500
 
     
-    #pseudo_family = parameters["muonic"].pop("pseudo_choice", "")
+    pseudo_family_muons = parameters["muonic"].pop("pseudo_choice", "")
     # dummy logic.
     pseudo_family = overrides["base"]["pseudo_family"]
         
@@ -193,6 +193,11 @@ def get_builder(codes, structure, parameters):
 
     if pp_code:
         builder.findmuon.pp_metadata = pp_metadata
+
+    if pseudo_family_muons:
+        builder.findmuon.pseudo_family = Str(pseudo_family_muons)
+        if compute_supercell:
+            builder.impuritysupercellconv.pseudo_family = Str(pseudo_family_muons)
     
     
     return builder
