@@ -415,6 +415,42 @@ class MuonConfigurationSettingPanel(
             (self._model, "spin_polarized"),
         )
         
+        # Pseudopotential family selection
+        self.pseudo_family_title = ipw.HTML("<h5><b> - Pseudopotential family (optional)</b></h5>")
+        self.pseudo_family_help = SettingsInfoBoxWidget(
+            info="""&#8613; Pseudopotential family<br>Specify a custom pseudopotential family for the muon calculations. 
+                Leave empty to use the defaults from the "Advanced settings" tab. 
+                """,
+        )
+        self.pseudo_family_input = ipw.Text(
+            description="Pseudo family:",
+            placeholder="Enter pseudopotential family name",
+            value=self._model.pseudo_choice,
+            continuous_update=False,
+            layout=ipw.Layout(width="50%"),
+        )
+        ipw.link(
+            (self.pseudo_family_input, "value"),
+            (self._model, "pseudo_choice"),
+        )
+        
+        self.pseudo_family_warning = ipw.HTML(value="")
+        ipw.dlink(
+            (self._model, "warning_banner"),
+            (self.pseudo_family_warning, "value"),
+            lambda x: f"<p style='color: red; font-weight: bold;'>{x[1]}</p>" if len(x) > 1 and x[1] else "",
+        )
+        
+        self.pseudo_family_box = ipw.VBox([
+            ipw.HBox([
+                self.pseudo_family_title,
+                self.pseudo_family_input,
+                self.pseudo_family_help,
+            ]),
+            self.pseudo_family_warning,
+            self.pseudo_family_help.infobox,
+        ])
+        
         # Muon spacing view and control, included the estimator for the number of supercells
         self.mu_spacing_help_title = ipw.HTML("<h5><b> - Spacing for trial grid for initial muon sites (Å):</b></h5>")
         self.mu_spacing_help = SettingsInfoBoxWidget(
@@ -500,6 +536,7 @@ class MuonConfigurationSettingPanel(
             self.kpoints_box,
             self.hubbard,
             self.spin_polarized,
+            self.pseudo_family_box,
             self.mu_spacing_box,
             ipw.HBox([
                 self.estimate_number_of_supercells,

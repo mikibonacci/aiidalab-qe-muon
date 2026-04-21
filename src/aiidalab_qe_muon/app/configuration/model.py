@@ -47,8 +47,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
     
     use_defaults = tl.Bool(True) # default are the one of the muons, not the one of QE or the QEapp. overriding means using the defaults (protocols) of the QEapp.
     
-    # TODO: implement these two in MVC
-    specific_pseudofamily = tl.Unicode("")
+    pseudo_choice = tl.Unicode("")
     warning_banner = tl.List(
         trait=tl.Unicode(""),
         default_value=["", ""]
@@ -96,7 +95,7 @@ class MuonConfigurationSettingsModel(ConfigurationSettingsModel, HasInputStructu
                 if trait not in exclude:
                     self._set_default(trait)
     
-    
+    @tl.observe('pseudo_choice')
     def _validate_pseudo_family(self, change):
         """try to load the pseudo family and raise warning/exception"""
         self.warning_banner[1] = ''
